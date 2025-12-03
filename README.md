@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ascension - Daily Progress Tracker
 
-## Getting Started
+A comprehensive web application for tracking your 4-month career transformation journey targeting remote software engineering roles (15-25 LPA).
 
-First, run the development server:
+## 🎯 Features
+
+### ✅ Implemented
+
+- **Dashboard**: Real-time metrics, XP/level system, activity heatmap, quick actions
+- **Daily Check-In**: Morning priorities, task completion with undo, evening review
+- **Academics**: DSA problem tracker, AI/ML module management
+- **Settings**: Profile customization, theme toggle, daily goals
+
+### 🔄 Coming Soon
+
+- Gym & Health tracking
+- Social & Goals management
+- Job Hunt tracker
+- Analytics & Insights
+- Gamification (badges, challenges)
+- Browser notifications
+
+## 🚀 Getting Started
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Open browser
+http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 💻 Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Vanilla CSS with CSS Variables
+- **State**: React Context API
+- **Storage**: LocalStorage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+src/
+├── app/                    # Next.js pages
+│   ├── page.tsx           # Dashboard
+│   ├── checkin/           # Daily check-in
+│   ├── academics/         # DSA & AI/ML
+│   ├── settings/          # Settings
+│   └── globals.css        # Global styles
+├── components/            # Reusable components
+│   ├── Navigation.tsx
+│   ├── MetricCard.tsx
+│   ├── ActivityHeatmap.tsx
+│   ├── QuickActionButton.tsx
+│   ├── Modal.tsx
+│   └── Toast.tsx
+├── contexts/              # State management
+│   └── AppContext.tsx
+├── lib/                   # Utilities
+│   ├── storage.ts         # LocalStorage
+│   ├── calculations.ts    # Core logic
+│   └── notifications.ts   # Notifications
+└── types/                 # TypeScript types
+    └── index.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🎨 Design Principles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Frictionless**: Max 2 taps to log anything
+- **Instant Feedback**: Toast notifications for all actions
+- **Mobile-First**: Responsive design for all devices
+- **Privacy-Focused**: All data stays local
+- **Consistent Colors**: Green=complete, Red=missed, Yellow=in-progress
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📊 Data Management
 
-## Deploy on Vercel
+All data is stored in browser LocalStorage:
+- Automatic saving on every change
+- Survives page refreshes
+- No server required
+- Export/import capabilities (coming soon)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎮 Gamification
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **XP System**: Earn points for every activity
+  - Easy DSA: 10 XP
+  - Medium DSA: 25 XP
+  - Hard DSA: 50 XP
+  - AI Module: 30 XP
+  - Gym Session: 20 XP
+- **Levels**: 1-20 (500 XP per level)
+- **Streaks**: Track consecutive active days
+
+## 📝 License
+
+Private project for personal use.
+
+## 🙏 Acknowledgments
+
+Built with Next.js, React, and TypeScript.
