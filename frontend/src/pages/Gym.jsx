@@ -1,301 +1,200 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-const Gym = () => {
-    const { user, workouts, logActivity, addWorkout, editWorkout, deleteWorkout, logWorkout } = useApp();
+// IST Date helpers
+const getISTDate = () => {
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+    return new Date(utc + IST_OFFSET);
+};
 
+const getISTDateString = (date = new Date()) => {
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+    const istDate = new Date(utc + IST_OFFSET);
+    return `${istDate.getFullYear()}-${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}`;
+};
+
+const getCurrentWeekDays = () => {
+    const istNow = getISTDate();
+    const dayOfWeek = istNow.getDay();
+    const mondayAdjust = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(istNow);
+    monday.setDate(istNow.getDate() + mondayAdjust);
+
+    const days = [];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const todayStr = getISTDateString();
+
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        const dateStr = getISTDateString(date);
+        days.push({ name: dayNames[i], dateString: dateStr, isToday: dateStr === todayStr, isFuture: dateStr > todayStr });
+    }
+    return days;
+};
+
+const Gym = () => {
+    const { user, workouts, activities, logActivity, addWorkout, editWorkout, deleteWorkout, logWorkout } = useApp();
     const [showAddWorkout, setShowAddWorkout] = useState(false);
     const [newWorkoutName, setNewWorkoutName] = useState('');
-    const [newWorkoutIcon, setNewWorkoutIcon] = useState('💪');
     const [newExercises, setNewExercises] = useState('');
     const [editingWorkout, setEditingWorkout] = useState(null);
     const [expandedWorkout, setExpandedWorkout] = useState(null);
 
-    const icons = ['💪', '🏋️', '🦵', '🏃', '🔥', '🧘', '🚴', '🏊', '⚡', '🎯'];
-
     const handleAddWorkout = () => {
         if (!newWorkoutName.trim()) return;
-        const exercises = newExercises.split(',').map(e => e.trim()).filter(Boolean);
-        addWorkout(newWorkoutName.trim(), newWorkoutIcon, exercises);
-        setNewWorkoutName('');
-        setNewExercises('');
-        setShowAddWorkout(false);
-    };
-
-    const handleEditWorkout = (workout) => {
-        if (editingWorkout === workout.id) {
-            setEditingWorkout(null);
-        } else {
-            setEditingWorkout(workout.id);
-            setNewWorkoutName(workout.name);
-            setNewWorkoutIcon(workout.icon);
-            setNewExercises(workout.exercises.join(', '));
-        }
+        addWorkout(newWorkoutName.trim(), '💪', newExercises.split(',').map(e => e.trim()).filter(Boolean));
+        setNewWorkoutName(''); setNewExercises(''); setShowAddWorkout(false);
     };
 
     const saveWorkoutEdit = (workoutId) => {
-        const exercises = newExercises.split(',').map(e => e.trim()).filter(Boolean);
-        editWorkout(workoutId, { name: newWorkoutName, icon: newWorkoutIcon, exercises });
-        setEditingWorkout(null);
-        setNewWorkoutName('');
-        setNewExercises('');
+        editWorkout(workoutId, { name: newWorkoutName, exercises: newExercises.split(',').map(e => e.trim()).filter(Boolean) });
+        setEditingWorkout(null); setNewWorkoutName(''); setNewExercises('');
     };
 
-    // Get this week's days
-    const getWeekDays = () => {
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const today = new Date().getDay();
-        const adjustedToday = today === 0 ? 6 : today - 1; // Adjust for Monday start
+    const weekDays = getCurrentWeekDays();
 
-        return days.map((day, index) => ({
-            name: day,
-            active: index < (user?.stats?.gymDaysThisWeek || 0),
-            isToday: index === adjustedToday
-        }));
+    const getGymDaysThisWeek = () => {
+        const weekStart = weekDays[0].dateString;
+        const weekEnd = weekDays[6].dateString;
+        const gymDates = new Set();
+        activities.forEach(activity => {
+            if (activity.type === 'gym') {
+                const activityDate = getISTDateString(new Date(activity.date));
+                if (activityDate >= weekStart && activityDate <= weekEnd) gymDates.add(activityDate);
+            }
+        });
+        return gymDates;
     };
 
-    const weekDays = getWeekDays();
+    const gymDaysSet = getGymDaysThisWeek();
     const gymGoal = user?.settings?.weeklyGymGoal || 5;
-    const gymDays = user?.stats?.gymDaysThisWeek || 0;
-    const progressPercent = Math.min(100, (gymDays / gymGoal) * 100);
+    const gymDaysCount = gymDaysSet.size;
+    const progressPercent = Math.min(100, (gymDaysCount / gymGoal) * 100);
+    const totalSessions = workouts.reduce((sum, w) => sum + w.timesCompleted, 0);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">🏋️ Gym & Health</h1>
-                <p className="text-slate-400">Track your fitness journey and workout routines</p>
+                <h1 className="text-2xl font-semibold text-white mb-1">Gym & Health</h1>
+                <p className="text-sm text-zinc-500">Track your fitness journey and workout routines</p>
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">This Week</p>
+                    <p className="stat-value text-amber-400">{gymDaysCount}<span className="text-zinc-500 text-lg">/{gymGoal}</span></p>
+                    <p className="stat-sublabel">sessions</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Routines</p>
+                    <p className="stat-value">{workouts.length}</p>
+                    <p className="stat-sublabel">created</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Total Sessions</p>
+                    <p className="stat-value text-emerald-400">{totalSessions}</p>
+                    <p className="stat-sublabel">completed</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Progress</p>
+                    <p className="stat-value">{Math.round(progressPercent)}%</p>
+                    <p className="stat-sublabel">weekly goal</p>
+                </div>
             </div>
 
             {/* Weekly Overview */}
-            <div className="glass-card p-6">
+            <div className="glass-card p-5">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-xl font-semibold text-white">Weekly Goal</h3>
-                        <p className="text-slate-400">{gymDays}/{gymGoal} gym sessions this week</p>
+                        <h3 className="text-base font-semibold text-white">Weekly Goal</h3>
+                        <p className="text-xs text-zinc-500">{gymDaysCount} of {gymGoal} sessions this week</p>
                     </div>
-                    <button
-                        onClick={() => logActivity('gym', { notes: 'Quick gym session' })}
-                        className="btn-primary"
-                    >
-                        Log Gym Session +20 XP
-                    </button>
+                    <button onClick={() => logActivity('gym', { notes: 'Gym session' })} className="btn-primary text-sm">Log Session +20 XP</button>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mb-6">
-                    <div className="progress-bar h-4">
-                        <div
-                            className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-500"
-                            style={{ width: `${progressPercent}%` }}
-                        ></div>
-                    </div>
-                    <p className="text-sm text-slate-400 mt-2">
-                        {gymDays >= gymGoal
-                            ? '🎉 Weekly goal achieved!'
-                            : `${gymGoal - gymDays} more sessions to hit your goal`}
-                    </p>
+                <div className="progress-bar h-2.5 mb-5">
+                    <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
                 </div>
 
-                {/* Week Visualization */}
                 <div className="grid grid-cols-7 gap-2">
-                    {weekDays.map((day, index) => (
-                        <div
-                            key={index}
-                            className={`p-3 rounded-xl text-center transition-all ${day.active
-                                    ? 'bg-green-500/20 border-2 border-green-500'
-                                    : 'bg-white/5 border-2 border-transparent'
-                                } ${day.isToday ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-900' : ''}`}
-                        >
-                            <p className="text-xs text-slate-400 mb-1">{day.name}</p>
-                            <span className="text-lg">{day.active ? '✅' : '⚪'}</span>
-                        </div>
-                    ))}
+                    {weekDays.map((day, index) => {
+                        const hasGym = gymDaysSet.has(day.dateString);
+                        return (
+                            <div key={index} className={`p-3 rounded-lg text-center transition-all relative ${hasGym ? 'bg-emerald-500/10 border border-emerald-500/30' : day.isFuture ? 'bg-[#0a0a0a] border border-[#111111] opacity-40' : 'bg-[#0a0a0a] border border-[#111111]'} ${day.isToday ? 'ring-2 ring-violet-500/50' : ''}`}>
+                                <p className="text-xs font-medium text-zinc-500 mb-2">{day.name}</p>
+                                <div className={`w-4 h-4 mx-auto rounded-full ${hasGym ? 'bg-emerald-500' : 'bg-[#1a1a1a]'}`}></div>
+                                {day.isToday && <span className="absolute -top-1 -right-1 w-2 h-2 bg-violet-500 rounded-full"></span>}
+                            </div>
+                        );
+                    })}
                 </div>
+                <p className="text-xs text-zinc-600 mt-4 text-center">IST · Today: <span className="text-violet-400 font-medium">{weekDays.find(d => d.isToday)?.name}</span> · {gymDaysCount >= gymGoal ? <span className="text-emerald-400">Goal reached!</span> : `${gymGoal - gymDaysCount} more to goal`}</p>
             </div>
 
             {/* Workout Routines */}
-            <div className="glass-card p-6">
-                <div className="flex items-center justify-between mb-6">
+            <div className="glass-card p-5">
+                <div className="flex items-center justify-between mb-5">
                     <div>
-                        <h3 className="text-xl font-semibold text-white">Workout Routines</h3>
-                        <p className="text-slate-400">Manage your workout plans</p>
+                        <h3 className="text-base font-semibold text-white">Workout Routines</h3>
+                        <p className="text-xs text-zinc-500">{workouts.length} routines · {totalSessions} total sessions</p>
                     </div>
-                    <button
-                        onClick={() => setShowAddWorkout(true)}
-                        className="btn-secondary"
-                    >
-                        + Add Routine
-                    </button>
+                    <button onClick={() => setShowAddWorkout(true)} className="btn-secondary text-xs">+ Add Routine</button>
                 </div>
 
-                {/* Add Workout Form */}
                 {showAddWorkout && (
-                    <div className="mb-6 p-4 bg-white/5 rounded-xl space-y-4">
-                        <h4 className="text-white font-medium">New Workout Routine</h4>
-
-                        {/* Icon Selection */}
-                        <div>
-                            <label className="text-sm text-slate-400 block mb-2">Choose Icon</label>
-                            <div className="flex gap-2 flex-wrap">
-                                {icons.map(icon => (
-                                    <button
-                                        key={icon}
-                                        onClick={() => setNewWorkoutIcon(icon)}
-                                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${newWorkoutIcon === icon
-                                                ? 'bg-purple-500 ring-2 ring-purple-300'
-                                                : 'bg-white/10 hover:bg-white/20'
-                                            }`}
-                                    >
-                                        {icon}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Name Input */}
-                        <div>
-                            <label className="text-sm text-slate-400 block mb-2">Routine Name</label>
-                            <input
-                                type="text"
-                                value={newWorkoutName}
-                                onChange={(e) => setNewWorkoutName(e.target.value)}
-                                placeholder="e.g., Upper Body, HIIT Training"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                            />
-                        </div>
-
-                        {/* Exercises Input */}
-                        <div>
-                            <label className="text-sm text-slate-400 block mb-2">Exercises (comma-separated)</label>
-                            <input
-                                type="text"
-                                value={newExercises}
-                                onChange={(e) => setNewExercises(e.target.value)}
-                                placeholder="e.g., Bench Press, Skull Crushers, Lateral Raises"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                            />
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button onClick={handleAddWorkout} className="btn-primary">Add Routine</button>
-                            <button onClick={() => setShowAddWorkout(false)} className="btn-secondary">Cancel</button>
+                    <div className="mb-5 p-4 bg-[#0a0a0a] rounded-lg border border-[#1a1a1a] space-y-3">
+                        <input type="text" value={newWorkoutName} onChange={(e) => setNewWorkoutName(e.target.value)} placeholder="Routine name (e.g., Push Day, HIIT)" className="input-field" />
+                        <input type="text" value={newExercises} onChange={(e) => setNewExercises(e.target.value)} placeholder="Exercises (comma-separated)" className="input-field" />
+                        <div className="flex gap-2">
+                            <button onClick={handleAddWorkout} className="btn-primary text-xs">Add Routine</button>
+                            <button onClick={() => setShowAddWorkout(false)} className="btn-secondary text-xs">Cancel</button>
                         </div>
                     </div>
                 )}
 
-                {/* Workouts Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {workouts.map((workout) => (
-                        <div
-                            key={workout.id}
-                            className="bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-all"
-                        >
+                        <div key={workout.id} className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#111111] hover:border-[#1a1a1a] transition-all">
                             {editingWorkout === workout.id ? (
-                                // Edit Mode
                                 <div className="p-4 space-y-3">
-                                    <div className="flex gap-2 flex-wrap">
-                                        {icons.map(icon => (
-                                            <button
-                                                key={icon}
-                                                onClick={() => setNewWorkoutIcon(icon)}
-                                                className={`w-8 h-8 rounded flex items-center justify-center ${newWorkoutIcon === icon ? 'bg-purple-500' : 'bg-white/10'
-                                                    }`}
-                                            >
-                                                {icon}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={newWorkoutName}
-                                        onChange={(e) => setNewWorkoutName(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                                        placeholder="Routine name"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={newExercises}
-                                        onChange={(e) => setNewExercises(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                                        placeholder="Exercises (comma-separated)"
-                                    />
+                                    <input type="text" value={newWorkoutName} onChange={(e) => setNewWorkoutName(e.target.value)} className="input-field" placeholder="Routine name" />
+                                    <input type="text" value={newExercises} onChange={(e) => setNewExercises(e.target.value)} className="input-field" placeholder="Exercises" />
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={() => saveWorkoutEdit(workout.id)}
-                                            className="flex-1 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm"
-                                        >
-                                            Save
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingWorkout(null)}
-                                            className="flex-1 py-2 bg-slate-500/20 text-slate-400 rounded-lg text-sm"
-                                        >
-                                            Cancel
-                                        </button>
+                                        <button onClick={() => saveWorkoutEdit(workout.id)} className="flex-1 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-semibold">Save</button>
+                                        <button onClick={() => setEditingWorkout(null)} className="flex-1 py-2 bg-[#111111] text-zinc-400 rounded-lg text-xs">Cancel</button>
                                     </div>
                                 </div>
                             ) : (
-                                // View Mode
                                 <>
-                                    <div
-                                        className="p-4 cursor-pointer hover:bg-white/5"
-                                        onClick={() => setExpandedWorkout(expandedWorkout === workout.id ? null : workout.id)}
-                                    >
+                                    <div className="p-4 cursor-pointer" onClick={() => setExpandedWorkout(expandedWorkout === workout.id ? null : workout.id)}>
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-3xl">{workout.icon}</span>
-                                                <div>
-                                                    <h4 className="text-white font-medium">{workout.name}</h4>
-                                                    <p className="text-xs text-slate-400">
-                                                        {workout.exercises.length} exercises • Done {workout.timesCompleted}x
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEditWorkout(workout);
-                                                    }}
-                                                    className="p-1 text-slate-500 hover:text-purple-400"
-                                                >
-                                                    ✏️
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteWorkout(workout.id);
-                                                    }}
-                                                    className="p-1 text-slate-500 hover:text-red-400"
-                                                >
-                                                    🗑️
-                                                </button>
+                                            <h4 className="text-sm font-semibold text-white">{workout.name}</h4>
+                                            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                                <button onClick={() => { setEditingWorkout(workout.id); setNewWorkoutName(workout.name); setNewExercises(workout.exercises.join(', ')); }} className="text-xs text-zinc-600 hover:text-white font-medium">Edit</button>
+                                                <button onClick={() => deleteWorkout(workout.id)} className="text-xs text-zinc-600 hover:text-red-400 font-medium">Del</button>
                                             </div>
                                         </div>
+                                        <p className="text-xs text-zinc-500"><span className="text-white font-medium">{workout.exercises.length}</span> exercises · <span className="text-amber-400 font-medium">{workout.timesCompleted}</span> times</p>
                                     </div>
 
-                                    {/* Expanded Exercises */}
                                     {expandedWorkout === workout.id && (
-                                        <div className="border-t border-white/10 p-4 bg-black/20 space-y-2">
-                                            <p className="text-sm text-slate-300 font-medium mb-2">Exercises:</p>
+                                        <div className="border-t border-[#111111] p-4 bg-black space-y-2">
                                             {workout.exercises.length === 0 ? (
-                                                <p className="text-sm text-slate-500">No exercises added yet</p>
+                                                <p className="text-xs text-zinc-600 text-center py-2">No exercises added</p>
                                             ) : (
                                                 workout.exercises.map((exercise, i) => (
-                                                    <div key={i} className="flex items-center gap-2 text-sm">
-                                                        <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded flex items-center justify-center text-xs">
-                                                            {i + 1}
-                                                        </span>
+                                                    <div key={i} className="flex items-center gap-3 text-sm">
+                                                        <span className="w-6 h-6 bg-[#111111] text-zinc-500 rounded flex items-center justify-center text-xs font-semibold">{i + 1}</span>
                                                         <span className="text-white">{exercise}</span>
                                                     </div>
                                                 ))
                                             )}
-                                            <button
-                                                onClick={() => logWorkout(workout.id)}
-                                                className="w-full mt-3 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm transition-all"
-                                            >
-                                                ✓ Complete Workout (+20 XP)
-                                            </button>
+                                            <button onClick={() => logWorkout(workout.id)} className="w-full mt-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold transition-all">Complete Workout +20 XP</button>
                                         </div>
                                     )}
                                 </>
@@ -304,32 +203,17 @@ const Gym = () => {
                     ))}
                 </div>
 
-                {workouts.length === 0 && (
-                    <div className="text-center py-8">
-                        <span className="text-4xl mb-4 block">🏋️</span>
-                        <p className="text-slate-500">No workout routines yet. Add your first one!</p>
-                    </div>
-                )}
+                {workouts.length === 0 && <p className="text-center text-zinc-600 py-8 text-sm">No routines yet. Create your first workout routine above.</p>}
             </div>
 
             {/* Quick Log */}
-            <div className="glass-card p-6">
-                <h3 className="text-xl font-semibold text-white mb-4">Quick Log</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                        { icon: '🏃', label: 'Cardio', notes: 'Cardio session' },
-                        { icon: '🏋️', label: 'Weights', notes: 'Weight training' },
-                        { icon: '🧘', label: 'Yoga', notes: 'Yoga session' },
-                        { icon: '🏊', label: 'Swimming', notes: 'Swimming workout' },
-                    ].map((item) => (
-                        <button
-                            key={item.label}
-                            onClick={() => logActivity('gym', { notes: item.notes })}
-                            className="glass-card-hover p-4 text-center"
-                        >
-                            <span className="text-3xl block mb-2">{item.icon}</span>
-                            <span className="text-sm text-white">{item.label}</span>
-                            <span className="text-xs text-green-400 block">+20 XP</span>
+            <div className="glass-card p-5">
+                <h3 className="text-base font-semibold text-white mb-4">Quick Log</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[{ label: 'Cardio', notes: 'Cardio session' }, { label: 'Weights', notes: 'Weight training' }, { label: 'Yoga', notes: 'Yoga session' }, { label: 'Swimming', notes: 'Swimming workout' }].map((item) => (
+                        <button key={item.label} onClick={() => logActivity('gym', { notes: item.notes })} className="glass-card-hover p-4 text-center">
+                            <p className="text-sm font-semibold text-white mb-1">{item.label}</p>
+                            <p className="text-xs font-semibold font-mono text-emerald-400">+20 XP</p>
                         </button>
                     ))}
                 </div>

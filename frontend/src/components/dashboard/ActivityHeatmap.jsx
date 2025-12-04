@@ -1,37 +1,57 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
+// IST helpers
+const getISTDate = () => {
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+    return new Date(utc + IST_OFFSET);
+};
+
+const getISTDateString = (date = new Date()) => {
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+    const istDate = new Date(utc + IST_OFFSET);
+    const year = istDate.getFullYear();
+    const month = String(istDate.getMonth() + 1).padStart(2, '0');
+    const day = String(istDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 const ActivityHeatmap = () => {
     const { heatmapData } = useApp();
     const [hoveredDay, setHoveredDay] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-    // Generate last 365 days
+    const todayIST = getISTDateString();
+
+    // Generate last 365 days using IST
     const days = useMemo(() => {
         const result = [];
-        const today = new Date();
+        const istToday = getISTDate();
 
         for (let i = 364; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
+            const date = new Date(istToday);
+            date.setDate(istToday.getDate() - i);
+            const dateStr = getISTDateString(date);
 
             result.push({
                 date: dateStr,
                 dayOfWeek: date.getDay(),
-                data: heatmapData[dateStr] || null
+                data: heatmapData[dateStr] || null,
+                isToday: dateStr === todayIST
             });
         }
 
         return result;
-    }, [heatmapData]);
+    }, [heatmapData, todayIST]);
 
     // Group by weeks
     const weeks = useMemo(() => {
         const result = [];
         let currentWeek = [];
 
-        // Add empty cells for first week alignment
         const firstDayOfWeek = days[0]?.dayOfWeek || 0;
         for (let i = 0; i < firstDayOfWeek; i++) {
             currentWeek.push(null);
@@ -45,7 +65,6 @@ const ActivityHeatmap = () => {
             }
         });
 
-        // Add remaining days
         if (currentWeek.length > 0) {
             result.push(currentWeek);
         }
@@ -53,22 +72,20 @@ const ActivityHeatmap = () => {
         return result;
     }, [days]);
 
-    // Get intensity class based on activity count
-    const getIntensityClass = (data) => {
-        if (!data) return 'bg-slate-800/50';
+    const getIntensityClass = (data, isToday) => {
+        if (isToday) return 'bg-violet-500 ring-2 ring-violet-400/50';
+        if (!data) return 'bg-[#151515]';
         const count = data.count;
-        if (count >= 5) return 'bg-green-400';
-        if (count >= 4) return 'bg-green-500';
-        if (count >= 3) return 'bg-green-600';
-        if (count >= 2) return 'bg-green-700';
-        if (count >= 1) return 'bg-green-800';
-        return 'bg-slate-800/50';
+        if (count >= 5) return 'bg-emerald-400';
+        if (count >= 4) return 'bg-emerald-500';
+        if (count >= 3) return 'bg-emerald-600';
+        if (count >= 2) return 'bg-emerald-700/80';
+        if (count >= 1) return 'bg-emerald-800/60';
+        return 'bg-[#151515]';
     };
 
-    // Month labels
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    // Get month positions for labels
     const monthLabels = useMemo(() => {
         const labels = [];
         let lastMonth = -1;
@@ -97,61 +114,45 @@ const ActivityHeatmap = () => {
         });
     };
 
-    // Calculate stats
     const stats = useMemo(() => {
         const entries = Object.entries(heatmapData);
         const totalActivities = entries.reduce((sum, [, d]) => sum + d.count, 0);
         const totalXp = entries.reduce((sum, [, d]) => sum + d.totalXp, 0);
         const activeDays = entries.length;
-        const currentStreak = (() => {
-            let streak = 0;
-            const today = new Date();
-            for (let i = 0; i < 365; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                if (heatmapData[dateStr]) {
-                    streak++;
-                } else if (i > 0) {
-                    break;
-                }
-            }
-            return streak;
-        })();
 
-        return { totalActivities, totalXp, activeDays, currentStreak };
+        return { totalActivities, totalXp, activeDays };
     }, [heatmapData]);
 
     return (
-        <div className="glass-card p-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-5">
+            <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="text-lg font-semibold text-white">Activity Heatmap</h3>
-                    <p className="text-sm text-slate-400">Your activity over the past year</p>
+                    <h3 className="text-sm font-semibold text-white">Activity Heatmap</h3>
+                    <p className="text-xs text-zinc-500">Past 365 days in IST</p>
                 </div>
-                <div className="flex gap-4 text-sm">
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-green-400">{stats.totalActivities}</p>
-                        <p className="text-slate-400">Activities</p>
+                <div className="flex gap-8 text-right">
+                    <div>
+                        <p className="stat-value text-lg">{stats.totalActivities}</p>
+                        <p className="stat-label text-[10px]">Activities</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-purple-400">{stats.activeDays}</p>
-                        <p className="text-slate-400">Active Days</p>
+                    <div>
+                        <p className="stat-value text-lg">{stats.activeDays}</p>
+                        <p className="stat-label text-[10px]">Active Days</p>
                     </div>
-                    <div className="text-center hidden sm:block">
-                        <p className="text-xl font-bold text-orange-400">{stats.totalXp}</p>
-                        <p className="text-slate-400">Total XP</p>
+                    <div className="hidden sm:block">
+                        <p className="stat-value text-lg text-violet-400">{stats.totalXp}</p>
+                        <p className="stat-label text-[10px]">Total XP</p>
                     </div>
                 </div>
             </div>
 
             {/* Month labels */}
-            <div className="flex mb-1 ml-8 text-xs text-slate-500">
+            <div className="flex mb-1.5 ml-7 text-[10px] font-medium text-zinc-600 relative h-3">
                 {monthLabels.map((label, i) => (
                     <span
                         key={i}
                         className="absolute"
-                        style={{ marginLeft: `${label.weekIndex * 14}px` }}
+                        style={{ left: `${label.weekIndex * 12}px` }}
                     >
                         {label.month}
                     </span>
@@ -159,26 +160,26 @@ const ActivityHeatmap = () => {
             </div>
 
             {/* Heatmap grid */}
-            <div className="flex gap-1 overflow-x-auto pb-2 mt-6">
+            <div className="flex gap-[3px] overflow-x-auto pb-2">
                 {/* Day labels */}
-                <div className="flex flex-col gap-1 text-xs text-slate-500 mr-2 flex-shrink-0">
-                    <span className="h-3"></span>
-                    <span className="h-3">Mon</span>
-                    <span className="h-3"></span>
-                    <span className="h-3">Wed</span>
-                    <span className="h-3"></span>
-                    <span className="h-3">Fri</span>
-                    <span className="h-3"></span>
+                <div className="flex flex-col gap-[3px] text-[10px] font-medium text-zinc-600 mr-1.5 flex-shrink-0">
+                    <span className="h-2.5"></span>
+                    <span className="h-2.5">M</span>
+                    <span className="h-2.5"></span>
+                    <span className="h-2.5">W</span>
+                    <span className="h-2.5"></span>
+                    <span className="h-2.5">F</span>
+                    <span className="h-2.5"></span>
                 </div>
 
                 {/* Weeks */}
                 {weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-1 flex-shrink-0">
+                    <div key={weekIndex} className="flex flex-col gap-[3px] flex-shrink-0">
                         {week.map((day, dayIndex) => (
                             <div
                                 key={dayIndex}
-                                className={`w-3 h-3 rounded-sm transition-all cursor-pointer ${day ? getIntensityClass(day.data) : 'bg-transparent'
-                                    } ${day ? 'hover:ring-2 hover:ring-white/50' : ''}`}
+                                className={`w-2.5 h-2.5 rounded-sm transition-all cursor-pointer ${day ? getIntensityClass(day.data, day.isToday) : 'bg-transparent'
+                                    } ${day && !day.isToday ? 'hover:ring-1 hover:ring-zinc-500' : ''}`}
                                 onMouseEnter={(e) => handleMouseEnter(e, day)}
                                 onMouseLeave={() => setHoveredDay(null)}
                             />
@@ -188,36 +189,40 @@ const ActivityHeatmap = () => {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-end gap-2 mt-4 text-xs text-slate-400">
-                <span>Less</span>
-                <div className="flex gap-1">
-                    <div className="w-3 h-3 bg-slate-800/50 rounded-sm"></div>
-                    <div className="w-3 h-3 bg-green-800 rounded-sm"></div>
-                    <div className="w-3 h-3 bg-green-700 rounded-sm"></div>
-                    <div className="w-3 h-3 bg-green-600 rounded-sm"></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-                    <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+            <div className="flex items-center justify-between mt-4 text-[11px]">
+                <span className="text-zinc-500 font-medium">Today: <span className="text-violet-400">{todayIST}</span></span>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-zinc-600">Less</span>
+                    <div className="flex gap-[3px]">
+                        <div className="w-2.5 h-2.5 bg-[#151515] rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-emerald-800/60 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-emerald-700/80 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-emerald-600 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-emerald-400 rounded-sm"></div>
+                    </div>
+                    <span className="text-zinc-600">More</span>
                 </div>
-                <span>More</span>
             </div>
 
             {/* Tooltip */}
             {hoveredDay && (
                 <div
-                    className="fixed z-50 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm pointer-events-none transform -translate-x-1/2 -translate-y-full"
+                    className="fixed z-50 bg-[#111111] border border-[#222222] rounded-lg px-3 py-2.5 pointer-events-none transform -translate-x-1/2 -translate-y-full shadow-xl"
                     style={{
                         left: tooltipPos.x,
                         top: tooltipPos.y - 5
                     }}
                 >
-                    <p className="text-white font-medium">{hoveredDay.date}</p>
+                    <p className="text-sm font-semibold text-white">{hoveredDay.date}</p>
+                    {hoveredDay.isToday && <p className="text-xs font-medium text-violet-400">Today</p>}
                     {hoveredDay.data ? (
                         <>
-                            <p className="text-green-400">{hoveredDay.data.count} activities</p>
-                            <p className="text-purple-400">{hoveredDay.data.totalXp} XP earned</p>
+                            <p className="text-xs text-emerald-400 font-medium">{hoveredDay.data.count} activities</p>
+                            <p className="text-xs text-zinc-500">{hoveredDay.data.totalXp} XP earned</p>
                         </>
                     ) : (
-                        <p className="text-slate-400">No activity</p>
+                        <p className="text-xs text-zinc-600">No activity</p>
                     )}
                 </div>
             )}

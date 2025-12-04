@@ -1,15 +1,19 @@
 import { getGreeting } from '../../utils/dateUtils';
+import { useApp } from '../../context/AppContext';
 
-const Greeting = ({ userName = 'Champion' }) => {
+const Greeting = () => {
+    const { user } = useApp();
     const greeting = getGreeting();
 
     return (
-        <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                {greeting.text}, {userName}! {greeting.emoji}
+        <div className="mb-2">
+            <h1 className="text-2xl font-semibold text-white mb-1">
+                {greeting.text}, {user?.name || 'Champion'}
             </h1>
-            <p className="text-slate-400 text-lg">
-                Ready to level up today?
+            <p className="text-sm text-zinc-500">
+                Level <span className="text-zinc-300 font-medium">{user?.level || 1}</span> ·
+                <span className="text-zinc-300 font-medium font-mono"> {user?.xp || 0}</span> XP ·
+                Week <span className="text-zinc-300 font-medium">{user?.journey?.currentWeek || 1}</span> of {user?.journey?.totalWeeks || 17}
             </p>
         </div>
     );

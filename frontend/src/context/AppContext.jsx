@@ -357,27 +357,38 @@ export const AppProvider = ({ children }) => {
         return { newLevel, newXpToNext, levelsGained: newLevel - currentLevel };
     };
 
-    // Update streak
-    const updateStreak = (currentStreak) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (currentStreak.lastActivityDate) {
-            const lastDate = new Date(currentStreak.lastActivityDate);
-            lastDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
-            if (diffDays === 0) return currentStreak;
-            else if (diffDays === 1) {
-                const newCurrent = currentStreak.current + 1;
-                return { current: newCurrent, longest: Math.max(newCurrent, currentStreak.longest), lastActivityDate: today.toISOString() };
-            }
-        }
-        return { current: 1, longest: Math.max(1, currentStreak.longest), lastActivityDate: today.toISOString() };
+    // Get IST date string
+    const getISTDateString = (date = new Date()) => {
+        const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+        const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+        const istDate = new Date(utc + IST_OFFSET);
+        return istDate.toISOString().split('T')[0];
     };
 
-    // Log activity
+    // Update streak (using IST)
+    const updateStreak = (currentStreak) => {
+        const todayIST = getISTDateString();
+        if (currentStreak.lastActivityDate) {
+            const lastDateIST = getISTDateString(new Date(currentStreak.lastActivityDate));
+            if (todayIST === lastDateIST) return currentStreak;
+
+            // Check if yesterday
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayIST = getISTDateString(yesterday);
+
+            if (lastDateIST === yesterdayIST) {
+                const newCurrent = currentStreak.current + 1;
+                return { current: newCurrent, longest: Math.max(newCurrent, currentStreak.longest), lastActivityDate: new Date().toISOString() };
+            }
+        }
+        return { current: 1, longest: Math.max(1, currentStreak.longest), lastActivityDate: new Date().toISOString() };
+    };
+
+    // Log activity (using IST for date key)
     const logActivity = async (type, details = {}) => {
         const xpEarned = calculateXp(type, details.difficulty);
-        const today = new Date().toISOString().split('T')[0];
+        const todayIST = getISTDateString();
         const prevState = { user: { ...user }, activities: [...activities], heatmap: { ...heatmapData } };
 
         const newActivity = { _id: Date.now().toString(), type, xpEarned, details, date: new Date().toISOString() };
@@ -397,8 +408,8 @@ export const AppProvider = ({ children }) => {
         const newUser = { ...user, xp: newXp, level: newLevel, xpToNextLevel: newXpToNext, streak: newStreak, stats: newStats };
         const newActivities = [newActivity, ...activities];
         const newHeatmap = { ...heatmapData };
-        const existing = newHeatmap[today] || { count: 0, totalXp: 0 };
-        newHeatmap[today] = { count: existing.count + 1, totalXp: existing.totalXp + xpEarned };
+        const existing = newHeatmap[todayIST] || { count: 0, totalXp: 0 };
+        newHeatmap[todayIST] = { count: existing.count + 1, totalXp: existing.totalXp + xpEarned };
 
         setUser(newUser);
         setActivities(newActivities);
@@ -650,6 +661,27 @@ export const AppProvider = ({ children }) => {
 
     const refreshData = async () => { };
 
+    // Reset ALL data to defaults
+    const resetAll = () => {
+        // Clear all localStorage
+        Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+
+        // Reset all state to defaults
+        setUser({ ...DEFAULT_USER, journey: { ...DEFAULT_USER.journey, startDate: new Date().toISOString() } });
+        setActivities([]);
+        setHeatmapData({});  // Empty - no fake historical data for new users
+        setGoals([]);
+        setDsaTopics(DEFAULT_DSA_TOPICS.map(t => ({ ...t, completed: 0, subtopics: t.subtopics.map(s => ({ ...s, completed: false })) })));
+        setAiModules(DEFAULT_AI_MODULES.map(m => ({ ...m, completed: false, progress: 0, lessons: m.lessons.map(l => ({ ...l, completed: false })) })));
+        setWorkouts(DEFAULT_WORKOUTS.map(w => ({ ...w, timesCompleted: 0 })));
+
+        // Clear history
+        setHistory([]);
+        setHistoryIndex(-1);
+
+        showNotification('🔄 All data reset! Fresh start!', 'success');
+    };
+
     const value = {
         // State
         user, activities, heatmapData, goals, dsaTopics, aiModules, workouts,
@@ -664,8 +696,8 @@ export const AppProvider = ({ children }) => {
         addAiModule, editAiModule, deleteAiModule, addAiLesson, toggleAiLesson, completeAiModule,
         // Workouts
         addWorkout, editWorkout, deleteWorkout, logWorkout,
-        // Settings
-        updateSettings, refreshData, showNotification,
+        // Settings & Utils
+        updateSettings, refreshData, showNotification, resetAll,
         // Undo/Redo
         undo, redo, canUndo, canRedo
     };

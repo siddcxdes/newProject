@@ -2,144 +2,146 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 const Jobs = () => {
-    const { user, logActivity } = useApp();
-    const [applications, setApplications] = useState([
-        { id: 1, company: 'Google', role: 'SDE Intern', status: 'applied', date: '2024-12-01' },
-        { id: 2, company: 'Microsoft', role: 'SWE Intern', status: 'interview', date: '2024-11-28' },
-        { id: 3, company: 'Amazon', role: 'SDE Intern', status: 'rejected', date: '2024-11-25' },
-    ]);
-    const [showForm, setShowForm] = useState(false);
-    const [newApp, setNewApp] = useState({ company: '', role: '', status: 'applied' });
+    const { logActivity, user } = useApp();
+    const [applications, setApplications] = useState([]);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [newJob, setNewJob] = useState({ company: '', role: '', status: 'applied' });
 
-    const addApplication = async (e) => {
-        e.preventDefault();
-        if (!newApp.company || !newApp.role) return;
-
-        setApplications([
-            ...applications,
-            { ...newApp, id: Date.now(), date: new Date().toISOString().split('T')[0] }
-        ]);
-        await logActivity('job');
-        setNewApp({ company: '', role: '', status: 'applied' });
-        setShowForm(false);
+    const handleAddApplication = () => {
+        if (!newJob.company || !newJob.role) return;
+        const app = { id: Date.now(), ...newJob, date: new Date().toISOString() };
+        setApplications([app, ...applications]);
+        logActivity('job');
+        setNewJob({ company: '', role: '', status: 'applied' });
+        setShowAddForm(false);
     };
+
+    const updateStatus = (id, status) => {
+        setApplications(applications.map(app => app.id === id ? { ...app, status } : app));
+    };
+
+    const deleteApplication = (id) => {
+        setApplications(applications.filter(app => app.id !== id));
+    };
+
+    const statuses = [
+        { value: 'applied', label: 'Applied', color: 'bg-blue-500' },
+        { value: 'screening', label: 'Screening', color: 'bg-amber-500' },
+        { value: 'interview', label: 'Interview', color: 'bg-violet-500' },
+        { value: 'offer', label: 'Offer', color: 'bg-emerald-500' },
+        { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
+    ];
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'applied': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-            case 'interview': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-            case 'offer': return 'bg-green-500/20 text-green-400 border-green-500/30';
-            case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
-            default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-        }
-    };
-
-    const stats = {
-        total: applications.length,
-        applied: applications.filter(a => a.status === 'applied').length,
-        interviews: applications.filter(a => a.status === 'interview').length,
-        offers: applications.filter(a => a.status === 'offer').length,
+        return statuses.find(s => s.value === status)?.color || 'bg-zinc-500';
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-white mb-2">💼 Job Hunt</h1>
-                <p className="text-slate-400">Track your job applications and earn XP!</p>
+        <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-semibold text-white mb-1">Job Search</h1>
+                    <p className="text-sm text-zinc-500">Track your applications and interview progress</p>
+                </div>
+                <button onClick={() => setShowAddForm(true)} className="btn-primary text-sm">+ Log Application</button>
             </div>
 
             {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {statuses.map((status) => {
+                    const count = applications.filter(a => a.status === status.value).length;
+                    return (
+                        <div key={status.value} className="glass-card p-4">
+                            <div className={`w-2.5 h-2.5 rounded-full ${status.color} mb-2`}></div>
+                            <p className="stat-value text-xl">{count}</p>
+                            <p className="stat-label text-[10px]">{status.label}</p>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Total Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="glass-card p-4 text-center">
-                    <p className="text-3xl font-bold text-white">{stats.total}</p>
-                    <p className="text-sm text-slate-400">Total Applied</p>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Total Applied</p>
+                    <p className="stat-value text-blue-400">{user?.stats?.jobApplications || 0}</p>
+                    <p className="stat-sublabel">all time</p>
                 </div>
-                <div className="glass-card p-4 text-center">
-                    <p className="text-3xl font-bold text-blue-400">{stats.applied}</p>
-                    <p className="text-sm text-slate-400">Pending</p>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">This Session</p>
+                    <p className="stat-value">{applications.length}</p>
+                    <p className="stat-sublabel">tracked</p>
                 </div>
-                <div className="glass-card p-4 text-center">
-                    <p className="text-3xl font-bold text-purple-400">{stats.interviews}</p>
-                    <p className="text-sm text-slate-400">Interviews</p>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Interview Rate</p>
+                    <p className="stat-value text-violet-400">{applications.length > 0 ? Math.round((applications.filter(a => ['interview', 'offer'].includes(a.status)).length / applications.length) * 100) : 0}%</p>
+                    <p className="stat-sublabel">conversion</p>
                 </div>
-                <div className="glass-card p-4 text-center">
-                    <p className="text-3xl font-bold text-green-400">{stats.offers}</p>
-                    <p className="text-sm text-slate-400">Offers</p>
+                <div className="glass-card p-4">
+                    <p className="stat-label mb-1">Success Rate</p>
+                    <p className="stat-value text-emerald-400">{applications.length > 0 ? Math.round((applications.filter(a => a.status === 'offer').length / applications.length) * 100) : 0}%</p>
+                    <p className="stat-sublabel">offers</p>
                 </div>
             </div>
 
-            {/* Add Application */}
-            <div className="glass-card p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-white">Applications</h3>
-                    <button
-                        onClick={() => setShowForm(!showForm)}
-                        className="btn-primary"
-                    >
-                        + Add Application
-                    </button>
+            {/* Add Form */}
+            {showAddForm && (
+                <div className="glass-card p-5 space-y-4">
+                    <h3 className="text-base font-semibold text-white">New Application</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" value={newJob.company} onChange={(e) => setNewJob({ ...newJob, company: e.target.value })} placeholder="Company name" className="input-field" />
+                        <input type="text" value={newJob.role} onChange={(e) => setNewJob({ ...newJob, role: e.target.value })} placeholder="Role / Position" className="input-field" />
+                    </div>
+                    <div className="flex gap-3">
+                        <button onClick={handleAddApplication} className="btn-primary text-sm">Add Application +15 XP</button>
+                        <button onClick={() => setShowAddForm(false)} className="btn-secondary text-sm">Cancel</button>
+                    </div>
                 </div>
+            )}
 
-                {showForm && (
-                    <form onSubmit={addApplication} className="mb-6 p-4 bg-white/5 rounded-xl space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <input
-                                type="text"
-                                value={newApp.company}
-                                onChange={(e) => setNewApp({ ...newApp, company: e.target.value })}
-                                placeholder="Company"
-                                className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                            />
-                            <input
-                                type="text"
-                                value={newApp.role}
-                                onChange={(e) => setNewApp({ ...newApp, role: e.target.value })}
-                                placeholder="Role"
-                                className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                            />
-                            <select
-                                value={newApp.status}
-                                onChange={(e) => setNewApp({ ...newApp, status: e.target.value })}
-                                className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                            >
-                                <option value="applied">Applied</option>
-                                <option value="interview">Interview</option>
-                                <option value="offer">Offer</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <button type="submit" className="btn-secondary">
-                            Save & Earn +15 XP
-                        </button>
-                    </form>
+            {/* Applications List */}
+            <div className="glass-card p-5">
+                <h3 className="text-base font-semibold text-white mb-4">Applications</h3>
+                {applications.length === 0 ? (
+                    <div className="text-center py-12">
+                        <p className="text-zinc-500 mb-2">No applications tracked yet</p>
+                        <p className="text-xs text-zinc-600">Start by logging your first application above</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {applications.map((app) => (
+                            <div key={app.id} className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111] hover:border-[#1a1a1a] transition-all group">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(app.status)}`}></div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">{app.company}</p>
+                                        <p className="text-xs text-zinc-500">{app.role}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <select
+                                        value={app.status}
+                                        onChange={(e) => updateStatus(app.id, e.target.value)}
+                                        className="bg-[#111111] text-white text-xs font-medium px-3 py-2 rounded-lg border border-[#1a1a1a] focus:outline-none focus:border-[#333]"
+                                    >
+                                        {statuses.map((s) => (
+                                            <option key={s.value} value={s.value}>{s.label}</option>
+                                        ))}
+                                    </select>
+                                    <button onClick={() => deleteApplication(app.id)} className="opacity-0 group-hover:opacity-100 text-xs text-zinc-600 hover:text-red-400 font-medium transition-all">Del</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
-
-                {/* Applications List */}
-                <div className="space-y-3">
-                    {applications.map((app) => (
-                        <div
-                            key={app.id}
-                            className="flex items-center justify-between p-4 bg-white/5 rounded-xl"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-xl">
-                                    💼
-                                </div>
-                                <div>
-                                    <p className="text-white font-medium">{app.company}</p>
-                                    <p className="text-sm text-slate-400">{app.role}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs text-slate-500">{app.date}</span>
-                                <span className={`px-3 py-1 rounded-full text-xs border capitalize ${getStatusColor(app.status)}`}>
-                                    {app.status}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
+
+            {/* Quick Log */}
+            <button onClick={() => logActivity('job')} className="w-full glass-card-hover p-5 text-center">
+                <p className="text-sm font-semibold text-white mb-1">Quick Log Application</p>
+                <p className="text-xs text-zinc-500">Log without tracking details</p>
+                <p className="text-sm font-semibold font-mono text-emerald-400 mt-2">+15 XP</p>
+            </button>
         </div>
     );
 };
