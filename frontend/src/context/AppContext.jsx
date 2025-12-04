@@ -229,10 +229,98 @@ export const AppProvider = ({ children }) => {
     const [notification, setNotification] = useState(null);
     const [useLocalStorage, setUseLocalStorage] = useState(true);
 
+    // Auth state
+    const [authToken, setAuthToken] = useState(() => localStorage.getItem('ascension_token'));
+    const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('ascension_token'));
+
     // Undo/Redo state
     const [history, setHistory] = useState([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
     const isUndoRedoAction = useRef(false);
+
+    // API base URL
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+    // Auth functions
+    const login = async (email, password) => {
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+
+        localStorage.setItem('ascension_token', data.token);
+        setAuthToken(data.token);
+        setIsAuthenticated(true);
+        setUseLocalStorage(false);
+
+        // Load user data from server
+        if (data.user) {
+            setUser(data.user);
+            if (data.user.activities) setActivities(data.user.activities);
+            if (data.user.dsaTopics) setDsaTopics(data.user.dsaTopics);
+            if (data.user.aiModules) setAiModules(data.user.aiModules);
+            if (data.user.workouts) setWorkouts(data.user.workouts);
+            if (data.user.goals) setGoals(data.user.goals);
+        }
+        return data;
+    };
+
+    const register = async (name, email, password) => {
+        const res = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Registration failed');
+
+        localStorage.setItem('ascension_token', data.token);
+        setAuthToken(data.token);
+        setIsAuthenticated(true);
+        setUseLocalStorage(false);
+        if (data.user) setUser(data.user);
+        return data;
+    };
+
+    const logout = () => {
+        localStorage.removeItem('ascension_token');
+        setAuthToken(null);
+        setIsAuthenticated(false);
+        setUseLocalStorage(true);
+    };
+
+    const syncToCloud = async () => {
+        if (!authToken) return;
+        try {
+            await fetch(`${API_URL}/auth/sync`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    dsaTopics, aiModules, workouts, goals, activities,
+                    stats: user?.stats, streak: user?.streak,
+                    xp: user?.xp, level: user?.level, xpToNextLevel: user?.xpToNextLevel,
+                    settings: user?.settings
+                })
+            });
+            setLastSaved(new Date());
+        } catch (error) {
+            console.error('Sync failed:', error);
+        }
+    };
+
+    // Auto-sync when authenticated
+    useEffect(() => {
+        if (isAuthenticated && authToken) {
+            const syncInterval = setInterval(syncToCloud, 30000); // Sync every 30s
+            return () => clearInterval(syncInterval);
+        }
+    }, [isAuthenticated, authToken]);
 
     // Save to localStorage effects
     useEffect(() => { if (user) { saveToStorage(STORAGE_KEYS.USER, user); setLastSaved(new Date()); } }, [user]);
@@ -685,7 +773,9 @@ export const AppProvider = ({ children }) => {
     const value = {
         // State
         user, activities, heatmapData, goals, dsaTopics, aiModules, workouts,
-        loading, lastSaved, notification, useLocalStorage,
+        loading, lastSaved, notification, useLocalStorage, isAuthenticated,
+        // Auth
+        login, register, logout, syncToCloud,
         // Activity
         logActivity,
         // Goals

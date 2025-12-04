@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { useState } from 'react';
 
 const Sidebar = () => {
     const { user } = useApp();
@@ -39,24 +38,24 @@ const Sidebar = () => {
     const xpProgress = user ? (user.xp / user.xpToNextLevel) * 100 : 0;
 
     return (
-        <aside className="fixed left-0 top-16 bottom-0 w-56 bg-black border-r border-[#141414] overflow-y-auto hidden md:block">
-            <div className="p-4">
+        <aside className="fixed left-0 top-14 bottom-0 w-56 bg-[#050505] border-r border-[#111] overflow-y-auto hidden md:block">
+            <div className="p-3">
                 {/* XP Progress */}
-                <div className="mb-6 p-4 bg-[#0a0a0a] rounded-xl border border-[#141414]">
+                <div className="mb-4 p-3 bg-[#0a0a0a] rounded-xl border border-[#111]">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wide">Progress</span>
-                        <span className="text-xs font-mono text-violet-400 font-semibold">{user?.xp || 0} XP</span>
+                        <span className="text-[9px] text-zinc-600 uppercase tracking-wide">Progress</span>
+                        <span className="text-[10px] font-mono text-violet-400 font-semibold">{user?.xp || 0} XP</span>
                     </div>
-                    <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full" style={{ width: `${Math.min(xpProgress, 100)}%` }}></div>
+                    <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 rounded-full" style={{ width: `${Math.min(xpProgress, 100)}%` }}></div>
                     </div>
-                    <p className="text-[10px] text-zinc-600 mt-2">
-                        <span className="text-zinc-400">{user?.xpToNextLevel || 500}</span> XP to Level {(user?.level || 1) + 1}
+                    <p className="text-[9px] text-zinc-600 mt-1.5">
+                        <span className="text-zinc-500">{user?.xpToNextLevel || 500}</span> XP to Level {(user?.level || 1) + 1}
                     </p>
                 </div>
 
                 {/* Navigation */}
-                <nav className="space-y-1">
+                <nav className="space-y-0.5">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -64,25 +63,25 @@ const Sidebar = () => {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             {getIcon(item.icon)}
-                            <span>{item.label}</span>
+                            <span className="text-xs">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
 
-                {/* Stats */}
-                <div className="mt-6 pt-6 border-t border-[#141414]">
-                    <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-3">Quick Stats</p>
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                {/* Quick Stats */}
+                <div className="mt-4 pt-4 border-t border-[#111]">
+                    <p className="text-[9px] text-zinc-600 uppercase tracking-wider mb-2 px-1">Stats</p>
+                    <div className="space-y-1.5 text-xs">
+                        <div className="flex justify-between px-1">
                             <span className="text-zinc-600">Streak</span>
                             <span className="font-mono text-amber-400 font-semibold">{user?.streak?.current || 0}d</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-zinc-600">DSA Solved</span>
+                        <div className="flex justify-between px-1">
+                            <span className="text-zinc-600">DSA</span>
                             <span className="font-mono text-violet-400 font-semibold">{user?.stats?.dsaProblemsTotal || 0}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-zinc-600">Gym Days</span>
+                        <div className="flex justify-between px-1">
+                            <span className="text-zinc-600">Gym</span>
                             <span className="font-mono text-emerald-400 font-semibold">{user?.stats?.gymDaysThisWeek || 0}/7</span>
                         </div>
                     </div>
@@ -94,36 +93,30 @@ const Sidebar = () => {
 
 // Mobile Navigation Component
 export const MobileNav = () => {
-    const [isOpen, setIsOpen] = useState(false);
-
     const navItems = [
-        { path: '/', label: 'Home', icon: 'grid' },
-        { path: '/checkin', label: 'Check-In', icon: 'check' },
-        { path: '/academics', label: 'Study', icon: 'book' },
-        { path: '/gym', label: 'Gym', icon: 'activity' },
-        { path: '/admin', label: 'Admin', icon: 'terminal' },
+        { path: '/', label: 'Home', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+        { path: '/checkin', label: 'Check-In', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+        { path: '/academics', label: 'Study', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+        { path: '/gym', label: 'Gym', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+        { path: '/analytics', label: 'Stats', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-[#141414] md:hidden z-50">
-            <div className="flex justify-around items-center h-16">
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#050505] border-t border-[#111] md:hidden z-50 safe-area-pb">
+            <div className="flex justify-around items-center h-14 px-2">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex flex-col items-center justify-center p-2 ${isActive ? 'text-white' : 'text-zinc-600'
+                            `flex flex-col items-center justify-center flex-1 py-1 ${isActive ? 'text-white' : 'text-zinc-600'
                             }`
                         }
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            {item.icon === 'grid' && <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />}
-                            {item.icon === 'check' && <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />}
-                            {item.icon === 'book' && <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
-                            {item.icon === 'activity' && <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />}
-                            {item.icon === 'terminal' && <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />}
+                            <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                         </svg>
-                        <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+                        <span className="text-[9px] mt-0.5 font-medium">{item.label}</span>
                     </NavLink>
                 ))}
             </div>

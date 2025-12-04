@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -8,7 +9,14 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true,
-        sparse: true
+        required: true,
+        lowercase: true,
+        trim: true
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
     },
     level: {
         type: Number,
@@ -47,14 +55,31 @@ const userSchema = new mongoose.Schema({
         dailyDsaGoal: { type: Number, default: 3 },
         weeklyGymGoal: { type: Number, default: 5 },
         theme: { type: String, default: 'dark' }
-    }
+    },
+    // Data storage
+    dsaTopics: { type: Array, default: [] },
+    aiModules: { type: Array, default: [] },
+    workouts: { type: Array, default: [] },
+    goals: { type: Array, default: [] },
+    activities: { type: Array, default: [] }
 }, {
     timestamps: true
 });
 
+// Hash password before saving
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+});
+
+// Compare password method
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
 // Calculate level thresholds
 userSchema.methods.calculateXpForLevel = function (level) {
-    // Level 1: 0-499, Level 2: 500-1199, etc.
     if (level <= 1) return 0;
     return Math.floor(500 * Math.pow(1.5, level - 2)) + this.calculateXpForLevel(level - 1);
 };
@@ -65,7 +90,6 @@ userSchema.methods.checkLevelUp = function () {
     while (this.xp >= this.xpToNextLevel) {
         this.level += 1;
         levelsGained += 1;
-        // Calculate new XP threshold
         this.xpToNextLevel = this.calculateXpForLevel(this.level + 1);
     }
     return levelsGained;
@@ -79,29 +103,28 @@ userSchema.methods.updateStreak = function () {
     if (this.streak.lastActivityDate) {
         const lastDate = new Date(this.streak.lastActivityDate);
         lastDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
 
-        const diffTime = today - lastDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) {
-            // Same day, no change
-            return;
-        } else if (diffDays === 1) {
-            // Consecutive day, increment streak
+        if (diffDays === 0) return;
+        else if (diffDays === 1) {
             this.streak.current += 1;
             if (this.streak.current > this.streak.longest) {
                 this.streak.longest = this.streak.current;
             }
         } else {
-            // Streak broken, reset to 1
             this.streak.current = 1;
         }
     } else {
-        // First activity ever
         this.streak.current = 1;
     }
-
     this.streak.lastActivityDate = today;
+};
+
+// Return user data without password
+userSchema.methods.toJSON = function () {
+    const obj = this.toObject();
+    delete obj.password;
+    return obj;
 };
 
 const User = mongoose.model('User', userSchema);

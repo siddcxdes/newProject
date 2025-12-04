@@ -83,10 +83,17 @@ const Analytics = () => {
                             {Object.entries(activityBreakdown).map(([type, count]) => {
                                 const total = activities.length;
                                 const percent = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
+                                const displayName = {
+                                    dsa: 'DSA',
+                                    ai: 'AI',
+                                    gym: 'Gym',
+                                    job: 'Job',
+                                    personal: 'Personal'
+                                }[type] || type;
                                 return (
                                     <div key={type}>
                                         <div className="flex justify-between text-sm mb-2">
-                                            <span className="font-medium text-white capitalize">{type}</span>
+                                            <span className="font-medium text-white">{displayName}</span>
                                             <span className="text-zinc-500"><span className="text-white font-semibold">{count}</span> ({percent}%)</span>
                                         </div>
                                         <div className="progress-bar h-2">
