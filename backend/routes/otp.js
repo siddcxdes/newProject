@@ -13,34 +13,49 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Create email transporter
-const createTransporter = () => {
-    // Check for custom SMTP config
-    if (process.env.SMTP_HOST) {
-        return nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT || 587,
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
-        });
-    }
+// Lazy transporter - only created when needed
+let transporter = null;
 
-    // Default: Use Gmail
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS // Use App Password for Gmail
+// Create email transporter (lazy initialization)
+const getTransporter = () => {
+    if (transporter) return transporter;
+
+    try {
+        // Check for custom SMTP config
+        if (process.env.SMTP_HOST) {
+            transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: process.env.SMTP_PORT || 587,
+                secure: process.env.SMTP_SECURE === 'true',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS
+                }
+            });
+        } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            // Use Gmail
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
         }
-    });
+        return transporter;
+    } catch (error) {
+        console.error('Failed to create email transporter:', error.message);
+        return null;
+    }
 };
 
 // Send OTP email
 const sendOTPEmail = async (email, otp) => {
-    const transporter = createTransporter();
+    const emailTransporter = getTransporter();
+
+    if (!emailTransporter) {
+        throw new Error('Email not configured');
+    }
 
     const mailOptions = {
         from: `"Ascension" <${process.env.EMAIL_USER || 'noreply@ascension.app'}>`,
@@ -70,7 +85,7 @@ const sendOTPEmail = async (email, otp) => {
         `
     };
 
-    await transporter.sendMail(mailOptions);
+    await emailTransporter.sendMail(mailOptions);
 };
 
 // @route   POST /api/otp/send
