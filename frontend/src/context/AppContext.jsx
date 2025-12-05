@@ -239,6 +239,10 @@ export const AppProvider = ({ children }) => {
     const isUndoRedoAction = useRef(false);
     const initializedRef = useRef(false);
     const hydrationCompleteRef = useRef(false); // Prevents sync before hydration
+    const syncLockedRef = useRef(true); // Lock sync completely until first hydration
+
+    // Use refs to track latest data for sync (prevents stale closure issues)
+    const dataRef = useRef({ user: null, dsaTopics: [], aiModules: [], workouts: [], goals: [], activities: [] });
 
     // API base URL
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -271,6 +275,12 @@ export const AppProvider = ({ children }) => {
 
         // Mark hydration as complete - now safe to sync
         hydrationCompleteRef.current = true;
+
+        // Use setTimeout to ensure React has rendered with new values before unlocking sync
+        setTimeout(() => {
+            syncLockedRef.current = false;
+            console.log('🔓 Sync unlocked after hydration');
+        }, 100);
     };
 
     // Initialize auth state on app load - CRITICAL for cross-device sync
@@ -360,20 +370,39 @@ export const AppProvider = ({ children }) => {
 
     const syncToCloud = async () => {
         if (!authToken) return;
+        // CRITICAL: Use dataRef to get latest values, not stale closure values
+        const currentData = dataRef.current;
+        if (!currentData.user) {
+            console.log('⚠️ Sync skipped: no user data');
+            return;
+        }
         try {
-            await fetch(`${API_URL}/auth/sync`, {
+            console.log('☁️ Syncing to cloud...', { workouts: currentData.workouts?.length || 0 });
+            const response = await fetch(`${API_URL}/auth/sync`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    dsaTopics, aiModules, workouts, goals, activities,
-                    stats: user?.stats, streak: user?.streak,
-                    xp: user?.xp, level: user?.level, xpToNextLevel: user?.xpToNextLevel,
-                    settings: user?.settings
+                    dsaTopics: currentData.dsaTopics,
+                    aiModules: currentData.aiModules,
+                    workouts: currentData.workouts,
+                    goals: currentData.goals,
+                    activities: currentData.activities,
+                    stats: currentData.user?.stats,
+                    streak: currentData.user?.streak,
+                    xp: currentData.user?.xp,
+                    level: currentData.user?.level,
+                    xpToNextLevel: currentData.user?.xpToNextLevel,
+                    settings: currentData.user?.settings
                 })
             });
+            if (response.ok) {
+                console.log('✅ Sync successful');
+            } else {
+                console.error('❌ Sync failed:', response.status);
+            }
             setLastSaved(new Date());
         } catch (error) {
             console.error('Sync failed:', error);
@@ -383,6 +412,7 @@ export const AppProvider = ({ children }) => {
     // Update user profile (name, etc.)
     const updateUserProfile = async (updates) => {
         if (!authToken) return;
+        const currentData = dataRef.current;
         try {
             const response = await fetch(`${API_URL}/auth/sync`, {
                 method: 'PUT',
@@ -392,10 +422,17 @@ export const AppProvider = ({ children }) => {
                 },
                 body: JSON.stringify({
                     ...updates,
-                    dsaTopics, aiModules, workouts, goals, activities,
-                    stats: user?.stats, streak: user?.streak,
-                    xp: user?.xp, level: user?.level, xpToNextLevel: user?.xpToNextLevel,
-                    settings: user?.settings
+                    dsaTopics: currentData.dsaTopics,
+                    aiModules: currentData.aiModules,
+                    workouts: currentData.workouts,
+                    goals: currentData.goals,
+                    activities: currentData.activities,
+                    stats: currentData.user?.stats,
+                    streak: currentData.user?.streak,
+                    xp: currentData.user?.xp,
+                    level: currentData.user?.level,
+                    xpToNextLevel: currentData.user?.xpToNextLevel,
+                    settings: currentData.user?.settings
                 })
             });
             const data = await response.json();
@@ -415,8 +452,11 @@ export const AppProvider = ({ children }) => {
 
     // Debounced sync to cloud - syncs 2 seconds after last change
     const debouncedSyncToCloud = useCallback(() => {
-        // Don't sync until hydration is complete to prevent overwriting server data
-        if (!authToken || !isAuthenticated || !hydrationCompleteRef.current) return;
+        // CRITICAL: Don't sync until hydration is complete AND sync is unlocked
+        if (!authToken || !isAuthenticated || syncLockedRef.current) {
+            console.log('🔒 Sync blocked:', { authToken: !!authToken, isAuthenticated, locked: syncLockedRef.current });
+            return;
+        }
 
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
@@ -429,46 +469,51 @@ export const AppProvider = ({ children }) => {
 
     // Auto-sync when authenticated (periodic backup sync)
     useEffect(() => {
-        if (isAuthenticated && authToken && hydrationCompleteRef.current) {
+        if (isAuthenticated && authToken && !syncLockedRef.current) {
             const syncInterval = setInterval(syncToCloud, 60000); // Sync every 60s as backup
             return () => clearInterval(syncInterval);
         }
     }, [isAuthenticated, authToken]);
+
+    // Keep dataRef updated with latest values (for sync to use)
+    useEffect(() => {
+        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities };
+    }, [user, dsaTopics, aiModules, workouts, goals, activities]);
 
     // Save to localStorage and trigger cloud sync on data changes
     useEffect(() => {
         if (user) {
             saveToStorage(STORAGE_KEYS.USER, user);
             setLastSaved(new Date());
-            debouncedSyncToCloud();
+            if (!syncLockedRef.current) debouncedSyncToCloud();
         }
     }, [user, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.ACTIVITIES, activities);
-        if (initializedRef.current) debouncedSyncToCloud();
+        if (!syncLockedRef.current) debouncedSyncToCloud();
     }, [activities, debouncedSyncToCloud]);
 
     useEffect(() => { saveToStorage(STORAGE_KEYS.HEATMAP, heatmapData); }, [heatmapData]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.GOALS, goals);
-        if (initializedRef.current) debouncedSyncToCloud();
+        if (!syncLockedRef.current) debouncedSyncToCloud();
     }, [goals, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.DSA_TOPICS, dsaTopics);
-        if (initializedRef.current) debouncedSyncToCloud();
+        if (!syncLockedRef.current) debouncedSyncToCloud();
     }, [dsaTopics, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.AI_MODULES, aiModules);
-        if (initializedRef.current) debouncedSyncToCloud();
+        if (!syncLockedRef.current) debouncedSyncToCloud();
     }, [aiModules, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.WORKOUTS, workouts);
-        if (initializedRef.current) debouncedSyncToCloud();
+        if (!syncLockedRef.current) debouncedSyncToCloud();
     }, [workouts, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
