@@ -155,6 +155,26 @@ const XP_VALUES = {
 // Return empty heatmap - will be populated by actual user activity
 const generateHistoricalHeatmap = () => ({});
 
+// Migration: Clear fake historical heatmap data for existing users
+const MIGRATION_KEY = 'ascension_migration_v2';
+const runMigrations = () => {
+    try {
+        const migrated = localStorage.getItem(MIGRATION_KEY);
+        if (!migrated) {
+            // Clear the old fake heatmap data
+            localStorage.removeItem(STORAGE_KEYS.HEATMAP);
+            // Mark migration as complete
+            localStorage.setItem(MIGRATION_KEY, 'true');
+            console.log('Migration complete: Cleared fake heatmap data');
+        }
+    } catch (error) {
+        console.error('Migration error:', error);
+    }
+};
+
+// Run migrations immediately
+runMigrations();
+
 // Helper to load from localStorage
 const loadFromStorage = (key, defaultValue) => {
     try {
@@ -889,6 +909,7 @@ export const AppProvider = ({ children }) => {
         loading, lastSaved, notification, useLocalStorage, isAuthenticated,
         // Auth
         login, register, logout, syncToCloud,
+        hydrateFromServerData, setAuthToken, setIsAuthenticated,
         // Activity
         logActivity,
         // Goals

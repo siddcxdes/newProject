@@ -6,17 +6,23 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'Champion'
     },
+    phone: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows null values while maintaining uniqueness
+        trim: true
+    },
     email: {
         type: String,
         unique: true,
-        required: true,
+        sparse: true, // Now optional
         lowercase: true,
         trim: true
     },
     password: {
         type: String,
-        required: true,
         minlength: 6
+        // No longer required
     },
     level: {
         type: Number,

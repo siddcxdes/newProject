@@ -124,20 +124,20 @@ const ActivityHeatmap = () => {
     }, [heatmapData]);
 
     return (
-        <div className="glass-card p-5">
-            <div className="flex items-center justify-between mb-5">
+        <div className="glass-card p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Activity Heatmap</h3>
                     <p className="text-xs text-[var(--color-text-muted)]">Past 365 days in IST</p>
                 </div>
-                <div className="flex gap-8 text-right">
+                <div className="flex gap-4 sm:gap-8 text-right">
                     <div>
-                        <p className="stat-value text-lg">{stats.totalActivities}</p>
-                        <p className="stat-label text-[10px]">Activities</p>
+                        <p className="stat-value text-base sm:text-lg">{stats.totalActivities}</p>
+                        <p className="stat-label text-[9px] sm:text-[10px]">Activities</p>
                     </div>
                     <div>
-                        <p className="stat-value text-lg">{stats.activeDays}</p>
-                        <p className="stat-label text-[10px]">Active Days</p>
+                        <p className="stat-value text-base sm:text-lg">{stats.activeDays}</p>
+                        <p className="stat-label text-[9px] sm:text-[10px]">Active Days</p>
                     </div>
                     <div className="hidden sm:block">
                         <p className="stat-value text-lg text-violet-400">{stats.totalXp}</p>
@@ -146,53 +146,58 @@ const ActivityHeatmap = () => {
                 </div>
             </div>
 
-            {/* Month labels */}
-            <div className="flex mb-1.5 ml-7 text-[10px] font-medium text-[var(--color-text-muted)] relative h-3">
-                {monthLabels.map((label, i) => (
-                    <span
-                        key={i}
-                        className="absolute"
-                        style={{ left: `${label.weekIndex * 12}px` }}
-                    >
-                        {label.month}
-                    </span>
-                ))}
-            </div>
-
-            {/* Heatmap grid */}
-            <div className="flex gap-[3px] overflow-x-auto pb-2">
-                {/* Day labels */}
-                <div className="flex flex-col gap-[3px] text-[10px] font-medium text-zinc-600 mr-1.5 flex-shrink-0">
-                    <span className="h-2.5"></span>
-                    <span className="h-2.5">M</span>
-                    <span className="h-2.5"></span>
-                    <span className="h-2.5">W</span>
-                    <span className="h-2.5"></span>
-                    <span className="h-2.5">F</span>
-                    <span className="h-2.5"></span>
-                </div>
-
-                {/* Weeks */}
-                {weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-[3px] flex-shrink-0">
-                        {week.map((day, dayIndex) => (
-                            <div
-                                key={dayIndex}
-                                className={`w-2.5 h-2.5 rounded-sm transition-all cursor-pointer ${day ? getIntensityClass(day.data, day.isToday) : 'bg-transparent'
-                                    } ${day && !day.isToday ? 'hover:ring-1 hover:ring-zinc-500' : ''}`}
-                                onMouseEnter={(e) => handleMouseEnter(e, day)}
-                                onMouseLeave={() => setHoveredDay(null)}
-                            />
+            {/* Scrollable heatmap container for mobile */}
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <div className="min-w-[700px] sm:min-w-0">
+                    {/* Month labels - hidden on mobile */}
+                    <div className="hidden sm:flex mb-1.5 ml-7 text-[10px] font-medium text-[var(--color-text-muted)] relative h-3">
+                        {monthLabels.map((label, i) => (
+                            <span
+                                key={i}
+                                className="absolute"
+                                style={{ left: `${label.weekIndex * 12}px` }}
+                            >
+                                {label.month}
+                            </span>
                         ))}
                     </div>
-                ))}
+
+                    {/* Heatmap grid */}
+                    <div className="flex gap-[3px]">
+                        {/* Day labels */}
+                        <div className="flex flex-col gap-[3px] text-[10px] font-medium text-[var(--color-text-muted)] mr-1.5 flex-shrink-0">
+                            <span className="h-2.5"></span>
+                            <span className="h-2.5">M</span>
+                            <span className="h-2.5"></span>
+                            <span className="h-2.5">W</span>
+                            <span className="h-2.5"></span>
+                            <span className="h-2.5">F</span>
+                            <span className="h-2.5"></span>
+                        </div>
+
+                        {/* Weeks */}
+                        {weeks.map((week, weekIndex) => (
+                            <div key={weekIndex} className="flex flex-col gap-[3px] flex-shrink-0">
+                                {week.map((day, dayIndex) => (
+                                    <div
+                                        key={dayIndex}
+                                        className={`w-2.5 h-2.5 rounded-sm transition-all cursor-pointer ${day ? getIntensityClass(day.data, day.isToday) : 'bg-transparent'
+                                            } ${day && !day.isToday ? 'hover:ring-1 hover:ring-zinc-500' : ''}`}
+                                        onMouseEnter={(e) => handleMouseEnter(e, day)}
+                                        onMouseLeave={() => setHoveredDay(null)}
+                                    />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Legend */}
             <div className="flex items-center justify-between mt-4 text-[11px]">
-                <span className="text-zinc-500 font-medium">Today: <span className="text-violet-400">{todayIST}</span></span>
+                <span className="text-[var(--color-text-muted)] font-medium">Today: <span className="text-violet-400">{todayIST}</span></span>
                 <div className="flex items-center gap-1.5">
-                    <span className="text-zinc-600">Less</span>
+                    <span className="text-[var(--color-text-muted)]">Less</span>
                     <div className="flex gap-[3px]">
                         <div className="w-2.5 h-2.5 bg-[#151515] rounded-sm"></div>
                         <div className="w-2.5 h-2.5 bg-emerald-800/60 rounded-sm"></div>
@@ -201,28 +206,28 @@ const ActivityHeatmap = () => {
                         <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
                         <div className="w-2.5 h-2.5 bg-emerald-400 rounded-sm"></div>
                     </div>
-                    <span className="text-zinc-600">More</span>
+                    <span className="text-[var(--color-text-muted)]">More</span>
                 </div>
             </div>
 
             {/* Tooltip */}
             {hoveredDay && (
                 <div
-                    className="fixed z-50 bg-[#111111] border border-[#222222] rounded-lg px-3 py-2.5 pointer-events-none transform -translate-x-1/2 -translate-y-full shadow-xl"
+                    className="fixed z-50 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 pointer-events-none transform -translate-x-1/2 -translate-y-full shadow-xl"
                     style={{
                         left: tooltipPos.x,
                         top: tooltipPos.y - 5
                     }}
                 >
-                    <p className="text-sm font-semibold text-white">{hoveredDay.date}</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{hoveredDay.date}</p>
                     {hoveredDay.isToday && <p className="text-xs font-medium text-violet-400">Today</p>}
                     {hoveredDay.data ? (
                         <>
                             <p className="text-xs text-emerald-400 font-medium">{hoveredDay.data.count} activities</p>
-                            <p className="text-xs text-zinc-500">{hoveredDay.data.totalXp} XP earned</p>
+                            <p className="text-xs text-[var(--color-text-muted)]">{hoveredDay.data.totalXp} XP earned</p>
                         </>
                     ) : (
-                        <p className="text-xs text-zinc-600">No activity</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">No activity</p>
                     )}
                 </div>
             )}
@@ -231,3 +236,4 @@ const ActivityHeatmap = () => {
 };
 
 export default ActivityHeatmap;
+
