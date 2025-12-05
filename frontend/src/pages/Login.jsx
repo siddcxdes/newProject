@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+// Use production URL if env var not set
+const API_URL = import.meta.env.VITE_API_URL || 'https://newproject-zqkp.onrender.com/api';
 
 const Login = () => {
     const navigate = useNavigate();
