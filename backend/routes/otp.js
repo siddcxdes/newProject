@@ -100,16 +100,23 @@ router.post('/send', async (req, res) => {
             attempts: 0
         });
 
-        // Check if email credentials are configured
+        // Try to send email, fallback to console if it fails
+        let emailSent = false;
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            await sendOTPEmail(normalizedEmail, otp);
+            try {
+                await sendOTPEmail(normalizedEmail, otp);
+                emailSent = true;
+            } catch (emailError) {
+                console.error('Email send failed:', emailError.message);
+                console.log(`\n📧 OTP for ${normalizedEmail}: ${otp} (email failed, logged here)\n`);
+            }
         } else {
             // Development mode - log OTP to console
             console.log(`\n📧 OTP for ${normalizedEmail}: ${otp}\n`);
         }
 
         res.json({
-            message: 'OTP sent successfully',
+            message: emailSent ? 'OTP sent successfully' : 'OTP generated (check server logs)',
             email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3')
         });
 
