@@ -194,8 +194,8 @@ const Academics = () => {
                                         <div className="flex items-center gap-4">
                                             <div className="flex-shrink-0">
                                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${topic.completed === topic.total && topic.total > 0
-                                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                                        : 'bg-[#111] text-white'
+                                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                                    : 'bg-[#111] text-white'
                                                     }`}>
                                                     {topic.completed === topic.total && topic.total > 0 ? '✓' : topic.completed}
                                                 </div>
@@ -243,7 +243,7 @@ const Academics = () => {
                                         <div className="border-t border-[#111] bg-black p-4">
                                             {/* Add Problem */}
                                             {showAddProblem === topic.id ? (
-                                                <div className="flex gap-2 mb-4">
+                                                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                                                     <input
                                                         type="text"
                                                         value={newProblemName}
@@ -253,17 +253,19 @@ const Academics = () => {
                                                         autoFocus
                                                         onKeyDown={(e) => e.key === 'Enter' && handleAddProblem(topic.id)}
                                                     />
-                                                    <select
-                                                        value={newProblemDifficulty}
-                                                        onChange={(e) => setNewProblemDifficulty(e.target.value)}
-                                                        className="input-field w-24 text-sm"
-                                                    >
-                                                        <option value="easy">Easy</option>
-                                                        <option value="medium">Medium</option>
-                                                        <option value="hard">Hard</option>
-                                                    </select>
-                                                    <button onClick={() => handleAddProblem(topic.id)} className="px-4 py-2 bg-violet-500 text-white rounded-lg text-xs font-semibold hover:bg-violet-600 transition-all">Add</button>
-                                                    <button onClick={() => setShowAddProblem(null)} className="px-3 py-2 text-zinc-500 hover:text-white text-sm">×</button>
+                                                    <div className="flex gap-2">
+                                                        <select
+                                                            value={newProblemDifficulty}
+                                                            onChange={(e) => setNewProblemDifficulty(e.target.value)}
+                                                            className="input-field w-24 text-sm"
+                                                        >
+                                                            <option value="easy">Easy</option>
+                                                            <option value="medium">Medium</option>
+                                                            <option value="hard">Hard</option>
+                                                        </select>
+                                                        <button onClick={() => handleAddProblem(topic.id)} className="px-4 py-2 bg-violet-500 text-white rounded-lg text-xs font-semibold hover:bg-violet-600 transition-all">Add</button>
+                                                        <button onClick={() => setShowAddProblem(null)} className="px-3 py-2 text-zinc-500 hover:text-white text-sm">×</button>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <button
@@ -286,8 +288,8 @@ const Academics = () => {
                                                                 <button
                                                                     onClick={() => toggleDsaSubtopic(topic.id, problem.id)}
                                                                     className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${problem.completed
-                                                                            ? 'bg-emerald-500 text-white'
-                                                                            : 'border-2 border-zinc-700 hover:border-violet-500 hover:bg-violet-500/10'
+                                                                        ? 'bg-emerald-500 text-white'
+                                                                        : 'border-2 border-zinc-700 hover:border-violet-500 hover:bg-violet-500/10'
                                                                         }`}
                                                                 >
                                                                     {problem.completed && '✓'}
@@ -296,8 +298,8 @@ const Academics = () => {
                                                                     {problem.name}
                                                                 </span>
                                                                 <span className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide ${config.color === 'emerald' ? 'bg-emerald-500/15 text-emerald-400' :
-                                                                        config.color === 'amber' ? 'bg-amber-500/15 text-amber-400' :
-                                                                            'bg-red-500/15 text-red-400'
+                                                                    config.color === 'amber' ? 'bg-amber-500/15 text-amber-400' :
+                                                                        'bg-red-500/15 text-red-400'
                                                                     }`}>
                                                                     {config.label}
                                                                 </span>
@@ -454,8 +456,8 @@ const Academics = () => {
                                                             <button
                                                                 onClick={() => toggleAiLesson(module.id, lesson.id)}
                                                                 className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${lesson.completed
-                                                                        ? 'bg-emerald-500 text-white'
-                                                                        : 'border-2 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-500/10'
+                                                                    ? 'bg-emerald-500 text-white'
+                                                                    : 'border-2 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-500/10'
                                                                     }`}
                                                             >
                                                                 {lesson.completed && '✓'}

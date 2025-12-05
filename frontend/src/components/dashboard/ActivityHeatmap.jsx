@@ -127,8 +127,8 @@ const ActivityHeatmap = () => {
         <div className="glass-card p-5">
             <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="text-sm font-semibold text-white">Activity Heatmap</h3>
-                    <p className="text-xs text-zinc-500">Past 365 days in IST</p>
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Activity Heatmap</h3>
+                    <p className="text-xs text-[var(--color-text-muted)]">Past 365 days in IST</p>
                 </div>
                 <div className="flex gap-8 text-right">
                     <div>
@@ -147,7 +147,7 @@ const ActivityHeatmap = () => {
             </div>
 
             {/* Month labels */}
-            <div className="flex mb-1.5 ml-7 text-[10px] font-medium text-zinc-600 relative h-3">
+            <div className="flex mb-1.5 ml-7 text-[10px] font-medium text-[var(--color-text-muted)] relative h-3">
                 {monthLabels.map((label, i) => (
                     <span
                         key={i}

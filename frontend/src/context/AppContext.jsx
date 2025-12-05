@@ -152,27 +152,8 @@ const XP_VALUES = {
 };
 
 // Generate historical heatmap data
-const generateHistoricalHeatmap = () => {
-    const data = {};
-    const today = new Date();
-    for (let i = 365; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        const dayOfWeek = date.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        let probability = 0.4;
-        if (isWeekend) probability = 0.25;
-        if (i < 30) probability = 0.6;
-        if (i < 7) probability = 0.8;
-        if (Math.random() < probability) {
-            const count = Math.floor(Math.random() * 5) + 1;
-            const totalXp = count * (Math.floor(Math.random() * 30) + 10);
-            data[dateStr] = { count, totalXp };
-        }
-    }
-    return data;
-};
+// Return empty heatmap - will be populated by actual user activity
+const generateHistoricalHeatmap = () => ({});
 
 // Helper to load from localStorage
 const loadFromStorage = (key, defaultValue) => {
@@ -180,9 +161,8 @@ const loadFromStorage = (key, defaultValue) => {
         const stored = localStorage.getItem(key);
         if (stored) return JSON.parse(stored);
         if (key === STORAGE_KEYS.HEATMAP) {
-            const historical = generateHistoricalHeatmap();
-            localStorage.setItem(key, JSON.stringify(historical));
-            return historical;
+            // Start with empty heatmap - no fake data
+            return {};
         }
         return defaultValue;
     } catch {
@@ -224,22 +204,99 @@ export const AppProvider = ({ children }) => {
     const [workouts, setWorkouts] = useState(() => loadFromStorage(STORAGE_KEYS.WORKOUTS, DEFAULT_WORKOUTS));
 
     // UI state
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // Start true for initial load
     const [lastSaved, setLastSaved] = useState(new Date());
     const [notification, setNotification] = useState(null);
     const [useLocalStorage, setUseLocalStorage] = useState(true);
 
     // Auth state
     const [authToken, setAuthToken] = useState(() => localStorage.getItem('ascension_token'));
-    const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('ascension_token'));
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Start false, set after checking
 
     // Undo/Redo state
     const [history, setHistory] = useState([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
     const isUndoRedoAction = useRef(false);
+    const initializedRef = useRef(false);
 
     // API base URL
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+    // Helper to hydrate all state from server user data
+    const hydrateFromServerData = (serverUser) => {
+        if (!serverUser) return;
+
+        // Build user object from server data
+        const hydratedUser = {
+            name: serverUser.name || DEFAULT_USER.name,
+            level: serverUser.level || DEFAULT_USER.level,
+            xp: serverUser.xp || DEFAULT_USER.xp,
+            xpToNextLevel: serverUser.xpToNextLevel || DEFAULT_USER.xpToNextLevel,
+            streak: serverUser.streak || DEFAULT_USER.streak,
+            stats: serverUser.stats || DEFAULT_USER.stats,
+            journey: serverUser.journey || DEFAULT_USER.journey,
+            settings: serverUser.settings || DEFAULT_USER.settings
+        };
+        setUser(hydratedUser);
+
+        // Hydrate collections - only if server has data
+        if (serverUser.dsaTopics && serverUser.dsaTopics.length > 0) {
+            setDsaTopics(serverUser.dsaTopics);
+        }
+        if (serverUser.aiModules && serverUser.aiModules.length > 0) {
+            setAiModules(serverUser.aiModules);
+        }
+        if (serverUser.workouts && serverUser.workouts.length > 0) {
+            setWorkouts(serverUser.workouts);
+        }
+        if (serverUser.goals && serverUser.goals.length > 0) {
+            setGoals(serverUser.goals);
+        }
+        if (serverUser.activities && serverUser.activities.length > 0) {
+            setActivities(serverUser.activities);
+        }
+    };
+
+    // Initialize auth state on app load - CRITICAL for cross-device sync
+    useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+
+        const initializeAuth = async () => {
+            const token = localStorage.getItem('ascension_token');
+
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const { user: serverUser } = await res.json();
+                    hydrateFromServerData(serverUser);
+                    setAuthToken(token);
+                    setIsAuthenticated(true);
+                    setUseLocalStorage(false);
+                } else {
+                    // Token invalid, clear it
+                    localStorage.removeItem('ascension_token');
+                    setAuthToken(null);
+                    setIsAuthenticated(false);
+                }
+            } catch (error) {
+                console.error('Auth initialization failed:', error);
+                // Keep using localStorage if server is unavailable
+            }
+
+            setLoading(false);
+        };
+
+        initializeAuth();
+    }, []);
 
     // Auth functions
     const login = async (email, password) => {
@@ -256,15 +313,8 @@ export const AppProvider = ({ children }) => {
         setIsAuthenticated(true);
         setUseLocalStorage(false);
 
-        // Load user data from server
-        if (data.user) {
-            setUser(data.user);
-            if (data.user.activities) setActivities(data.user.activities);
-            if (data.user.dsaTopics) setDsaTopics(data.user.dsaTopics);
-            if (data.user.aiModules) setAiModules(data.user.aiModules);
-            if (data.user.workouts) setWorkouts(data.user.workouts);
-            if (data.user.goals) setGoals(data.user.goals);
-        }
+        // Load user data from server using hydration helper
+        hydrateFromServerData(data.user);
         return data;
     };
 
@@ -314,22 +364,65 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    // Auto-sync when authenticated
+    // Debounced cloud sync ref
+    const syncTimeoutRef = useRef(null);
+
+    // Debounced sync to cloud - syncs 2 seconds after last change
+    const debouncedSyncToCloud = useCallback(() => {
+        if (!authToken || !isAuthenticated) return;
+
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+        }
+
+        syncTimeoutRef.current = setTimeout(() => {
+            syncToCloud();
+        }, 2000);
+    }, [authToken, isAuthenticated]);
+
+    // Auto-sync when authenticated (periodic backup sync)
     useEffect(() => {
         if (isAuthenticated && authToken) {
-            const syncInterval = setInterval(syncToCloud, 30000); // Sync every 30s
+            const syncInterval = setInterval(syncToCloud, 60000); // Sync every 60s as backup
             return () => clearInterval(syncInterval);
         }
     }, [isAuthenticated, authToken]);
 
-    // Save to localStorage effects
-    useEffect(() => { if (user) { saveToStorage(STORAGE_KEYS.USER, user); setLastSaved(new Date()); } }, [user]);
-    useEffect(() => { saveToStorage(STORAGE_KEYS.ACTIVITIES, activities); }, [activities]);
+    // Save to localStorage and trigger cloud sync on data changes
+    useEffect(() => {
+        if (user) {
+            saveToStorage(STORAGE_KEYS.USER, user);
+            setLastSaved(new Date());
+            debouncedSyncToCloud();
+        }
+    }, [user, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.ACTIVITIES, activities);
+        if (initializedRef.current) debouncedSyncToCloud();
+    }, [activities, debouncedSyncToCloud]);
+
     useEffect(() => { saveToStorage(STORAGE_KEYS.HEATMAP, heatmapData); }, [heatmapData]);
-    useEffect(() => { saveToStorage(STORAGE_KEYS.GOALS, goals); }, [goals]);
-    useEffect(() => { saveToStorage(STORAGE_KEYS.DSA_TOPICS, dsaTopics); }, [dsaTopics]);
-    useEffect(() => { saveToStorage(STORAGE_KEYS.AI_MODULES, aiModules); }, [aiModules]);
-    useEffect(() => { saveToStorage(STORAGE_KEYS.WORKOUTS, workouts); }, [workouts]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.GOALS, goals);
+        if (initializedRef.current) debouncedSyncToCloud();
+    }, [goals, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.DSA_TOPICS, dsaTopics);
+        if (initializedRef.current) debouncedSyncToCloud();
+    }, [dsaTopics, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.AI_MODULES, aiModules);
+        if (initializedRef.current) debouncedSyncToCloud();
+    }, [aiModules, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.WORKOUTS, workouts);
+        if (initializedRef.current) debouncedSyncToCloud();
+    }, [workouts, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
     const saveToHistory = useCallback((action, prevState, newState) => {
@@ -742,8 +835,28 @@ export const AppProvider = ({ children }) => {
         showNotification('Goal removed', 'info');
     };
 
+    // Apply theme to document
+    const applyTheme = useCallback((theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('ascension_theme', theme);
+    }, []);
+
+    // Initialize theme on mount
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('ascension_theme') || user?.settings?.theme || 'dark';
+        applyTheme(savedTheme);
+    }, []);
+
+    // Apply theme when settings change
+    useEffect(() => {
+        if (user?.settings?.theme) {
+            applyTheme(user.settings.theme);
+        }
+    }, [user?.settings?.theme, applyTheme]);
+
     const updateSettings = async (settings) => {
         setUser(prev => ({ ...prev, settings: { ...prev.settings, ...settings } }));
+        // Theme is applied via the useEffect above
         showNotification('Settings saved!', 'success');
     };
 

@@ -38,19 +38,19 @@ const Sidebar = () => {
     const xpProgress = user ? (user.xp / user.xpToNextLevel) * 100 : 0;
 
     return (
-        <aside className="fixed left-0 top-14 bottom-0 w-56 bg-[#050505] border-r border-[#111] overflow-y-auto hidden md:block">
+        <aside className="fixed left-0 top-14 bottom-0 w-56 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] overflow-y-auto hidden md:block">
             <div className="p-3">
                 {/* XP Progress */}
-                <div className="mb-4 p-3 bg-[#0a0a0a] rounded-xl border border-[#111]">
+                <div className="mb-4 p-3 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border)]">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] text-zinc-600 uppercase tracking-wide">Progress</span>
+                        <span className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wide">Progress</span>
                         <span className="text-[10px] font-mono text-violet-400 font-semibold">{user?.xp || 0} XP</span>
                     </div>
-                    <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                    <div className="h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 rounded-full" style={{ width: `${Math.min(xpProgress, 100)}%` }}></div>
                     </div>
-                    <p className="text-[9px] text-zinc-600 mt-1.5">
-                        <span className="text-zinc-500">{user?.xpToNextLevel || 500}</span> XP to Level {(user?.level || 1) + 1}
+                    <p className="text-[9px] text-[var(--color-text-muted)] mt-1.5">
+                        <span className="text-[var(--color-text-secondary)]">{user?.xpToNextLevel || 500}</span> XP to Level {(user?.level || 1) + 1}
                     </p>
                 </div>
 
@@ -69,19 +69,19 @@ const Sidebar = () => {
                 </nav>
 
                 {/* Quick Stats */}
-                <div className="mt-4 pt-4 border-t border-[#111]">
-                    <p className="text-[9px] text-zinc-600 uppercase tracking-wider mb-2 px-1">Stats</p>
+                <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
+                    <p className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider mb-2 px-1">Stats</p>
                     <div className="space-y-1.5 text-xs">
                         <div className="flex justify-between px-1">
-                            <span className="text-zinc-600">Streak</span>
+                            <span className="text-[var(--color-text-muted)]">Streak</span>
                             <span className="font-mono text-amber-400 font-semibold">{user?.streak?.current || 0}d</span>
                         </div>
                         <div className="flex justify-between px-1">
-                            <span className="text-zinc-600">DSA</span>
+                            <span className="text-[var(--color-text-muted)]">DSA</span>
                             <span className="font-mono text-violet-400 font-semibold">{user?.stats?.dsaProblemsTotal || 0}</span>
                         </div>
                         <div className="flex justify-between px-1">
-                            <span className="text-zinc-600">Gym</span>
+                            <span className="text-[var(--color-text-muted)]">Gym</span>
                             <span className="font-mono text-emerald-400 font-semibold">{user?.stats?.gymDaysThisWeek || 0}/7</span>
                         </div>
                     </div>
@@ -102,14 +102,14 @@ export const MobileNav = () => {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#050505] border-t border-[#111] md:hidden z-50 safe-area-pb">
+        <nav className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg-primary)] border-t border-[var(--color-border)] md:hidden z-50 safe-area-pb">
             <div className="flex justify-around items-center h-14 px-2">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex flex-col items-center justify-center flex-1 py-1 ${isActive ? 'text-white' : 'text-zinc-600'
+                            `flex flex-col items-center justify-center flex-1 py-1 ${isActive ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'
                             }`
                         }
                     >

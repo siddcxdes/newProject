@@ -25,35 +25,35 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[var(--color-bg-primary)] flex items-center justify-center p-4">
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-3 mb-4">
                         <div className="relative w-10 h-10">
                             <div className="absolute inset-0 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-xl rotate-45"></div>
-                            <div className="absolute inset-[3px] bg-black rounded-[9px] rotate-45"></div>
+                            <div className="absolute inset-[3px] bg-[var(--color-bg-primary)] rounded-[9px] rotate-45"></div>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <svg className="w-4 h-4 text-[var(--color-text-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <path d="M12 19V5M5 12l7-7 7 7" />
                                 </svg>
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-white">ASCENSION</h1>
+                        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">ASCENSION</h1>
                     </div>
-                    <p className="text-zinc-500 text-sm">Welcome back, continue your journey</p>
+                    <p className="text-[var(--color-text-muted)] text-sm">Welcome back, continue your journey</p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
                     {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
                             {error}
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-xs text-zinc-500 uppercase tracking-wide mb-2">Email</label>
+                        <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">Email</label>
                         <input
                             type="email"
                             value={formData.email}
@@ -65,7 +65,7 @@ const Login = () => {
                     </div>
 
                     <div>
-                        <label className="block text-xs text-zinc-500 uppercase tracking-wide mb-2">Password</label>
+                        <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">Password</label>
                         <input
                             type="password"
                             value={formData.password}
@@ -85,9 +85,9 @@ const Login = () => {
                     </button>
                 </form>
 
-                <p className="text-center text-zinc-500 text-sm mt-6">
+                <p className="text-center text-[var(--color-text-muted)] text-sm mt-6">
                     Don't have an account?{' '}
-                    <Link to="/register" className="text-violet-400 hover:text-violet-300">
+                    <Link to="/register" className="text-violet-500 hover:text-violet-400">
                         Create one
                     </Link>
                 </p>
@@ -95,7 +95,7 @@ const Login = () => {
                 {/* Continue offline option */}
                 <button
                     onClick={() => navigate('/')}
-                    className="w-full mt-4 py-2 text-zinc-600 text-sm hover:text-zinc-400 transition-colors"
+                    className="w-full mt-4 py-2 text-[var(--color-text-muted)] text-sm hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                     Continue offline (local storage only)
                 </button>
@@ -105,3 +105,4 @@ const Login = () => {
 };
 
 export default Login;
+

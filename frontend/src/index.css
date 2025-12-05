@@ -4,17 +4,79 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+[data-theme="dark"] {
+  /* Background colors */
   --color-bg-primary: #000000;
   --color-bg-secondary: #0a0a0a;
   --color-bg-tertiary: #111111;
   --color-bg-card: #0a0a0a;
+  --color-bg-hover: #111111;
+  --color-bg-active: #151515;
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-label: #52525b;
+
+  /* Border colors */
+  --color-border: #1a1a1a;
+  --color-border-subtle: #222222;
+  --color-border-hover: #2a2a2a;
+
+  /* Accent colors (remain same for both themes) */
   --color-accent: #8b5cf6;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
-  --color-border: #1a1a1a;
-  --color-border-subtle: #222222;
+
+  /* Scrollbar */
+  --color-scrollbar: #333;
+  --color-scrollbar-hover: #444;
+
+  /* Focus */
+  --color-focus: #333;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="light"] {
+  /* Background colors - Clean, warm whites with subtle depth */
+  --color-bg-primary: #fafafa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f5f5f5;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #f0f0f0;
+  --color-bg-active: #e8e8e8;
+
+  /* Text colors - Rich, readable contrast */
+  --color-text-primary: #18181b;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted: #71717a;
+  --color-text-label: #a1a1aa;
+
+  /* Border colors - Subtle, refined */
+  --color-border: #e5e5e5;
+  --color-border-subtle: #f0f0f0;
+  --color-border-hover: #d4d4d4;
+
+  /* Scrollbar */
+  --color-scrollbar: #d4d4d4;
+  --color-scrollbar-hover: #a1a1aa;
+
+  /* Focus - Violet accent for consistency */
+  --color-focus: #8b5cf6;
+
+  /* Shadows - Soft, elegant depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -29,8 +91,8 @@ html {
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  background: #000000;
-  color: #e4e4e7;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
@@ -39,6 +101,7 @@ body {
   line-height: 1.6;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Mobile Safe Areas */
@@ -95,19 +158,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--color-scrollbar);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: var(--color-scrollbar-hover);
 }
 
 /* Typography - Better hierarchy */
 h1 {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--color-text-primary);
   letter-spacing: -0.025em;
   line-height: 1.2;
 }
@@ -115,14 +178,14 @@ h1 {
 h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--color-text-primary);
   letter-spacing: -0.02em;
 }
 
 h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #fafafa;
+  color: var(--color-text-primary);
   letter-spacing: -0.01em;
 }
 
@@ -130,28 +193,28 @@ h4,
 h5,
 h6 {
   font-weight: 500;
-  color: #e4e4e7;
+  color: var(--color-text-secondary);
 }
 
 p {
-  color: #a1a1aa;
+  color: var(--color-text-secondary);
 }
 
 /* Text utility classes */
 .text-primary {
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 .text-secondary {
-  color: #a1a1aa;
+  color: var(--color-text-secondary);
 }
 
 .text-muted {
-  color: #71717a;
+  color: var(--color-text-muted);
 }
 
 .text-label {
-  color: #52525b;
+  color: var(--color-text-label);
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -167,19 +230,46 @@ p {
 /* Components */
 @layer components {
   .glass-card {
-    @apply bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-200 hover:bg-[#111111] hover:border-[#252525];
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.2s ease;
+  }
+
+  .glass-card-hover:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-md);
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 bg-white text-black rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-zinc-100;
+    @apply px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200;
+    background: var(--color-text-primary);
+    color: var(--color-bg-primary);
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
   }
 
   .btn-secondary {
-    @apply px-5 py-2.5 bg-transparent border border-[#2a2a2a] rounded-lg font-medium text-sm text-zinc-300 hover:bg-[#111111] hover:text-white transition-all duration-200;
+    @apply px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200;
+    background: transparent;
+    border: 1px solid var(--color-border-hover);
+    color: var(--color-text-secondary);
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
   }
 
   .btn-danger {
@@ -187,15 +277,24 @@ p {
   }
 
   .nav-link {
-    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-zinc-500 font-medium text-sm hover:text-zinc-200 hover:bg-[#111111] transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200;
+    color: var(--color-text-muted);
+  }
+
+  .nav-link:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
   }
 
   .nav-link.active {
-    @apply text-white bg-[#111111] border border-[#222222];
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+    border: 1px solid var(--color-border);
   }
 
   .progress-bar {
-    @apply h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden;
+    @apply h-1.5 rounded-full overflow-hidden;
+    background: var(--color-border);
   }
 
   .progress-fill {
@@ -207,11 +306,15 @@ p {
   }
 
   .level-badge {
-    @apply inline-flex items-center gap-2 px-3 py-1.5 bg-[#111111] border border-[#222222] rounded-lg text-white text-sm font-semibold;
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold;
+    background: var(--color-bg-hover);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
   }
 
   .xp-bar {
-    @apply h-2 bg-[#1a1a1a] rounded-full overflow-hidden;
+    @apply h-2 rounded-full overflow-hidden;
+    background: var(--color-border);
   }
 
   .xp-fill {
@@ -219,7 +322,20 @@ p {
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#333] focus:ring-1 focus:ring-[#333] transition-all;
+    @apply w-full px-4 py-2.5 rounded-lg text-sm transition-all;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .input-field::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: var(--color-border-hover);
+    box-shadow: 0 0 0 1px var(--color-border-hover);
   }
 
   /* Badges with better visibility */
@@ -286,7 +402,7 @@ p {
 
 /* Focus states */
 :focus-visible {
-  outline: 2px solid #333;
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -300,19 +416,19 @@ th,
 td {
   text-align: left;
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--color-border);
 }
 
 th {
   font-weight: 600;
-  color: #71717a;
+  color: var(--color-text-muted);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 td {
-  color: #e4e4e7;
+  color: var(--color-text-secondary);
 }
 
 /* Page transitions */

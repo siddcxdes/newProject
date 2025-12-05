@@ -59,10 +59,10 @@ const Settings = () => {
                         <p className="text-sm font-semibold text-white">Dark Mode</p>
                         <p className="text-xs text-zinc-500">Pure black theme</p>
                     </button>
-                    <button disabled className="p-5 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] text-left opacity-50 cursor-not-allowed">
-                        <div className="w-10 h-10 bg-white rounded-lg mb-3"></div>
+                    <button onClick={() => setSettings({ ...settings, theme: 'light' })} className={`p-5 rounded-xl border transition-all text-left ${settings.theme === 'light' ? 'border-violet-500 bg-violet-500/10' : 'border-[#1a1a1a] bg-[#0a0a0a] hover:border-[#222]'}`}>
+                        <div className="w-10 h-10 bg-white rounded-lg mb-3 border border-zinc-200"></div>
                         <p className="text-sm font-semibold text-white">Light Mode</p>
-                        <p className="text-xs text-zinc-500">Coming soon</p>
+                        <p className="text-xs text-zinc-500">Clean light theme</p>
                     </button>
                 </div>
             </div>

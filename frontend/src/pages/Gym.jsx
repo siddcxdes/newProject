@@ -108,26 +108,26 @@ const Gym = () => {
             </div>
 
             {/* Weekly Overview */}
-            <div className="glass-card p-5">
-                <div className="flex items-center justify-between mb-4">
+            <div className="glass-card p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div>
                         <h3 className="text-base font-semibold text-white">Weekly Goal</h3>
                         <p className="text-xs text-zinc-500">{gymDaysCount} of {gymGoal} sessions this week</p>
                     </div>
-                    <button onClick={() => logActivity('gym', { notes: 'Gym session' })} className="btn-primary text-sm">Log Session +20 XP</button>
+                    <button onClick={() => logActivity('gym', { notes: 'Gym session' })} className="btn-primary text-sm w-full sm:w-auto">Log Session +20 XP</button>
                 </div>
 
                 <div className="progress-bar h-2.5 mb-5">
                     <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {weekDays.map((day, index) => {
                         const hasGym = gymDaysSet.has(day.dateString);
                         return (
-                            <div key={index} className={`p-3 rounded-lg text-center transition-all relative ${hasGym ? 'bg-emerald-500/10 border border-emerald-500/30' : day.isFuture ? 'bg-[#0a0a0a] border border-[#111111] opacity-40' : 'bg-[#0a0a0a] border border-[#111111]'} ${day.isToday ? 'ring-2 ring-violet-500/50' : ''}`}>
-                                <p className="text-xs font-medium text-zinc-500 mb-2">{day.name}</p>
-                                <div className={`w-4 h-4 mx-auto rounded-full ${hasGym ? 'bg-emerald-500' : 'bg-[#1a1a1a]'}`}></div>
+                            <div key={index} className={`p-2 sm:p-3 rounded-lg text-center transition-all relative ${hasGym ? 'bg-emerald-500/10 border border-emerald-500/30' : day.isFuture ? 'bg-[#0a0a0a] border border-[#111111] opacity-40' : 'bg-[#0a0a0a] border border-[#111111]'} ${day.isToday ? 'ring-2 ring-violet-500/50' : ''}`}>
+                                <p className="text-[10px] sm:text-xs font-medium text-zinc-500 mb-1 sm:mb-2">{day.name}</p>
+                                <div className={`w-3 h-3 sm:w-4 sm:h-4 mx-auto rounded-full ${hasGym ? 'bg-emerald-500' : 'bg-[#1a1a1a]'}`}></div>
                                 {day.isToday && <span className="absolute -top-1 -right-1 w-2 h-2 bg-violet-500 rounded-full"></span>}
                             </div>
                         );
