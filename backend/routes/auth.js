@@ -79,10 +79,11 @@ router.get('/me', protect, async (req, res) => {
 // @access  Private
 router.put('/sync', protect, async (req, res) => {
     try {
-        const { dsaTopics, aiModules, workouts, goals, activities, stats, streak, xp, level, xpToNextLevel, settings } = req.body;
+        const { name, dsaTopics, aiModules, workouts, goals, activities, stats, streak, xp, level, xpToNextLevel, settings } = req.body;
 
         const user = await User.findById(req.user._id);
 
+        if (name) user.name = name;
         if (dsaTopics) user.dsaTopics = dsaTopics;
         if (aiModules) user.aiModules = aiModules;
         if (workouts) user.workouts = workouts;

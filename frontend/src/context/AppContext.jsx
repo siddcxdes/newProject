@@ -384,6 +384,36 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // Update user profile (name, etc.)
+    const updateUserProfile = async (updates) => {
+        if (!authToken) return;
+        try {
+            const response = await fetch(`${API_URL}/auth/sync`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    ...updates,
+                    dsaTopics, aiModules, workouts, goals, activities,
+                    stats: user?.stats, streak: user?.streak,
+                    xp: user?.xp, level: user?.level, xpToNextLevel: user?.xpToNextLevel,
+                    settings: user?.settings
+                })
+            });
+            const data = await response.json();
+            if (data.user) {
+                setUser(data.user);
+            }
+            showNotification('Profile updated!', 'success');
+            setLastSaved(new Date());
+        } catch (error) {
+            console.error('Profile update failed:', error);
+            showNotification('Failed to update profile', 'error');
+        }
+    };
+
     // Debounced cloud sync ref
     const syncTimeoutRef = useRef(null);
 
@@ -908,7 +938,7 @@ export const AppProvider = ({ children }) => {
         user, activities, heatmapData, goals, dsaTopics, aiModules, workouts,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated,
         // Auth
-        login, register, logout, syncToCloud,
+        login, register, logout, syncToCloud, updateUserProfile,
         hydrateFromServerData, setAuthToken, setIsAuthenticated,
         // Activity
         logActivity,
