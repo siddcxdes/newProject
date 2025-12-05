@@ -12,48 +12,63 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP email - uses dynamic import to prevent startup crash
+// Send OTP email with timeout
 const sendOTPEmail = async (email, otp) => {
-    // Dynamic import - only loads nodemailer when actually sending email
-    const nodemailer = await import('nodemailer');
+    // Skip if no email credentials
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.log(`📧 OTP for ${email}: ${otp} (email not configured)`);
+        return false;
+    }
 
-    const transporter = nodemailer.default.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
+    try {
+        // Dynamic import with timeout
+        const nodemailer = await import('nodemailer');
 
-    const mailOptions = {
-        from: `"Ascension" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Your Ascension Login Code',
-        html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #8b5cf6, #d946ef); border-radius: 12px; transform: rotate(45deg); margin: 0 auto 15px;"></div>
-                    <h1 style="color: #18181b; font-size: 24px; margin: 0;">ASCENSION</h1>
+        const transporter = nodemailer.default.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            connectionTimeout: 10000, // 10 second timeout
+            greetingTimeout: 5000
+        });
+
+        const mailOptions = {
+            from: `"Ascension" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Your Ascension Login Code',
+            html: `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #8b5cf6, #d946ef); border-radius: 12px; transform: rotate(45deg); margin: 0 auto 15px;"></div>
+                        <h1 style="color: #18181b; font-size: 24px; margin: 0;">ASCENSION</h1>
+                    </div>
+                    <p style="color: #52525b; font-size: 16px; margin-bottom: 25px;">
+                        Your verification code is:
+                    </p>
+                    <div style="background: #f4f4f5; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 25px;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; font-family: monospace;">
+                            ${otp}
+                        </span>
+                    </div>
+                    <p style="color: #71717a; font-size: 14px; margin-bottom: 10px;">
+                        This code expires in 5 minutes.
+                    </p>
+                    <p style="color: #a1a1aa; font-size: 12px;">
+                        If you didn't request this code, you can safely ignore this email.
+                    </p>
                 </div>
-                <p style="color: #52525b; font-size: 16px; margin-bottom: 25px;">
-                    Your verification code is:
-                </p>
-                <div style="background: #f4f4f5; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 25px;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; font-family: monospace;">
-                        ${otp}
-                    </span>
-                </div>
-                <p style="color: #71717a; font-size: 14px; margin-bottom: 10px;">
-                    This code expires in 5 minutes.
-                </p>
-                <p style="color: #a1a1aa; font-size: 12px;">
-                    If you didn't request this code, you can safely ignore this email.
-                </p>
-            </div>
-        `
-    };
+            `
+        };
 
-    await transporter.sendMail(mailOptions);
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error('Email send failed:', error.message);
+        console.log(`📧 OTP for ${email}: ${otp} (email failed, check logs)`);
+        return false;
+    }
 };
 
 // @route   POST /api/otp/send
@@ -83,24 +98,14 @@ router.post('/send', async (req, res) => {
             attempts: 0
         });
 
-        // Try to send email
-        let emailSent = false;
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            try {
-                await sendOTPEmail(normalizedEmail, otp);
-                emailSent = true;
-            } catch (emailError) {
-                console.error('Email send failed:', emailError.message);
-                // Still log OTP so user can get it from Render logs
-                console.log(`\n📧 OTP for ${normalizedEmail}: ${otp} (email failed)\n`);
-            }
-        } else {
-            // No email configured - log to console
-            console.log(`\n📧 OTP for ${normalizedEmail}: ${otp}\n`);
-        }
+        // Log OTP for debugging
+        console.log(`📧 Generated OTP for ${normalizedEmail}: ${otp}`);
+
+        // Try to send email (don't wait too long)
+        const emailSent = await sendOTPEmail(normalizedEmail, otp);
 
         res.json({
-            message: emailSent ? 'OTP sent to your email' : 'OTP generated (check server logs)',
+            message: emailSent ? 'OTP sent to your email' : 'OTP generated - check server logs',
             email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3')
         });
 
