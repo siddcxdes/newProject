@@ -1,12 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Load env vars FIRST before any other imports
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import apiRoutes from './routes/api.js';
 import authRoutes from './routes/auth.js';
 import otpRoutes from './routes/otp.js';
-
-dotenv.config();
 
 const app = express();
 
@@ -43,3 +43,4 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log(`Ascension Backend running on port ${PORT}`);
 });
+
