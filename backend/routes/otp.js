@@ -16,6 +16,12 @@ const generateOTP = () => {
 // Lazy transporter - only created when needed
 let transporter = null;
 
+// Log email config status on startup (without exposing secrets)
+console.log('Email config:', {
+    EMAIL_USER: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.slice(0, 5)}...` : 'NOT SET',
+    EMAIL_PASS: process.env.EMAIL_PASS ? `${process.env.EMAIL_PASS.length} chars` : 'NOT SET'
+});
+
 // Create email transporter (lazy initialization)
 const getTransporter = () => {
     if (transporter) return transporter;
