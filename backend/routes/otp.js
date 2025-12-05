@@ -119,6 +119,7 @@ router.post('/send', async (req, res) => {
 // @desc    Verify OTP and login/register user
 // @access  Public
 router.post('/verify', async (req, res) => {
+    console.log('📧 OTP VERIFY REQUEST:', req.body.email);
     try {
         const { email, otp, name } = req.body;
 
@@ -130,6 +131,7 @@ router.post('/verify', async (req, res) => {
         const storedData = otpStore.get(normalizedEmail);
 
         if (!storedData) {
+            console.log('❌ OTP expired/not found for:', normalizedEmail);
             return res.status(400).json({ message: 'OTP expired. Please request a new one.' });
         }
 
@@ -148,6 +150,7 @@ router.post('/verify', async (req, res) => {
         // Verify OTP
         if (storedData.otp !== otp) {
             storedData.attempts++;
+            console.log('❌ Invalid OTP attempt for:', normalizedEmail);
             return res.status(400).json({ message: 'Invalid OTP' });
         }
 
@@ -160,14 +163,19 @@ router.post('/verify', async (req, res) => {
 
         if (!user) {
             isNewUser = true;
+            console.log('🆕 Creating new user:', normalizedEmail);
             user = await User.create({
                 email: normalizedEmail,
                 name: name || 'Champion'
             });
+        } else {
+            console.log('✅ Found existing user:', normalizedEmail, 'workouts:', user.workouts?.length || 0);
         }
 
         // Generate JWT token
         const token = generateToken(user._id);
+
+        console.log('✅ OTP VERIFY SUCCESS for:', normalizedEmail, 'returning workouts:', user.workouts?.length || 0);
 
         res.json({
             message: isNewUser ? 'Account created successfully' : 'Login successful',
@@ -177,7 +185,7 @@ router.post('/verify', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Verify OTP error:', error);
+        console.error('❌ Verify OTP error:', error);
         res.status(500).json({ message: 'Verification failed. Please try again.' });
     }
 });

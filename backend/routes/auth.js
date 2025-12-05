@@ -79,27 +79,42 @@ router.get('/me', protect, async (req, res) => {
 // @access  Private
 router.put('/sync', protect, async (req, res) => {
     try {
+        console.log('📥 SYNC REQUEST from user:', req.user?.email);
+        console.log('📥 Body received:', JSON.stringify({
+            workouts: req.body.workouts?.length || 0,
+            dsaTopics: req.body.dsaTopics?.length || 0,
+            aiModules: req.body.aiModules?.length || 0
+        }));
+
         const { name, dsaTopics, aiModules, workouts, goals, activities, stats, streak, xp, level, xpToNextLevel, settings } = req.body;
 
         const user = await User.findById(req.user._id);
+        if (!user) {
+            console.error('❌ User not found:', req.user._id);
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        if (name) user.name = name;
-        if (dsaTopics) user.dsaTopics = dsaTopics;
-        if (aiModules) user.aiModules = aiModules;
-        if (workouts) user.workouts = workouts;
-        if (goals) user.goals = goals;
-        if (activities) user.activities = activities;
-        if (stats) user.stats = stats;
-        if (streak) user.streak = streak;
+        // Always update these fields (don't skip if empty array)
+        if (name !== undefined) user.name = name;
+        if (dsaTopics !== undefined) user.dsaTopics = dsaTopics;
+        if (aiModules !== undefined) user.aiModules = aiModules;
+        if (workouts !== undefined) user.workouts = workouts;
+        if (goals !== undefined) user.goals = goals;
+        if (activities !== undefined) user.activities = activities;
+        if (stats !== undefined) user.stats = stats;
+        if (streak !== undefined) user.streak = streak;
         if (xp !== undefined) user.xp = xp;
         if (level !== undefined) user.level = level;
         if (xpToNextLevel !== undefined) user.xpToNextLevel = xpToNextLevel;
-        if (settings) user.settings = settings;
+        if (settings !== undefined) user.settings = settings;
 
+        console.log('💾 Saving user with workouts:', user.workouts?.length || 0);
         await user.save();
+        console.log('✅ SYNC SAVED for:', user.email);
+
         res.json({ user: user.toJSON(), message: 'Data synced' });
     } catch (error) {
-        console.error('Sync error:', error);
+        console.error('❌ Sync error:', error);
         res.status(500).json({ message: 'Sync failed' });
     }
 });
