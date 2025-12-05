@@ -239,7 +239,6 @@ export const AppProvider = ({ children }) => {
     const isUndoRedoAction = useRef(false);
     const initializedRef = useRef(false);
     const hydrationCompleteRef = useRef(false); // Prevents sync before hydration
-    const syncLockedRef = useRef(true); // Lock sync completely until first hydration
 
     // Use refs to track latest data for sync (prevents stale closure issues)
     const dataRef = useRef({ user: null, dsaTopics: [], aiModules: [], workouts: [], goals: [], activities: [] });
@@ -249,7 +248,18 @@ export const AppProvider = ({ children }) => {
 
     // Helper to hydrate all state from server user data
     const hydrateFromServerData = (serverUser) => {
-        if (!serverUser) return;
+        console.log('🔄 HYDRATING FROM SERVER:', {
+            hasUser: !!serverUser,
+            workouts: serverUser?.workouts?.length || 0,
+            dsaTopics: serverUser?.dsaTopics?.length || 0,
+            aiModules: serverUser?.aiModules?.length || 0,
+            serverData: serverUser
+        });
+
+        if (!serverUser) {
+            console.error('❌ No server user data to hydrate!');
+            return;
+        }
 
         // Build user object from server data
         const hydratedUser = {
@@ -267,20 +277,27 @@ export const AppProvider = ({ children }) => {
         // ALWAYS use server data for authenticated users
         // This ensures cross-device sync works correctly
         // (Server data is the source of truth, even if empty)
-        setDsaTopics(serverUser.dsaTopics || []);
-        setAiModules(serverUser.aiModules || []);
-        setWorkouts(serverUser.workouts || []);
-        setGoals(serverUser.goals || []);
-        setActivities(serverUser.activities || []);
+        const workoutsToSet = serverUser.workouts || [];
+        const dsaTopicsToSet = serverUser.dsaTopics || [];
+        const aiModulesToSet = serverUser.aiModules || [];
+        const goalsToSet = serverUser.goals || [];
+        const activitiesToSet = serverUser.activities || [];
+
+        console.log('📊 Setting state from server:', {
+            workouts: workoutsToSet.length,
+            dsaTopics: dsaTopicsToSet.length,
+            aiModules: aiModulesToSet.length
+        });
+
+        setDsaTopics(dsaTopicsToSet);
+        setAiModules(aiModulesToSet);
+        setWorkouts(workoutsToSet);
+        setGoals(goalsToSet);
+        setActivities(activitiesToSet);
 
         // Mark hydration as complete - now safe to sync
         hydrationCompleteRef.current = true;
-
-        // Use setTimeout to ensure React has rendered with new values before unlocking sync
-        setTimeout(() => {
-            syncLockedRef.current = false;
-            console.log('🔓 Sync unlocked after hydration');
-        }, 100);
+        console.log('✅ Hydration complete, sync enabled');
     };
 
     // Initialize auth state on app load - CRITICAL for cross-device sync
@@ -289,25 +306,30 @@ export const AppProvider = ({ children }) => {
         initializedRef.current = true;
 
         const initializeAuth = async () => {
+            console.log('🔑 Initializing auth...');
             const token = localStorage.getItem('ascension_token');
 
             if (!token) {
+                console.log('⚠️ No token found, staying in local mode');
                 setLoading(false);
                 return;
             }
 
             try {
+                console.log('📡 Fetching user from server...');
                 const res = await fetch(`${API_URL}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (res.ok) {
-                    const { user: serverUser } = await res.json();
-                    hydrateFromServerData(serverUser);
+                    const data = await res.json();
+                    console.log('✅ Got user from server:', data);
+                    hydrateFromServerData(data.user);
                     setAuthToken(token);
                     setIsAuthenticated(true);
                     setUseLocalStorage(false);
                 } else {
+                    console.log('❌ Token invalid, clearing');
                     // Token invalid, clear it
                     localStorage.removeItem('ascension_token');
                     setAuthToken(null);
@@ -452,9 +474,12 @@ export const AppProvider = ({ children }) => {
 
     // Debounced sync to cloud - syncs 2 seconds after last change
     const debouncedSyncToCloud = useCallback(() => {
-        // CRITICAL: Don't sync until hydration is complete AND sync is unlocked
-        if (!authToken || !isAuthenticated || syncLockedRef.current) {
-            console.log('🔒 Sync blocked:', { authToken: !!authToken, isAuthenticated, locked: syncLockedRef.current });
+        if (!authToken || !isAuthenticated) {
+            console.log('🔒 Sync blocked: not authenticated');
+            return;
+        }
+        if (!hydrationCompleteRef.current) {
+            console.log('🔒 Sync blocked: hydration not complete');
             return;
         }
 
@@ -462,6 +487,7 @@ export const AppProvider = ({ children }) => {
             clearTimeout(syncTimeoutRef.current);
         }
 
+        console.log('⏳ Scheduling sync in 2s...');
         syncTimeoutRef.current = setTimeout(() => {
             syncToCloud();
         }, 2000);
@@ -469,11 +495,18 @@ export const AppProvider = ({ children }) => {
 
     // Auto-sync when authenticated (periodic backup sync)
     useEffect(() => {
-        if (isAuthenticated && authToken && !syncLockedRef.current) {
-            const syncInterval = setInterval(syncToCloud, 60000); // Sync every 60s as backup
+        if (isAuthenticated && authToken && hydrationCompleteRef.current) {
+            console.log('🔄 Setting up periodic sync (every 60s)');
+            const syncInterval = setInterval(syncToCloud, 60000);
             return () => clearInterval(syncInterval);
         }
     }, [isAuthenticated, authToken]);
+
+    // Force sync function (for manual triggering)
+    const forceSyncNow = async () => {
+        console.log('🚨 FORCE SYNC triggered!');
+        await syncToCloud();
+    };
 
     // Keep dataRef updated with latest values (for sync to use)
     useEffect(() => {
@@ -485,35 +518,35 @@ export const AppProvider = ({ children }) => {
         if (user) {
             saveToStorage(STORAGE_KEYS.USER, user);
             setLastSaved(new Date());
-            if (!syncLockedRef.current) debouncedSyncToCloud();
+            if (hydrationCompleteRef.current) debouncedSyncToCloud();
         }
     }, [user, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.ACTIVITIES, activities);
-        if (!syncLockedRef.current) debouncedSyncToCloud();
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [activities, debouncedSyncToCloud]);
 
     useEffect(() => { saveToStorage(STORAGE_KEYS.HEATMAP, heatmapData); }, [heatmapData]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.GOALS, goals);
-        if (!syncLockedRef.current) debouncedSyncToCloud();
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [goals, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.DSA_TOPICS, dsaTopics);
-        if (!syncLockedRef.current) debouncedSyncToCloud();
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [dsaTopics, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.AI_MODULES, aiModules);
-        if (!syncLockedRef.current) debouncedSyncToCloud();
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [aiModules, debouncedSyncToCloud]);
 
     useEffect(() => {
         saveToStorage(STORAGE_KEYS.WORKOUTS, workouts);
-        if (!syncLockedRef.current) debouncedSyncToCloud();
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [workouts, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
@@ -980,7 +1013,7 @@ export const AppProvider = ({ children }) => {
         user, activities, heatmapData, goals, dsaTopics, aiModules, workouts,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated,
         // Auth
-        login, register, logout, syncToCloud, updateUserProfile,
+        login, register, logout, syncToCloud, updateUserProfile, forceSyncNow,
         hydrateFromServerData, setAuthToken, setIsAuthenticated,
         // Activity
         logActivity,

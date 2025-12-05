@@ -65,6 +65,7 @@ const Login = () => {
         setLoading(true);
 
         try {
+            console.log('📧 Verifying OTP...');
             const res = await fetch(`${API_URL}/otp/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -72,6 +73,7 @@ const Login = () => {
             });
 
             const data = await res.json();
+            console.log('📧 OTP verify response:', data);
 
             if (!res.ok) {
                 throw new Error(data.message || 'Verification failed');
@@ -85,6 +87,12 @@ const Login = () => {
             }
 
             // Login successful
+            console.log('✅ Login successful, user data:', {
+                workouts: data.user?.workouts?.length || 0,
+                dsaTopics: data.user?.dsaTopics?.length || 0,
+                name: data.user?.name
+            });
+
             localStorage.setItem('ascension_token', data.token);
             setAuthToken(data.token);
             setIsAuthenticated(true);
@@ -95,6 +103,7 @@ const Login = () => {
 
             navigate('/');
         } catch (err) {
+            console.error('❌ OTP verify error:', err);
             setError(err.message);
         } finally {
             setLoading(false);
