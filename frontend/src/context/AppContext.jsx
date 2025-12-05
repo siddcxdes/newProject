@@ -238,6 +238,7 @@ export const AppProvider = ({ children }) => {
     const [historyIndex, setHistoryIndex] = useState(-1);
     const isUndoRedoAction = useRef(false);
     const initializedRef = useRef(false);
+    const hydrationCompleteRef = useRef(false); // Prevents sync before hydration
 
     // API base URL
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -259,22 +260,17 @@ export const AppProvider = ({ children }) => {
         };
         setUser(hydratedUser);
 
-        // Hydrate collections - only if server has data
-        if (serverUser.dsaTopics && serverUser.dsaTopics.length > 0) {
-            setDsaTopics(serverUser.dsaTopics);
-        }
-        if (serverUser.aiModules && serverUser.aiModules.length > 0) {
-            setAiModules(serverUser.aiModules);
-        }
-        if (serverUser.workouts && serverUser.workouts.length > 0) {
-            setWorkouts(serverUser.workouts);
-        }
-        if (serverUser.goals && serverUser.goals.length > 0) {
-            setGoals(serverUser.goals);
-        }
-        if (serverUser.activities && serverUser.activities.length > 0) {
-            setActivities(serverUser.activities);
-        }
+        // ALWAYS use server data for authenticated users
+        // This ensures cross-device sync works correctly
+        // (Server data is the source of truth, even if empty)
+        setDsaTopics(serverUser.dsaTopics || []);
+        setAiModules(serverUser.aiModules || []);
+        setWorkouts(serverUser.workouts || []);
+        setGoals(serverUser.goals || []);
+        setActivities(serverUser.activities || []);
+
+        // Mark hydration as complete - now safe to sync
+        hydrationCompleteRef.current = true;
     };
 
     // Initialize auth state on app load - CRITICAL for cross-device sync
@@ -419,7 +415,8 @@ export const AppProvider = ({ children }) => {
 
     // Debounced sync to cloud - syncs 2 seconds after last change
     const debouncedSyncToCloud = useCallback(() => {
-        if (!authToken || !isAuthenticated) return;
+        // Don't sync until hydration is complete to prevent overwriting server data
+        if (!authToken || !isAuthenticated || !hydrationCompleteRef.current) return;
 
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
@@ -432,7 +429,7 @@ export const AppProvider = ({ children }) => {
 
     // Auto-sync when authenticated (periodic backup sync)
     useEffect(() => {
-        if (isAuthenticated && authToken) {
+        if (isAuthenticated && authToken && hydrationCompleteRef.current) {
             const syncInterval = setInterval(syncToCloud, 60000); // Sync every 60s as backup
             return () => clearInterval(syncInterval);
         }

@@ -16,7 +16,7 @@ const formatDate = (dateStr) => {
 };
 
 const CheckIn = () => {
-    const { user, logActivity } = useApp();
+    const { user, logActivity, dsaTopics, aiModules, toggleDsaSubtopic, toggleAiLesson } = useApp();
     const todayStr = getISTDateString();
 
     const [dsaTasks, setDsaTasks] = useState([]);
@@ -28,6 +28,44 @@ const CheckIn = () => {
     const [newOtherTask, setNewOtherTask] = useState('');
 
     const [dsaDifficulty, setDsaDifficulty] = useState('medium');
+
+    // For academic picker dropdowns
+    const [showDsaPicker, setShowDsaPicker] = useState(false);
+    const [showAiPicker, setShowAiPicker] = useState(false);
+    const [selectedDsaTopic, setSelectedDsaTopic] = useState(null);
+    const [selectedAiModule, setSelectedAiModule] = useState(null);
+
+    // Get uncompleted subtopics from a DSA topic
+    const getUncompletedDsaProblems = (topicId) => {
+        const topic = dsaTopics.find(t => t.id === topicId);
+        if (!topic) return [];
+        return topic.subtopics.filter(s => !s.completed);
+    };
+
+    // Get uncompleted lessons from an AI module
+    const getUncompletedAiLessons = (moduleId) => {
+        const module = aiModules.find(m => m.id === moduleId);
+        if (!module) return [];
+        return module.lessons.filter(l => !l.completed);
+    };
+
+    // Get all uncompleted DSA problems across all topics
+    const getAllUncompletedDsaProblems = () => {
+        return dsaTopics.flatMap(topic =>
+            topic.subtopics
+                .filter(s => !s.completed)
+                .map(s => ({ ...s, topicId: topic.id, topicName: topic.name, topicIcon: topic.icon }))
+        );
+    };
+
+    // Get all uncompleted AI lessons across all modules
+    const getAllUncompletedAiLessons = () => {
+        return aiModules.flatMap(module =>
+            module.lessons
+                .filter(l => !l.completed)
+                .map(l => ({ ...l, moduleId: module.id, moduleName: module.name, moduleIcon: module.icon }))
+        );
+    };
 
     useEffect(() => {
         const storedDsa = localStorage.getItem(`daily_dsa_${todayStr}`);
@@ -42,16 +80,51 @@ const CheckIn = () => {
     const saveAiTasks = (tasks) => { setAiTasks(tasks); localStorage.setItem(`daily_ai_${todayStr}`, JSON.stringify(tasks)); };
     const saveOtherTasks = (tasks) => { setOtherTasks(tasks); localStorage.setItem(`daily_other_${todayStr}`, JSON.stringify(tasks)); };
 
+    // Manual add DSA task
     const addDsaTask = () => {
         if (!newDsaTask.trim()) return;
-        saveDsaTasks([...dsaTasks, { id: Date.now(), text: newDsaTask.trim(), difficulty: dsaDifficulty, completed: false }]);
+        saveDsaTasks([...dsaTasks, { id: Date.now(), text: newDsaTask.trim(), difficulty: dsaDifficulty, completed: false, isManual: true }]);
         setNewDsaTask('');
     };
 
+    // Add DSA task from Academic section
+    const addDsaFromAcademic = (problem, topicId) => {
+        // Check if already added today
+        if (dsaTasks.some(t => t.academicId === problem.id)) return;
+        saveDsaTasks([...dsaTasks, {
+            id: Date.now(),
+            text: problem.name,
+            difficulty: problem.difficulty,
+            completed: false,
+            isManual: false,
+            academicId: problem.id,
+            topicId: topicId
+        }]);
+        setShowDsaPicker(false);
+        setSelectedDsaTopic(null);
+    };
+
+    // Manual add AI task
     const addAiTask = () => {
         if (!newAiTask.trim()) return;
-        saveAiTasks([...aiTasks, { id: Date.now(), text: newAiTask.trim(), completed: false }]);
+        saveAiTasks([...aiTasks, { id: Date.now(), text: newAiTask.trim(), completed: false, isManual: true }]);
         setNewAiTask('');
+    };
+
+    // Add AI task from Academic section
+    const addAiFromAcademic = (lesson, moduleId) => {
+        // Check if already added today
+        if (aiTasks.some(t => t.academicId === lesson.id)) return;
+        saveAiTasks([...aiTasks, {
+            id: Date.now(),
+            text: lesson.name,
+            completed: false,
+            isManual: false,
+            academicId: lesson.id,
+            moduleId: moduleId
+        }]);
+        setShowAiPicker(false);
+        setSelectedAiModule(null);
     };
 
     const addOtherTask = () => {
@@ -64,14 +137,28 @@ const CheckIn = () => {
         const task = dsaTasks.find(t => t.id === id);
         if (!task || task.completed) return;
         saveDsaTasks(dsaTasks.map(t => t.id === id ? { ...t, completed: true } : t));
-        await logActivity('dsa', { difficulty: task.difficulty });
+
+        // If it's from Academic section, also mark it as completed there
+        if (!task.isManual && task.topicId && task.academicId) {
+            toggleDsaSubtopic(task.topicId, task.academicId);
+        } else {
+            // For manual tasks, just log activity
+            await logActivity('dsa', { difficulty: task.difficulty });
+        }
     };
 
     const toggleAiTask = async (id) => {
         const task = aiTasks.find(t => t.id === id);
         if (!task || task.completed) return;
         saveAiTasks(aiTasks.map(t => t.id === id ? { ...t, completed: true } : t));
-        await logActivity('ai');
+
+        // If it's from Academic section, also mark it as completed there
+        if (!task.isManual && task.moduleId && task.academicId) {
+            toggleAiLesson(task.moduleId, task.academicId);
+        } else {
+            // For manual tasks, just log activity
+            await logActivity('ai');
+        }
     };
 
     const toggleOtherTask = async (id) => {
@@ -90,6 +177,20 @@ const CheckIn = () => {
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     const getXp = (difficulty) => difficulty === 'easy' ? 10 : difficulty === 'hard' ? 50 : 25;
+
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.picker-container')) {
+                setShowDsaPicker(false);
+                setShowAiPicker(false);
+                setSelectedDsaTopic(null);
+                setSelectedAiModule(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     return (
         <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -134,12 +235,76 @@ const CheckIn = () => {
                         <span className="text-[10px] sm:text-xs text-zinc-600 ml-auto">{dsaTasks.filter(t => t.completed).length}/{dsaTasks.length}</span>
                     </div>
 
+                    {/* Academic Picker + Manual Add */}
+                    <div className="flex gap-1.5 sm:gap-2 mb-3">
+                        {/* Academic Picker Button */}
+                        <div className="relative picker-container flex-1">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowDsaPicker(!showDsaPicker); setShowAiPicker(false); }}
+                                className="w-full input-field text-xs sm:text-sm py-2 text-left flex items-center gap-2"
+                            >
+                                <span className="text-violet-400">📚</span>
+                                <span className="text-zinc-400 truncate">Pick from Academic...</span>
+                            </button>
+
+                            {/* DSA Topic/Problem Picker Dropdown */}
+                            {showDsaPicker && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f0f0f] border border-[#222] rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                                    {selectedDsaTopic === null ? (
+                                        // Show topics
+                                        <div className="p-2">
+                                            <p className="text-[10px] text-zinc-500 uppercase px-2 py-1 mb-1">Select Topic</p>
+                                            {dsaTopics.filter(t => t.subtopics.some(s => !s.completed)).map(topic => (
+                                                <button
+                                                    key={topic.id}
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedDsaTopic(topic.id); }}
+                                                    className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2"
+                                                >
+                                                    <span>{topic.icon}</span>
+                                                    <span className="text-sm text-white flex-1 truncate">{topic.name}</span>
+                                                    <span className="text-[10px] text-zinc-500">{getUncompletedDsaProblems(topic.id).length} left</span>
+                                                </button>
+                                            ))}
+                                            {dsaTopics.filter(t => t.subtopics.some(s => !s.completed)).length === 0 && (
+                                                <p className="text-center text-zinc-500 text-xs py-3">All problems completed! 🎉</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        // Show problems from selected topic
+                                        <div className="p-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedDsaTopic(null); }}
+                                                className="text-[10px] text-violet-400 hover:text-violet-300 px-2 py-1 mb-1 flex items-center gap-1"
+                                            >
+                                                ← Back to topics
+                                            </button>
+                                            {getUncompletedDsaProblems(selectedDsaTopic).map(problem => (
+                                                <button
+                                                    key={problem.id}
+                                                    onClick={(e) => { e.stopPropagation(); addDsaFromAcademic(problem, selectedDsaTopic); }}
+                                                    disabled={dsaTasks.some(t => t.academicId === problem.id)}
+                                                    className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2 disabled:opacity-40"
+                                                >
+                                                    <span className="text-sm text-white flex-1 truncate">{problem.name}</span>
+                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${problem.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
+                                                            problem.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                                                        }`}>{problem.difficulty}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Manual Add Row */}
                     <div className="flex gap-1.5 sm:gap-2 mb-3">
                         <input
                             type="text"
                             value={newDsaTask}
                             onChange={(e) => setNewDsaTask(e.target.value)}
-                            placeholder="Add problem..."
+                            placeholder="Or type manually..."
                             className="input-field flex-1 text-xs sm:text-sm py-2"
                             onKeyDown={(e) => e.key === 'Enter' && addDsaTask()}
                         />
@@ -168,9 +333,12 @@ const CheckIn = () => {
                                     >
                                         {task.completed && '✓'}
                                     </button>
-                                    <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>{task.text}</span>
+                                    <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                                        {!task.isManual && <span className="text-violet-400 mr-1">📚</span>}
+                                        {task.text}
+                                    </span>
                                     <span className={`text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded font-semibold hidden sm:inline ${task.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
-                                            task.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                                        task.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
                                         }`}>{task.difficulty === 'medium' ? 'M' : task.difficulty[0].toUpperCase()}</span>
                                     <span className="text-[9px] sm:text-[10px] font-mono text-zinc-600">+{getXp(task.difficulty)}</span>
                                     <button onClick={() => deleteDsaTask(task.id)} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 text-sm">×</button>
@@ -188,12 +356,74 @@ const CheckIn = () => {
                         <span className="text-[10px] sm:text-xs text-zinc-600 ml-auto">{aiTasks.filter(t => t.completed).length}/{aiTasks.length}</span>
                     </div>
 
+                    {/* Academic Picker + Manual Add */}
+                    <div className="flex gap-1.5 sm:gap-2 mb-3">
+                        {/* Academic Picker Button */}
+                        <div className="relative picker-container flex-1">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowAiPicker(!showAiPicker); setShowDsaPicker(false); }}
+                                className="w-full input-field text-xs sm:text-sm py-2 text-left flex items-center gap-2"
+                            >
+                                <span className="text-emerald-400">📚</span>
+                                <span className="text-zinc-400 truncate">Pick from Academic...</span>
+                            </button>
+
+                            {/* AI Module/Lesson Picker Dropdown */}
+                            {showAiPicker && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f0f0f] border border-[#222] rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                                    {selectedAiModule === null ? (
+                                        // Show modules
+                                        <div className="p-2">
+                                            <p className="text-[10px] text-zinc-500 uppercase px-2 py-1 mb-1">Select Module</p>
+                                            {aiModules.filter(m => m.lessons.some(l => !l.completed)).map(module => (
+                                                <button
+                                                    key={module.id}
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedAiModule(module.id); }}
+                                                    className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2"
+                                                >
+                                                    <span>{module.icon}</span>
+                                                    <span className="text-sm text-white flex-1 truncate">{module.name}</span>
+                                                    <span className="text-[10px] text-zinc-500">{getUncompletedAiLessons(module.id).length} left</span>
+                                                </button>
+                                            ))}
+                                            {aiModules.filter(m => m.lessons.some(l => !l.completed)).length === 0 && (
+                                                <p className="text-center text-zinc-500 text-xs py-3">All lessons completed! 🎉</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        // Show lessons from selected module
+                                        <div className="p-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedAiModule(null); }}
+                                                className="text-[10px] text-emerald-400 hover:text-emerald-300 px-2 py-1 mb-1 flex items-center gap-1"
+                                            >
+                                                ← Back to modules
+                                            </button>
+                                            {getUncompletedAiLessons(selectedAiModule).map(lesson => (
+                                                <button
+                                                    key={lesson.id}
+                                                    onClick={(e) => { e.stopPropagation(); addAiFromAcademic(lesson, selectedAiModule); }}
+                                                    disabled={aiTasks.some(t => t.academicId === lesson.id)}
+                                                    className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2 disabled:opacity-40"
+                                                >
+                                                    <span className="text-sm text-white flex-1 truncate">{lesson.name}</span>
+                                                    <span className="text-[9px] text-zinc-500">+30 XP</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Manual Add Row */}
                     <div className="flex gap-1.5 sm:gap-2 mb-3">
                         <input
                             type="text"
                             value={newAiTask}
                             onChange={(e) => setNewAiTask(e.target.value)}
-                            placeholder="Add topic..."
+                            placeholder="Or type manually..."
                             className="input-field flex-1 text-xs sm:text-sm py-2"
                             onKeyDown={(e) => e.key === 'Enter' && addAiTask()}
                         />
@@ -213,7 +443,10 @@ const CheckIn = () => {
                                     >
                                         {task.completed && '✓'}
                                     </button>
-                                    <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>{task.text}</span>
+                                    <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                                        {!task.isManual && <span className="text-emerald-400 mr-1">📚</span>}
+                                        {task.text}
+                                    </span>
                                     <span className="text-[9px] sm:text-[10px] font-mono text-zinc-600">+30</span>
                                     <button onClick={() => deleteAiTask(task.id)} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 text-sm">×</button>
                                 </div>
