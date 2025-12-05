@@ -1,5 +1,4 @@
 import express from 'express';
-import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 import { generateToken } from '../middleware/auth.js';
 
@@ -13,58 +12,21 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Lazy transporter - only created when needed
-let transporter = null;
-
-// Log email config status on startup (without exposing secrets)
-console.log('Email config:', {
-    EMAIL_USER: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.slice(0, 5)}...` : 'NOT SET',
-    EMAIL_PASS: process.env.EMAIL_PASS ? `${process.env.EMAIL_PASS.length} chars` : 'NOT SET'
-});
-
-// Create email transporter (lazy initialization)
-const getTransporter = () => {
-    if (transporter) return transporter;
-
-    try {
-        // Check for custom SMTP config
-        if (process.env.SMTP_HOST) {
-            transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: process.env.SMTP_PORT || 587,
-                secure: process.env.SMTP_SECURE === 'true',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
-                }
-            });
-        } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            // Use Gmail
-            transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
-        }
-        return transporter;
-    } catch (error) {
-        console.error('Failed to create email transporter:', error.message);
-        return null;
-    }
-};
-
-// Send OTP email
+// Send OTP email - uses dynamic import to prevent startup crash
 const sendOTPEmail = async (email, otp) => {
-    const emailTransporter = getTransporter();
+    // Dynamic import - only loads nodemailer when actually sending email
+    const nodemailer = await import('nodemailer');
 
-    if (!emailTransporter) {
-        throw new Error('Email not configured');
-    }
+    const transporter = nodemailer.default.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
 
     const mailOptions = {
-        from: `"Ascension" <${process.env.EMAIL_USER || 'noreply@ascension.app'}>`,
+        from: `"Ascension" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: 'Your Ascension Login Code',
         html: `
@@ -91,7 +53,7 @@ const sendOTPEmail = async (email, otp) => {
         `
     };
 
-    await emailTransporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 };
 
 // @route   POST /api/otp/send
@@ -121,7 +83,7 @@ router.post('/send', async (req, res) => {
             attempts: 0
         });
 
-        // Try to send email, fallback to console if it fails
+        // Try to send email
         let emailSent = false;
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
@@ -129,15 +91,16 @@ router.post('/send', async (req, res) => {
                 emailSent = true;
             } catch (emailError) {
                 console.error('Email send failed:', emailError.message);
-                console.log(`\n📧 OTP for ${normalizedEmail}: ${otp} (email failed, logged here)\n`);
+                // Still log OTP so user can get it from Render logs
+                console.log(`\n📧 OTP for ${normalizedEmail}: ${otp} (email failed)\n`);
             }
         } else {
-            // Development mode - log OTP to console
+            // No email configured - log to console
             console.log(`\n📧 OTP for ${normalizedEmail}: ${otp}\n`);
         }
 
         res.json({
-            message: emailSent ? 'OTP sent successfully' : 'OTP generated (check server logs)',
+            message: emailSent ? 'OTP sent to your email' : 'OTP generated (check server logs)',
             email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3')
         });
 
