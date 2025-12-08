@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
     GOALS: 'ascension_goals',
     DSA_TOPICS: 'ascension_dsa_topics',
     AI_MODULES: 'ascension_ai_modules',
-    WORKOUTS: 'ascension_workouts'
+    WORKOUTS: 'ascension_workouts',
+    DAILY_TASKS: 'ascension_daily_tasks'
 };
 
 // Default user data
@@ -223,6 +224,9 @@ export const AppProvider = ({ children }) => {
     // Gym state
     const [workouts, setWorkouts] = useState(() => loadFromStorage(STORAGE_KEYS.WORKOUTS, DEFAULT_WORKOUTS));
 
+    // Daily check-in tasks state (keyed by date string, e.g., "2025-12-08")
+    const [dailyTasks, setDailyTasks] = useState(() => loadFromStorage(STORAGE_KEYS.DAILY_TASKS, {}));
+
     // UI state
     const [loading, setLoading] = useState(true); // Start true for initial load
     const [lastSaved, setLastSaved] = useState(new Date());
@@ -282,11 +286,13 @@ export const AppProvider = ({ children }) => {
         const aiModulesToSet = serverUser.aiModules || [];
         const goalsToSet = serverUser.goals || [];
         const activitiesToSet = serverUser.activities || [];
+        const dailyTasksToSet = serverUser.dailyTasks || {};
 
         console.log('📊 Setting state from server:', {
             workouts: workoutsToSet.length,
             dsaTopics: dsaTopicsToSet.length,
-            aiModules: aiModulesToSet.length
+            aiModules: aiModulesToSet.length,
+            dailyTasks: Object.keys(dailyTasksToSet).length
         });
 
         setDsaTopics(dsaTopicsToSet);
@@ -294,6 +300,7 @@ export const AppProvider = ({ children }) => {
         setWorkouts(workoutsToSet);
         setGoals(goalsToSet);
         setActivities(activitiesToSet);
+        setDailyTasks(dailyTasksToSet);
 
         // Mark hydration as complete - now safe to sync
         hydrationCompleteRef.current = true;
@@ -412,6 +419,7 @@ export const AppProvider = ({ children }) => {
                     workouts: currentData.workouts,
                     goals: currentData.goals,
                     activities: currentData.activities,
+                    dailyTasks: currentData.dailyTasks,
                     stats: currentData.user?.stats,
                     streak: currentData.user?.streak,
                     xp: currentData.user?.xp,
@@ -510,8 +518,8 @@ export const AppProvider = ({ children }) => {
 
     // Keep dataRef updated with latest values (for sync to use)
     useEffect(() => {
-        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities };
-    }, [user, dsaTopics, aiModules, workouts, goals, activities]);
+        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks };
+    }, [user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks]);
 
     // Save to localStorage and trigger cloud sync on data changes
     useEffect(() => {
@@ -548,6 +556,11 @@ export const AppProvider = ({ children }) => {
         saveToStorage(STORAGE_KEYS.WORKOUTS, workouts);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [workouts, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        saveToStorage(STORAGE_KEYS.DAILY_TASKS, dailyTasks);
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [dailyTasks, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
     const saveToHistory = useCallback((action, prevState, newState) => {
@@ -1010,8 +1023,10 @@ export const AppProvider = ({ children }) => {
 
     const value = {
         // State
-        user, activities, heatmapData, goals, dsaTopics, aiModules, workouts,
+        user, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated,
+        // Daily Tasks
+        setDailyTasks,
         // Auth
         login, register, logout, syncToCloud, updateUserProfile, forceSyncNow,
         hydrateFromServerData, setAuthToken, setIsAuthenticated,

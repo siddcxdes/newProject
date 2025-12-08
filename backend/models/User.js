@@ -67,7 +67,10 @@ const userSchema = new mongoose.Schema({
     aiModules: { type: Array, default: [] },
     workouts: { type: Array, default: [] },
     goals: { type: Array, default: [] },
-    activities: { type: Array, default: [] }
+    activities: { type: Array, default: [] },
+    // Daily check-in tasks, keyed by date string (e.g., "2025-12-08")
+    // Each date contains: { dsa: [...], ai: [...], other: [...] }
+    dailyTasks: { type: Object, default: {} }
 }, {
     timestamps: true
 });

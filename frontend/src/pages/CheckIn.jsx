@@ -16,7 +16,7 @@ const formatDate = (dateStr) => {
 };
 
 const CheckIn = () => {
-    const { user, logActivity, dsaTopics, aiModules, toggleDsaSubtopic, toggleAiLesson } = useApp();
+    const { user, logActivity, dsaTopics, aiModules, toggleDsaSubtopic, toggleAiLesson, dailyTasks, setDailyTasks } = useApp();
     const todayStr = getISTDateString();
 
     const [dsaTasks, setDsaTasks] = useState([]);
@@ -67,18 +67,36 @@ const CheckIn = () => {
         );
     };
 
+    // Load tasks from AppContext (synced across devices)
     useEffect(() => {
-        const storedDsa = localStorage.getItem(`daily_dsa_${todayStr}`);
-        const storedAi = localStorage.getItem(`daily_ai_${todayStr}`);
-        const storedOther = localStorage.getItem(`daily_other_${todayStr}`);
-        if (storedDsa) setDsaTasks(JSON.parse(storedDsa));
-        if (storedAi) setAiTasks(JSON.parse(storedAi));
-        if (storedOther) setOtherTasks(JSON.parse(storedOther));
-    }, [todayStr]);
+        const todayData = dailyTasks[todayStr] || {};
+        setDsaTasks(todayData.dsa || []);
+        setAiTasks(todayData.ai || []);
+        setOtherTasks(todayData.other || []);
+    }, [dailyTasks, todayStr]);
 
-    const saveDsaTasks = (tasks) => { setDsaTasks(tasks); localStorage.setItem(`daily_dsa_${todayStr}`, JSON.stringify(tasks)); };
-    const saveAiTasks = (tasks) => { setAiTasks(tasks); localStorage.setItem(`daily_ai_${todayStr}`, JSON.stringify(tasks)); };
-    const saveOtherTasks = (tasks) => { setOtherTasks(tasks); localStorage.setItem(`daily_other_${todayStr}`, JSON.stringify(tasks)); };
+    // Save functions - update AppContext which syncs to backend
+    const saveDsaTasks = (tasks) => {
+        setDsaTasks(tasks);
+        setDailyTasks(prev => ({
+            ...prev,
+            [todayStr]: { ...prev[todayStr], dsa: tasks }
+        }));
+    };
+    const saveAiTasks = (tasks) => {
+        setAiTasks(tasks);
+        setDailyTasks(prev => ({
+            ...prev,
+            [todayStr]: { ...prev[todayStr], ai: tasks }
+        }));
+    };
+    const saveOtherTasks = (tasks) => {
+        setOtherTasks(tasks);
+        setDailyTasks(prev => ({
+            ...prev,
+            [todayStr]: { ...prev[todayStr], other: tasks }
+        }));
+    };
 
     // Manual add DSA task
     const addDsaTask = () => {
@@ -287,7 +305,7 @@ const CheckIn = () => {
                                                 >
                                                     <span className="text-sm text-white flex-1 truncate">{problem.name}</span>
                                                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${problem.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
-                                                            problem.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                                                        problem.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
                                                         }`}>{problem.difficulty}</span>
                                                 </button>
                                             ))}

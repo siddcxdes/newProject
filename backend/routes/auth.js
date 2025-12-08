@@ -86,7 +86,7 @@ router.put('/sync', protect, async (req, res) => {
             aiModules: req.body.aiModules?.length || 0
         }));
 
-        const { name, dsaTopics, aiModules, workouts, goals, activities, stats, streak, xp, level, xpToNextLevel, settings } = req.body;
+        const { name, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, stats, streak, xp, level, xpToNextLevel, settings } = req.body;
 
         const user = await User.findById(req.user._id);
         if (!user) {
@@ -101,6 +101,7 @@ router.put('/sync', protect, async (req, res) => {
         if (workouts !== undefined) user.workouts = workouts;
         if (goals !== undefined) user.goals = goals;
         if (activities !== undefined) user.activities = activities;
+        if (dailyTasks !== undefined) user.dailyTasks = dailyTasks;
         if (stats !== undefined) user.stats = stats;
         if (streak !== undefined) user.streak = streak;
         if (xp !== undefined) user.xp = xp;
