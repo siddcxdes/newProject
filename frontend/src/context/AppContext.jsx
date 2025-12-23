@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as api from '../utils/api';
 
 const AppContext = createContext();
@@ -684,6 +684,70 @@ export const AppProvider = ({ children }) => {
         return istDate.toISOString().split('T')[0];
     };
 
+    // Get current week's Monday date string in IST
+    const getCurrentWeekMondayIST = () => {
+        const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const istNow = new Date(utc + IST_OFFSET);
+        const dayOfWeek = istNow.getDay();
+        const mondayAdjust = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(istNow);
+        monday.setDate(istNow.getDate() + mondayAdjust);
+        return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+    };
+
+    // Dynamically compute stats from activities (source of truth)
+    const computedStats = useMemo(() => {
+        const todayIST = getISTDateString();
+        const weekStartIST = getCurrentWeekMondayIST();
+
+        let dsaProblemsToday = 0;
+        let aiModulesToday = 0;
+        const gymDaysThisWeekSet = new Set();
+        let jobApplications = 0;
+        let personalWins = 0;
+        let dsaProblemsTotal = 0;
+        let aiModulesCompleted = 0;
+
+        activities.forEach(activity => {
+            const activityDateIST = getISTDateString(new Date(activity.date));
+
+            switch (activity.type) {
+                case 'dsa':
+                    dsaProblemsTotal += 1;
+                    if (activityDateIST === todayIST) dsaProblemsToday += 1;
+                    break;
+                case 'ai':
+                    aiModulesCompleted += 1;
+                    if (activityDateIST === todayIST) aiModulesToday += 1;
+                    break;
+                case 'gym':
+                    // Count unique gym days this week
+                    if (activityDateIST >= weekStartIST && activityDateIST <= todayIST) {
+                        gymDaysThisWeekSet.add(activityDateIST);
+                    }
+                    break;
+                case 'job':
+                    jobApplications += 1;
+                    break;
+                case 'personal':
+                    personalWins += 1;
+                    break;
+            }
+        });
+
+        return {
+            dsaProblemsTotal,
+            dsaProblemsToday,
+            aiModulesCompleted,
+            aiProgress: Math.min(100, aiModulesCompleted * 5),
+            gymDaysThisWeek: gymDaysThisWeekSet.size,
+            jobApplications,
+            personalWins
+        };
+    }, [activities]);
+
     // Update streak (using IST)
     const updateStreak = (currentStreak) => {
         const todayIST = getISTDateString();
@@ -1021,10 +1085,16 @@ export const AppProvider = ({ children }) => {
         showNotification('🔄 All data reset! Fresh start!', 'success');
     };
 
+    // Build user with computed stats (always up-to-date)
+    const userWithComputedStats = useMemo(() => ({
+        ...user,
+        stats: { ...user?.stats, ...computedStats }
+    }), [user, computedStats]);
+
     const value = {
-        // State
-        user, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks,
-        loading, lastSaved, notification, useLocalStorage, isAuthenticated,
+        // State - user now has dynamically computed stats
+        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks,
+        loading, lastSaved, notification, useLocalStorage, isAuthenticated, computedStats,
         // Daily Tasks
         setDailyTasks,
         // Auth
