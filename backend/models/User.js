@@ -68,6 +68,8 @@ const userSchema = new mongoose.Schema({
     workouts: { type: Array, default: [] },
     goals: { type: Array, default: [] },
     activities: { type: Array, default: [] },
+    // Heatmap data for activity visualization (keyed by date string, e.g., "2025-01-02")
+    heatmapData: { type: Object, default: {} },
     // Daily check-in tasks, keyed by date string (e.g., "2025-12-08")
     // Each date contains: { dsa: [...], ai: [...], other: [...] }
     dailyTasks: { type: Object, default: {} }
