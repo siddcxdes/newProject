@@ -128,7 +128,12 @@ router.put('/sync', protect, async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        console.log('✅ SYNC SAVED for:', user.email);
+        console.log('✅ SYNC SAVED for:', user.email, '| DB now has:', {
+            dsaTopics: user.dsaTopics?.length || 0,
+            aiModules: user.aiModules?.length || 0,
+            workouts: user.workouts?.length || 0,
+            learningDomains: user.learningDomains?.length || 0
+        });
         res.json({ user: user.toJSON(), message: 'Data synced' });
     } catch (error) {
         console.error('❌ Sync error:', error);
