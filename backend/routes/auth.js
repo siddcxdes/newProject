@@ -91,38 +91,44 @@ router.put('/sync', protect, async (req, res) => {
 
         const { name, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains, stats, streak, xp, level, xpToNextLevel, settings, quote } = req.body;
 
-        const user = await User.findById(req.user._id);
+        // Build update object with only defined fields
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (dsaTopics !== undefined) updateData.dsaTopics = dsaTopics;
+        if (aiModules !== undefined) updateData.aiModules = aiModules;
+        if (workouts !== undefined) updateData.workouts = workouts;
+        if (goals !== undefined) updateData.goals = goals;
+        if (activities !== undefined) updateData.activities = activities;
+        if (dailyTasks !== undefined) updateData.dailyTasks = dailyTasks;
+        if (heatmapData !== undefined) updateData.heatmapData = heatmapData;
+        if (learningDomains !== undefined) updateData.learningDomains = learningDomains;
+        if (stats !== undefined) updateData.stats = stats;
+        if (streak !== undefined) updateData.streak = streak;
+        if (xp !== undefined) updateData.xp = xp;
+        if (level !== undefined) updateData.level = level;
+        if (xpToNextLevel !== undefined) updateData.xpToNextLevel = xpToNextLevel;
+        if (settings !== undefined) updateData.settings = settings;
+        if (quote !== undefined) updateData.quote = quote;
+
+        console.log('💾 Saving user with:', {
+            workouts: updateData.workouts?.length || 0,
+            learningDomains: updateData.learningDomains?.length || 0,
+            dsaTopics: updateData.dsaTopics?.length || 0
+        });
+
+        // Use findByIdAndUpdate to avoid full document validation (password issue)
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: updateData },
+            { new: true, runValidators: false }
+        );
+
         if (!user) {
             console.error('❌ User not found:', req.user._id);
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Always update these fields (don't skip if empty array)
-        if (name !== undefined) user.name = name;
-        if (dsaTopics !== undefined) user.dsaTopics = dsaTopics;
-        if (aiModules !== undefined) user.aiModules = aiModules;
-        if (workouts !== undefined) user.workouts = workouts;
-        if (goals !== undefined) user.goals = goals;
-        if (activities !== undefined) user.activities = activities;
-        if (dailyTasks !== undefined) user.dailyTasks = dailyTasks;
-        if (heatmapData !== undefined) user.heatmapData = heatmapData;
-        if (learningDomains !== undefined) user.learningDomains = learningDomains;
-        if (stats !== undefined) user.stats = stats;
-        if (streak !== undefined) user.streak = streak;
-        if (xp !== undefined) user.xp = xp;
-        if (level !== undefined) user.level = level;
-        if (xpToNextLevel !== undefined) user.xpToNextLevel = xpToNextLevel;
-        if (settings !== undefined) user.settings = settings;
-        if (quote !== undefined) user.quote = quote;
-
-        console.log('💾 Saving user with:', {
-            workouts: user.workouts?.length || 0,
-            learningDomains: user.learningDomains?.length || 0,
-            dsaTopics: user.dsaTopics?.length || 0
-        });
-        await user.save();
         console.log('✅ SYNC SAVED for:', user.email);
-
         res.json({ user: user.toJSON(), message: 'Data synced' });
     } catch (error) {
         console.error('❌ Sync error:', error);
