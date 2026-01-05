@@ -83,7 +83,10 @@ router.put('/sync', protect, async (req, res) => {
         console.log('📥 Body received:', JSON.stringify({
             workouts: req.body.workouts?.length || 0,
             dsaTopics: req.body.dsaTopics?.length || 0,
-            aiModules: req.body.aiModules?.length || 0
+            aiModules: req.body.aiModules?.length || 0,
+            learningDomains: req.body.learningDomains?.length || 0,
+            goals: req.body.goals?.length || 0,
+            activities: req.body.activities?.length || 0
         }));
 
         const { name, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains, stats, streak, xp, level, xpToNextLevel, settings, quote } = req.body;
@@ -112,7 +115,11 @@ router.put('/sync', protect, async (req, res) => {
         if (settings !== undefined) user.settings = settings;
         if (quote !== undefined) user.quote = quote;
 
-        console.log('💾 Saving user with workouts:', user.workouts?.length || 0);
+        console.log('💾 Saving user with:', {
+            workouts: user.workouts?.length || 0,
+            learningDomains: user.learningDomains?.length || 0,
+            dsaTopics: user.dsaTopics?.length || 0
+        });
         await user.save();
         console.log('✅ SYNC SAVED for:', user.email);
 

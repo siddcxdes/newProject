@@ -259,14 +259,16 @@ export const AppProvider = ({ children }) => {
         // ALWAYS use server data for authenticated users
         // This ensures cross-device sync works correctly
         // (Server data is the source of truth, even if empty)
-        const workoutsToSet = serverUser.workouts || [];
-        const dsaTopicsToSet = serverUser.dsaTopics || [];
-        const aiModulesToSet = serverUser.aiModules || [];
-        const goalsToSet = serverUser.goals || [];
-        const activitiesToSet = serverUser.activities || [];
-        const dailyTasksToSet = serverUser.dailyTasks || {};
-        const heatmapDataToSet = serverUser.heatmapData || {};
-        const learningDomainsToSet = serverUser.learningDomains?.length > 0 ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
+        // Only fall back to defaults for learningDomains if completely empty (for UX)
+        const workoutsToSet = serverUser.workouts ?? [];
+        const dsaTopicsToSet = serverUser.dsaTopics ?? [];
+        const aiModulesToSet = serverUser.aiModules ?? [];
+        const goalsToSet = serverUser.goals ?? [];
+        const activitiesToSet = serverUser.activities ?? [];
+        const dailyTasksToSet = serverUser.dailyTasks ?? {};
+        const heatmapDataToSet = serverUser.heatmapData ?? {};
+        // For learningDomains, use server data if it exists (even empty array means user cleared it)
+        const learningDomainsToSet = serverUser.learningDomains !== undefined ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
 
         console.log('📊 Setting state from server:', {
             workouts: workoutsToSet.length,
@@ -285,6 +287,8 @@ export const AppProvider = ({ children }) => {
         setDailyTasks(dailyTasksToSet);
         setHeatmapData(heatmapDataToSet);
         setLearningDomains(learningDomainsToSet);
+
+        console.log('🎯 STATE SET - learningDomains:', learningDomainsToSet.map(d => d.name || d.shortName));
 
         // Mark hydration as complete - now safe to sync
         hydrationCompleteRef.current = true;
@@ -500,13 +504,14 @@ export const AppProvider = ({ children }) => {
     // Force sync function (for manual triggering)
     const forceSyncNow = async () => {
         console.log('🚨 FORCE SYNC triggered!');
+        // Update dataRef immediately before sync
+        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
         await syncToCloud();
     };
 
     // Keep dataRef updated with latest values (for sync to use)
-    useEffect(() => {
-        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
-    }, [user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains]);
+    // This runs on EVERY render to ensure dataRef is always current
+    dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
 
     // Trigger cloud sync on data changes (no localStorage)
     useEffect(() => {
