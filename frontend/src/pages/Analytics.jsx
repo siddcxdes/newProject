@@ -1,10 +1,15 @@
 import { useApp } from '../context/AppContext';
 
 const Analytics = () => {
-    const { user, activities, dsaTopics, aiModules, workouts } = useApp();
+    const { user, activities, learningDomains, workouts } = useApp();
 
-    const totalDsaSolved = dsaTopics.reduce((sum, t) => sum + t.completed, 0);
-    const totalAiModules = aiModules.filter(m => m.completed).length;
+    // Calculate domain-based stats from learningDomains
+    const domainStats = learningDomains.map(domain => {
+        const totalItems = domain.topics?.reduce((sum, t) => sum + (t.items?.length || 0), 0) || 0;
+        const completedItems = domain.topics?.reduce((sum, t) => sum + (t.items?.filter(i => i.completed).length || 0), 0) || 0;
+        return { id: domain.id, name: domain.shortName || domain.name, completed: completedItems, total: totalItems, color: domain.color };
+    });
+
     const totalWorkouts = workouts.reduce((sum, w) => sum + w.timesCompleted, 0);
     const totalXpEarned = activities.reduce((sum, a) => sum + a.xpEarned, 0);
 
@@ -23,7 +28,35 @@ const Analytics = () => {
 
     const maxCount = Math.max(...last7Days.map(d => d.count), 1);
 
-    const categoryColors = { dsa: 'bg-violet-500', ai: 'bg-emerald-500', gym: 'bg-amber-500', job: 'bg-blue-500', personal: 'bg-pink-500' };
+    // Dynamic color mapping for categories
+    const getCategoryColor = (type) => {
+        // Check if it's a learning domain
+        const domain = learningDomains.find(d => d.id === type);
+        if (domain) {
+            const colorMap = {
+                violet: 'bg-violet-500',
+                emerald: 'bg-emerald-500',
+                blue: 'bg-blue-500',
+                amber: 'bg-amber-500',
+                pink: 'bg-pink-500',
+                cyan: 'bg-cyan-500',
+            };
+            return colorMap[domain.color] || 'bg-zinc-500';
+        }
+        // Fallback for legacy types
+        const legacyColors = { dsa: 'bg-violet-500', ai: 'bg-emerald-500', gym: 'bg-amber-500', job: 'bg-blue-500', personal: 'bg-pink-500' };
+        return legacyColors[type] || 'bg-zinc-500';
+    };
+
+    // Get display name for category
+    const getCategoryName = (type) => {
+        // Check if it's a learning domain
+        const domain = learningDomains.find(d => d.id === type);
+        if (domain) return domain.shortName || domain.name;
+        // Fallback for legacy types
+        const legacyNames = { dsa: 'DSA', ai: 'AI', gym: 'Gym', job: 'Job', personal: 'Personal' };
+        return legacyNames[type] || type;
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -83,13 +116,8 @@ const Analytics = () => {
                             {Object.entries(activityBreakdown).map(([type, count]) => {
                                 const total = activities.length;
                                 const percent = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
-                                const displayName = {
-                                    dsa: 'DSA',
-                                    ai: 'AI',
-                                    gym: 'Gym',
-                                    job: 'Job',
-                                    personal: 'Personal'
-                                }[type] || type;
+                                const displayName = getCategoryName(type);
+                                const colorClass = getCategoryColor(type);
                                 return (
                                     <div key={type}>
                                         <div className="flex justify-between text-sm mb-2">
@@ -97,7 +125,7 @@ const Analytics = () => {
                                             <span className="text-zinc-500"><span className="text-white font-semibold">{count}</span> ({percent}%)</span>
                                         </div>
                                         <div className="progress-bar h-2">
-                                            <div className={`h-full rounded-full ${categoryColors[type] || 'bg-zinc-500'}`} style={{ width: `${percent}%` }}></div>
+                                            <div className={`h-full rounded-full ${colorClass}`} style={{ width: `${percent}%` }}></div>
                                         </div>
                                     </div>
                                 );
@@ -107,20 +135,32 @@ const Analytics = () => {
                 </div>
 
                 <div className="glass-card p-5">
-                    <h3 className="text-base font-semibold text-white mb-4">Achievements</h3>
+                    <h3 className="text-base font-semibold text-white mb-4">Progress Overview</h3>
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
-                            <span className="text-sm text-white">DSA Problems Solved</span>
-                            <span className="font-semibold font-mono text-violet-400">{totalDsaSolved}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
-                            <span className="text-sm text-white">AI Modules Completed</span>
-                            <span className="font-semibold font-mono text-emerald-400">{totalAiModules}</span>
-                        </div>
+                        {/* Dynamic domain stats */}
+                        {domainStats.map(stat => {
+                            const colorMap = {
+                                violet: 'text-violet-400',
+                                emerald: 'text-emerald-400',
+                                blue: 'text-blue-400',
+                                amber: 'text-amber-400',
+                                pink: 'text-pink-400',
+                                cyan: 'text-cyan-400',
+                            };
+                            const textColor = colorMap[stat.color] || 'text-zinc-400';
+                            return (
+                                <div key={stat.id} className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
+                                    <span className="text-sm text-white">{stat.name} Completed</span>
+                                    <span className={`font-semibold font-mono ${textColor}`}>{stat.completed}/{stat.total}</span>
+                                </div>
+                            );
+                        })}
+                        {/* Workouts */}
                         <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
                             <span className="text-sm text-white">Workouts Logged</span>
                             <span className="font-semibold font-mono text-amber-400">{totalWorkouts}</span>
                         </div>
+                        {/* Total XP */}
                         <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
                             <span className="text-sm text-white">Total XP Earned</span>
                             <span className="font-semibold font-mono text-white">{totalXpEarned}</span>

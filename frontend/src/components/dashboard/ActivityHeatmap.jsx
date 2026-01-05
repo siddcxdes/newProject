@@ -73,15 +73,15 @@ const ActivityHeatmap = () => {
     }, [days]);
 
     const getIntensityClass = (data, isToday) => {
-        if (isToday) return 'bg-violet-500 ring-2 ring-violet-400/50';
-        if (!data) return 'bg-[#151515]';
+        if (isToday) return 'bg-gradient-to-br from-violet-400 to-fuchsia-500 ring-2 ring-violet-400/50 shadow-lg shadow-violet-500/30';
+        if (!data) return 'bg-[#1a1a1a] hover:bg-[#222]';
         const count = data.count;
-        if (count >= 5) return 'bg-emerald-400';
-        if (count >= 4) return 'bg-emerald-500';
-        if (count >= 3) return 'bg-emerald-600';
-        if (count >= 2) return 'bg-emerald-700/80';
-        if (count >= 1) return 'bg-emerald-800/60';
-        return 'bg-[#151515]';
+        if (count >= 5) return 'bg-gradient-to-br from-emerald-400 to-cyan-400 shadow-lg shadow-emerald-500/20';
+        if (count >= 4) return 'bg-gradient-to-br from-emerald-500 to-teal-500';
+        if (count >= 3) return 'bg-gradient-to-br from-violet-500 to-purple-600';
+        if (count >= 2) return 'bg-gradient-to-br from-violet-600 to-purple-700';
+        if (count >= 1) return 'bg-violet-800/60';
+        return 'bg-[#1a1a1a] hover:bg-[#222]';
     };
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -124,10 +124,17 @@ const ActivityHeatmap = () => {
     }, [heatmapData]);
 
     return (
-        <div className="glass-card p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-4 sm:mb-5">
+        <div className="glass-card p-4 sm:p-5 relative overflow-hidden">
+            {/* Decorative gradient background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-violet-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="flex items-center justify-between mb-4 sm:mb-5 relative">
                 <div>
-                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Activity Heatmap</h3>
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse"></span>
+                        Activity Heatmap
+                    </h3>
                     <p className="text-xs text-[var(--color-text-muted)]">Past 365 days in IST</p>
                 </div>
                 <div className="flex gap-4 sm:gap-8 text-right">
@@ -194,17 +201,17 @@ const ActivityHeatmap = () => {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-between mt-4 text-[11px]">
-                <span className="text-[var(--color-text-muted)] font-medium">Today: <span className="text-violet-400">{todayIST}</span></span>
+            <div className="flex items-center justify-between mt-4 text-[11px] relative">
+                <span className="text-[var(--color-text-muted)] font-medium">Today: <span className="text-violet-400 font-semibold">{todayIST}</span></span>
                 <div className="flex items-center gap-1.5">
                     <span className="text-[var(--color-text-muted)]">Less</span>
                     <div className="flex gap-[3px]">
-                        <div className="w-2.5 h-2.5 bg-[#151515] rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-emerald-800/60 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-emerald-700/80 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-emerald-600 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-emerald-400 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-[#1a1a1a] rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-violet-800/60 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-violet-600 to-purple-700 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-sm shadow-sm shadow-emerald-400/30"></div>
                     </div>
                     <span className="text-[var(--color-text-muted)]">More</span>
                 </div>

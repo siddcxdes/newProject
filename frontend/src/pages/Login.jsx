@@ -1,32 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-// Use production URL if env var not set
-const API_URL = import.meta.env.VITE_API_URL || 'https://newproject-zqkp.onrender.com/api';
+// Use local backend for development
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const Login = () => {
     const navigate = useNavigate();
     const { setAuthToken, setIsAuthenticated, hydrateFromServerData } = useApp();
-    const [step, setStep] = useState('email'); // 'email' | 'otp' | 'name'
+    const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset'
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
+    const [resetToken, setResetToken] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
-    const [countdown, setCountdown] = useState(0);
 
-    // Countdown timer for resend OTP
-    useEffect(() => {
-        if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [countdown]);
-
-    const handleSendOTP = async () => {
-        if (!email || !email.includes('@')) {
-            setError('Please enter a valid email address');
+    const handleLogin = async () => {
+        if (!email || !password) {
+            setError('Please enter email and password');
             return;
         }
 
@@ -34,64 +28,17 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_URL}/otp/send`, {
+            const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, password })
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || 'Failed to send OTP');
+                throw new Error(data.message || 'Login failed');
             }
-
-            setStep('otp');
-            setCountdown(60); // 60 second countdown for resend
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleVerifyOTP = async () => {
-        if (!otp || otp.length !== 6) {
-            setError('Please enter the 6-digit OTP');
-            return;
-        }
-
-        setError('');
-        setLoading(true);
-
-        try {
-            console.log('📧 Verifying OTP...');
-            const res = await fetch(`${API_URL}/otp/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, otp, name: name || undefined })
-            });
-
-            const data = await res.json();
-            console.log('📧 OTP verify response:', data);
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Verification failed');
-            }
-
-            // If new user, ask for name
-            if (data.isNewUser && !name) {
-                setStep('name');
-                setLoading(false);
-                return;
-            }
-
-            // Login successful
-            console.log('✅ Login successful, user data:', {
-                workouts: data.user?.workouts?.length || 0,
-                dsaTopics: data.user?.dsaTopics?.length || 0,
-                name: data.user?.name
-            });
 
             localStorage.setItem('ascension_token', data.token);
             setAuthToken(data.token);
@@ -103,21 +50,156 @@ const Login = () => {
 
             navigate('/');
         } catch (err) {
-            console.error('❌ OTP verify error:', err);
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSetName = async () => {
-        if (!name.trim()) {
-            setError('Please enter your name');
+    const handleRegister = async () => {
+        if (!email || !password) {
+            setError('Please enter email and password');
             return;
         }
 
-        // Verify OTP again with name
-        handleVerifyOTP();
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        setError('');
+        setLoading(true);
+
+        try {
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name || 'Champion', email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Registration failed');
+            }
+
+            localStorage.setItem('ascension_token', data.token);
+            setAuthToken(data.token);
+            setIsAuthenticated(true);
+
+            if (data.user) {
+                hydrateFromServerData(data.user);
+            }
+
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            setError('Please enter your email');
+            return;
+        }
+
+        setError('');
+        setSuccess('');
+        setLoading(true);
+
+        try {
+            const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to send reset email');
+            }
+
+            setSuccess('Check your email for the reset code');
+            // In dev mode, the token is returned
+            if (data.resetToken) {
+                setResetToken(data.resetToken);
+            }
+            setMode('reset');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetToken || !password) {
+            setError('Please enter the reset code and new password');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        setError('');
+        setLoading(true);
+
+        try {
+            const res = await fetch(`${API_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, token: resetToken, newPassword: password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to reset password');
+            }
+
+            setSuccess('Password reset successful! You can now login.');
+            setPassword('');
+            setConfirmPassword('');
+            setResetToken('');
+            setMode('login');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getTitle = () => {
+        switch (mode) {
+            case 'register': return 'Create Account';
+            case 'forgot': return 'Forgot Password';
+            case 'reset': return 'Reset Password';
+            default: return 'Welcome Back';
+        }
+    };
+
+    const getSubtitle = () => {
+        switch (mode) {
+            case 'register': return 'Join your journey to success';
+            case 'forgot': return 'Enter your email to reset';
+            case 'reset': return 'Enter the code and new password';
+            default: return 'Sign in to continue';
+        }
     };
 
     return (
@@ -137,23 +219,27 @@ const Login = () => {
                         </div>
                         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">ASCENSION</h1>
                     </div>
-                    <p className="text-[var(--color-text-muted)] text-sm">
-                        {step === 'email' && 'Enter your email to continue'}
-                        {step === 'otp' && 'Check your email for the code'}
-                        {step === 'name' && 'Welcome! What should we call you?'}
-                    </p>
+                    <p className="text-[var(--color-text-muted)] text-sm">{getSubtitle()}</p>
                 </div>
 
                 {/* Form Container */}
                 <div className="glass-card p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white text-center">{getTitle()}</h2>
+
                     {error && (
                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
                             {error}
                         </div>
                     )}
 
-                    {/* Email Input Step */}
-                    {step === 'email' && (
+                    {success && (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-500 text-sm text-center">
+                            {success}
+                        </div>
+                    )}
+
+                    {/* Login Form */}
+                    {mode === 'login' && (
                         <>
                             <div>
                                 <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
@@ -166,66 +252,47 @@ const Login = () => {
                                     className="input-field"
                                     placeholder="you@example.com"
                                     autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendOTP()}
                                 />
                             </div>
-                            <button
-                                onClick={handleSendOTP}
-                                disabled={loading || !email.includes('@')}
-                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
-                            >
-                                {loading ? 'Sending...' : 'Send Verification Code'}
-                            </button>
-                        </>
-                    )}
-
-                    {/* OTP Input Step */}
-                    {step === 'otp' && (
-                        <>
                             <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="text-xs text-[var(--color-text-muted)] uppercase tracking-wide">
-                                        Verification Code
-                                    </label>
-                                    <button
-                                        onClick={() => setStep('email')}
-                                        className="text-xs text-violet-400 hover:text-violet-300"
-                                    >
-                                        Change email
-                                    </button>
-                                </div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Password
+                                </label>
                                 <input
-                                    type="text"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    className="input-field text-center text-2xl tracking-[0.5em] font-mono"
-                                    placeholder="000000"
-                                    autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleVerifyOTP()}
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-field"
+                                    placeholder="••••••••"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                 />
-                                <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                                    Sent to {email}
-                                </p>
                             </div>
                             <button
-                                onClick={handleVerifyOTP}
-                                disabled={loading || otp.length !== 6}
+                                onClick={handleLogin}
+                                disabled={loading}
                                 className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
                             >
-                                {loading ? 'Verifying...' : 'Verify Code'}
+                                {loading ? 'Signing in...' : 'Sign In'}
                             </button>
-                            <button
-                                onClick={handleSendOTP}
-                                disabled={countdown > 0}
-                                className="w-full py-2 text-[var(--color-text-muted)] text-sm hover:text-[var(--color-text-secondary)] transition-colors disabled:opacity-50"
-                            >
-                                {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
-                            </button>
+                            <div className="flex justify-between text-sm">
+                                <button
+                                    onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
+                                    className="text-violet-400 hover:text-violet-300"
+                                >
+                                    Forgot password?
+                                </button>
+                                <button
+                                    onClick={() => { setMode('register'); setError(''); setSuccess(''); }}
+                                    className="text-violet-400 hover:text-violet-300"
+                                >
+                                    Create account
+                                </button>
+                            </div>
                         </>
                     )}
 
-                    {/* Name Input Step (for new users) */}
-                    {step === 'name' && (
+                    {/* Register Form */}
+                    {mode === 'register' && (
                         <>
                             <div>
                                 <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
@@ -236,17 +303,150 @@ const Login = () => {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     className="input-field"
-                                    placeholder="Enter your name"
+                                    placeholder="Your name"
                                     autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSetName()}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input-field"
+                                    placeholder="you@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-field"
+                                    placeholder="At least 6 characters"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="input-field"
+                                    placeholder="Confirm password"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                 />
                             </div>
                             <button
-                                onClick={handleSetName}
-                                disabled={loading || !name.trim()}
+                                onClick={handleRegister}
+                                disabled={loading}
                                 className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
                             >
-                                {loading ? 'Creating account...' : 'Get Started'}
+                                {loading ? 'Creating account...' : 'Create Account'}
+                            </button>
+                            <button
+                                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                                className="w-full text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+                            >
+                                Already have an account? Sign in
+                            </button>
+                        </>
+                    )}
+
+                    {/* Forgot Password Form */}
+                    {mode === 'forgot' && (
+                        <>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input-field"
+                                    placeholder="you@example.com"
+                                    autoFocus
+                                    onKeyDown={(e) => e.key === 'Enter' && handleForgotPassword()}
+                                />
+                            </div>
+                            <button
+                                onClick={handleForgotPassword}
+                                disabled={loading}
+                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                            >
+                                {loading ? 'Sending...' : 'Send Reset Code'}
+                            </button>
+                            <button
+                                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                                className="w-full text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+                            >
+                                Back to login
+                            </button>
+                        </>
+                    )}
+
+                    {/* Reset Password Form */}
+                    {mode === 'reset' && (
+                        <>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Reset Code
+                                </label>
+                                <input
+                                    type="text"
+                                    value={resetToken}
+                                    onChange={(e) => setResetToken(e.target.value.toUpperCase())}
+                                    className="input-field text-center text-lg tracking-widest font-mono"
+                                    placeholder="XXXXXX"
+                                    maxLength={6}
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-field"
+                                    placeholder="At least 6 characters"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
+                                    Confirm New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="input-field"
+                                    placeholder="Confirm password"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                                />
+                            </div>
+                            <button
+                                onClick={handleResetPassword}
+                                disabled={loading}
+                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                            >
+                                {loading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                            <button
+                                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                                className="w-full text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+                            >
+                                Back to login
                             </button>
                         </>
                     )}
@@ -265,4 +465,3 @@ const Login = () => {
 };
 
 export default Login;
-// Force redeploy Fri Dec  5 18:13:27 IST 2025

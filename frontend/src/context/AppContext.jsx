@@ -3,18 +3,6 @@ import * as api from '../utils/api';
 
 const AppContext = createContext();
 
-// LocalStorage keys
-const STORAGE_KEYS = {
-    USER: 'ascension_user',
-    ACTIVITIES: 'ascension_activities',
-    HEATMAP: 'ascension_heatmap',
-    GOALS: 'ascension_goals',
-    DSA_TOPICS: 'ascension_dsa_topics',
-    AI_MODULES: 'ascension_ai_modules',
-    WORKOUTS: 'ascension_workouts',
-    DAILY_TASKS: 'ascension_daily_tasks'
-};
-
 // Default user data
 const DEFAULT_USER = {
     name: 'Champion',
@@ -39,7 +27,7 @@ const DEFAULT_USER = {
     settings: {
         dailyDsaGoal: 3,
         weeklyGymGoal: 5,
-        theme: 'dark'
+        theme: 'light'
     }
 };
 
@@ -152,53 +140,39 @@ const XP_VALUES = {
     personal: 10
 };
 
-// Generate historical heatmap data
-// Return empty heatmap - will be populated by actual user activity
-const generateHistoricalHeatmap = () => ({});
-
-// Migration: Clear fake historical heatmap data for existing users
-const MIGRATION_KEY = 'ascension_migration_v2';
-const runMigrations = () => {
-    try {
-        const migrated = localStorage.getItem(MIGRATION_KEY);
-        if (!migrated) {
-            // Clear the old fake heatmap data
-            localStorage.removeItem(STORAGE_KEYS.HEATMAP);
-            // Mark migration as complete
-            localStorage.setItem(MIGRATION_KEY, 'true');
-            console.log('Migration complete: Cleared fake heatmap data');
-        }
-    } catch (error) {
-        console.error('Migration error:', error);
+// Default Learning Domains - unified structure for customizable domains
+const DEFAULT_LEARNING_DOMAINS = [
+    {
+        id: 'dsa',
+        name: 'Data Structures & Algorithms',
+        shortName: 'DSA',
+        icon: '📊',
+        color: 'violet',
+        type: 'problem-based', // has difficulty levels (easy/medium/hard)
+        xpPerItem: { easy: 10, medium: 25, hard: 50 },
+        topics: []
+    },
+    {
+        id: 'ai',
+        name: 'AI & Machine Learning',
+        shortName: 'AI/ML',
+        icon: '🤖',
+        color: 'emerald',
+        type: 'module-based', // flat XP per item
+        xpPerItem: 30,
+        topics: []
+    },
+    {
+        id: 'job',
+        name: 'Job Search',
+        shortName: 'Jobs',
+        icon: '💼',
+        color: 'blue',
+        type: 'module-based',
+        xpPerItem: 15,
+        topics: []
     }
-};
-
-// Run migrations immediately
-runMigrations();
-
-// Helper to load from localStorage
-const loadFromStorage = (key, defaultValue) => {
-    try {
-        const stored = localStorage.getItem(key);
-        if (stored) return JSON.parse(stored);
-        if (key === STORAGE_KEYS.HEATMAP) {
-            // Start with empty heatmap - no fake data
-            return {};
-        }
-        return defaultValue;
-    } catch {
-        return defaultValue;
-    }
-};
-
-// Helper to save to localStorage
-const saveToStorage = (key, value) => {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-        console.error('Error saving to localStorage:', error);
-    }
-};
+];
 
 export const useApp = () => {
     const context = useContext(AppContext);
@@ -211,29 +185,32 @@ export const useApp = () => {
 const MAX_HISTORY = 50;
 
 export const AppProvider = ({ children }) => {
-    // Core state
-    const [user, setUser] = useState(() => loadFromStorage(STORAGE_KEYS.USER, DEFAULT_USER));
-    const [activities, setActivities] = useState(() => loadFromStorage(STORAGE_KEYS.ACTIVITIES, []));
-    const [heatmapData, setHeatmapData] = useState(() => loadFromStorage(STORAGE_KEYS.HEATMAP, generateHistoricalHeatmap()));
-    const [goals, setGoals] = useState(() => loadFromStorage(STORAGE_KEYS.GOALS, DEFAULT_GOALS));
+    // Core state - initialize with defaults, will be hydrated from server
+    const [user, setUser] = useState(DEFAULT_USER);
+    const [activities, setActivities] = useState([]);
+    const [heatmapData, setHeatmapData] = useState({});
+    const [goals, setGoals] = useState(DEFAULT_GOALS);
 
     // Academics state
-    const [dsaTopics, setDsaTopics] = useState(() => loadFromStorage(STORAGE_KEYS.DSA_TOPICS, DEFAULT_DSA_TOPICS));
-    const [aiModules, setAiModules] = useState(() => loadFromStorage(STORAGE_KEYS.AI_MODULES, DEFAULT_AI_MODULES));
+    const [dsaTopics, setDsaTopics] = useState(DEFAULT_DSA_TOPICS);
+    const [aiModules, setAiModules] = useState(DEFAULT_AI_MODULES);
 
     // Gym state
-    const [workouts, setWorkouts] = useState(() => loadFromStorage(STORAGE_KEYS.WORKOUTS, DEFAULT_WORKOUTS));
+    const [workouts, setWorkouts] = useState(DEFAULT_WORKOUTS);
 
     // Daily check-in tasks state (keyed by date string, e.g., "2025-12-08")
-    const [dailyTasks, setDailyTasks] = useState(() => loadFromStorage(STORAGE_KEYS.DAILY_TASKS, {}));
+    const [dailyTasks, setDailyTasks] = useState({});
+
+    // Learning Domains - unified customizable domains
+    const [learningDomains, setLearningDomains] = useState(DEFAULT_LEARNING_DOMAINS);
 
     // UI state
     const [loading, setLoading] = useState(true); // Start true for initial load
     const [lastSaved, setLastSaved] = useState(new Date());
     const [notification, setNotification] = useState(null);
-    const [useLocalStorage, setUseLocalStorage] = useState(true);
+    const [useLocalStorage, setUseLocalStorage] = useState(false); // No localStorage
 
-    // Auth state
+    // Auth state - only token stored in localStorage
     const [authToken, setAuthToken] = useState(() => localStorage.getItem('ascension_token'));
     const [isAuthenticated, setIsAuthenticated] = useState(false); // Start false, set after checking
 
@@ -245,7 +222,7 @@ export const AppProvider = ({ children }) => {
     const hydrationCompleteRef = useRef(false); // Prevents sync before hydration
 
     // Use refs to track latest data for sync (prevents stale closure issues)
-    const dataRef = useRef({ user: null, dsaTopics: [], aiModules: [], workouts: [], goals: [], activities: [] });
+    const dataRef = useRef({ user: null, dsaTopics: [], aiModules: [], workouts: [], goals: [], activities: [], learningDomains: [] });
 
     // API base URL
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -274,7 +251,8 @@ export const AppProvider = ({ children }) => {
             streak: serverUser.streak || DEFAULT_USER.streak,
             stats: serverUser.stats || DEFAULT_USER.stats,
             journey: serverUser.journey || DEFAULT_USER.journey,
-            settings: serverUser.settings || DEFAULT_USER.settings
+            settings: serverUser.settings || DEFAULT_USER.settings,
+            quote: serverUser.quote || "The only way to do great work is to love what you do."
         };
         setUser(hydratedUser);
 
@@ -287,12 +265,16 @@ export const AppProvider = ({ children }) => {
         const goalsToSet = serverUser.goals || [];
         const activitiesToSet = serverUser.activities || [];
         const dailyTasksToSet = serverUser.dailyTasks || {};
+        const heatmapDataToSet = serverUser.heatmapData || {};
+        const learningDomainsToSet = serverUser.learningDomains?.length > 0 ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
 
         console.log('📊 Setting state from server:', {
             workouts: workoutsToSet.length,
             dsaTopics: dsaTopicsToSet.length,
             aiModules: aiModulesToSet.length,
-            dailyTasks: Object.keys(dailyTasksToSet).length
+            dailyTasks: Object.keys(dailyTasksToSet).length,
+            heatmapData: Object.keys(heatmapDataToSet).length,
+            learningDomains: learningDomainsToSet.length
         });
 
         setDsaTopics(dsaTopicsToSet);
@@ -301,6 +283,8 @@ export const AppProvider = ({ children }) => {
         setGoals(goalsToSet);
         setActivities(activitiesToSet);
         setDailyTasks(dailyTasksToSet);
+        setHeatmapData(heatmapDataToSet);
+        setLearningDomains(learningDomainsToSet);
 
         // Mark hydration as complete - now safe to sync
         hydrationCompleteRef.current = true;
@@ -420,12 +404,15 @@ export const AppProvider = ({ children }) => {
                     goals: currentData.goals,
                     activities: currentData.activities,
                     dailyTasks: currentData.dailyTasks,
+                    heatmapData: currentData.heatmapData,
+                    learningDomains: currentData.learningDomains,
                     stats: currentData.user?.stats,
                     streak: currentData.user?.streak,
                     xp: currentData.user?.xp,
                     level: currentData.user?.level,
                     xpToNextLevel: currentData.user?.xpToNextLevel,
-                    settings: currentData.user?.settings
+                    settings: currentData.user?.settings,
+                    quote: currentData.user?.quote
                 })
             });
             if (response.ok) {
@@ -518,49 +505,49 @@ export const AppProvider = ({ children }) => {
 
     // Keep dataRef updated with latest values (for sync to use)
     useEffect(() => {
-        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks };
-    }, [user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks]);
+        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
+    }, [user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains]);
 
-    // Save to localStorage and trigger cloud sync on data changes
+    // Trigger cloud sync on data changes (no localStorage)
     useEffect(() => {
         if (user) {
-            saveToStorage(STORAGE_KEYS.USER, user);
             setLastSaved(new Date());
             if (hydrationCompleteRef.current) debouncedSyncToCloud();
         }
     }, [user, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.ACTIVITIES, activities);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [activities, debouncedSyncToCloud]);
 
-    useEffect(() => { saveToStorage(STORAGE_KEYS.HEATMAP, heatmapData); }, [heatmapData]);
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [heatmapData, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.GOALS, goals);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [goals, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.DSA_TOPICS, dsaTopics);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [dsaTopics, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.AI_MODULES, aiModules);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [aiModules, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.WORKOUTS, workouts);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [workouts, debouncedSyncToCloud]);
 
     useEffect(() => {
-        saveToStorage(STORAGE_KEYS.DAILY_TASKS, dailyTasks);
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [dailyTasks, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        console.log('📦 learningDomains updated:', learningDomains.map(d => ({ id: d.id, name: d.shortName, topicsCount: d.topics?.length || 0, topics: d.topics?.map(t => ({ name: t.name, itemsCount: t.items?.length || 0 })) })));
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [learningDomains, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
     const saveToHistory = useCallback((action, prevState, newState) => {
@@ -963,6 +950,178 @@ export const AppProvider = ({ children }) => {
         saveToHistory('AI_MODULE', prev, newModules);
     };
 
+    // ===== LEARNING DOMAIN FUNCTIONS =====
+    const addLearningDomain = (name, shortName = '', icon = '📚', color = 'blue', type = 'module-based') => {
+        const prev = [...learningDomains];
+        const newDomain = {
+            id: `domain_${Date.now()}`,
+            name,
+            shortName: shortName || name.substring(0, 10),
+            icon,
+            color,
+            type,
+            xpPerItem: type === 'problem-based' ? { easy: 10, medium: 25, hard: 50 } : 30,
+            topics: []
+        };
+        const newDomains = [...learningDomains, newDomain];
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification(`Added domain: ${name}`, 'success');
+        return newDomain;
+    };
+
+    const editLearningDomain = (domainId, updates) => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => d.id === domainId ? { ...d, ...updates } : d);
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification('Domain updated!', 'success');
+    };
+
+    const deleteLearningDomain = (domainId) => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.filter(d => d.id !== domainId);
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification('Domain deleted', 'info');
+    };
+
+    const addDomainTopic = (domainId, name, icon = '📝') => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                const newTopic = {
+                    id: Date.now(),
+                    name,
+                    icon,
+                    completed: 0,
+                    total: 0,
+                    items: []
+                };
+                return { ...d, topics: [...d.topics, newTopic] };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification(`Added topic: ${name}`, 'success');
+    };
+
+    const editDomainTopic = (domainId, topicId, updates) => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                return {
+                    ...d,
+                    topics: d.topics.map(t => t.id === topicId ? { ...t, ...updates } : t)
+                };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification('Topic updated!', 'success');
+    };
+
+    const deleteDomainTopic = (domainId, topicId) => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                return { ...d, topics: d.topics.filter(t => t.id !== topicId) };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification('Topic deleted', 'info');
+    };
+
+    const addDomainItem = (domainId, topicId, name, difficulty = 'medium') => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                return {
+                    ...d,
+                    topics: d.topics.map(t => {
+                        if (t.id === topicId) {
+                            const newItem = {
+                                id: Date.now(),
+                                name,
+                                difficulty: d.type === 'problem-based' ? difficulty : undefined,
+                                completed: false
+                            };
+                            return { ...t, items: [...t.items, newItem], total: t.total + 1 };
+                        }
+                        return t;
+                    })
+                };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification(`Added item: ${name}`, 'success');
+    };
+
+    const toggleDomainItem = (domainId, topicId, itemId) => {
+        const prev = [...learningDomains];
+        const domain = learningDomains.find(d => d.id === domainId);
+        const topic = domain?.topics.find(t => t.id === topicId);
+        const item = topic?.items.find(i => i.id === itemId);
+        const wasCompleted = item?.completed;
+
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                return {
+                    ...d,
+                    topics: d.topics.map(t => {
+                        if (t.id === topicId) {
+                            const newItems = t.items.map(i =>
+                                i.id === itemId ? { ...i, completed: !i.completed } : i
+                            );
+                            const completedCount = newItems.filter(i => i.completed).length;
+                            return { ...t, items: newItems, completed: completedCount };
+                        }
+                        return t;
+                    })
+                };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+
+        // Log activity if marking as complete
+        if (!wasCompleted && item) {
+            const xp = domain.type === 'problem-based'
+                ? (domain.xpPerItem[item.difficulty] || 25)
+                : (typeof domain.xpPerItem === 'number' ? domain.xpPerItem : 30);
+            logActivity('personal', { notes: `${domain.shortName}: ${item.name}`, xpOverride: xp });
+        }
+    };
+
+    const deleteDomainItem = (domainId, topicId, itemId) => {
+        const prev = [...learningDomains];
+        const newDomains = learningDomains.map(d => {
+            if (d.id === domainId) {
+                return {
+                    ...d,
+                    topics: d.topics.map(t => {
+                        if (t.id === topicId) {
+                            const newItems = t.items.filter(i => i.id !== itemId);
+                            return { ...t, items: newItems, total: Math.max(0, t.total - 1) };
+                        }
+                        return t;
+                    })
+                };
+            }
+            return d;
+        });
+        setLearningDomains(newDomains);
+        saveToHistory('LEARNING_DOMAIN', prev, newDomains);
+        showNotification('Item removed', 'info');
+    };
+
     // ===== WORKOUT FUNCTIONS =====
     const addWorkout = (name, icon = '💪', exercises = []) => {
         const prev = [...workouts];
@@ -1043,10 +1202,14 @@ export const AppProvider = ({ children }) => {
         localStorage.setItem('ascension_theme', theme);
     }, []);
 
-    // Initialize theme on mount
+    // Initialize theme on mount - force light theme as default
     useEffect(() => {
-        const savedTheme = localStorage.getItem('ascension_theme') || user?.settings?.theme || 'dark';
-        applyTheme(savedTheme);
+        // Migration: Force light theme for all users
+        const savedTheme = localStorage.getItem('ascension_theme');
+        // Always use light theme (user can switch to dark in Settings if they want)
+        const themeToApply = 'light';
+        applyTheme(themeToApply);
+        localStorage.setItem('ascension_theme', 'light'); // Persist light theme
     }, []);
 
     // Apply theme when settings change
@@ -1057,18 +1220,23 @@ export const AppProvider = ({ children }) => {
     }, [user?.settings?.theme, applyTheme]);
 
     const updateSettings = async (settings) => {
-        setUser(prev => ({ ...prev, settings: { ...prev.settings, ...settings } }));
+        setUser(prev => {
+            const updated = { ...prev, settings: { ...prev.settings, ...settings } };
+            // Update dataRef immediately so sync has latest data
+            dataRef.current.user = updated;
+            return updated;
+        });
         // Theme is applied via the useEffect above
         showNotification('Settings saved!', 'success');
+        // Trigger cloud sync after state update
+        if (authToken) {
+            setTimeout(() => syncToCloud(), 100);
+        }
     };
 
     const refreshData = async () => { };
-
     // Reset ALL data to defaults
     const resetAll = () => {
-        // Clear all localStorage
-        Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
-
         // Reset all state to defaults
         setUser({ ...DEFAULT_USER, journey: { ...DEFAULT_USER.journey, startDate: new Date().toISOString() } });
         setActivities([]);
@@ -1083,6 +1251,11 @@ export const AppProvider = ({ children }) => {
         setHistoryIndex(-1);
 
         showNotification('🔄 All data reset! Fresh start!', 'success');
+        
+        // Sync reset to cloud
+        if (authToken) {
+            setTimeout(() => syncToCloud(), 100);
+        }
     };
 
     // Build user with computed stats (always up-to-date)
@@ -1093,7 +1266,7 @@ export const AppProvider = ({ children }) => {
 
     const value = {
         // State - user now has dynamically computed stats
-        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks,
+        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks, learningDomains,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated, computedStats,
         // Daily Tasks
         setDailyTasks,
@@ -1108,6 +1281,11 @@ export const AppProvider = ({ children }) => {
         addDsaTopic, editDsaTopic, deleteDsaTopic, addDsaSubtopic, toggleDsaSubtopic, deleteDsaSubtopic,
         // AI
         addAiModule, editAiModule, deleteAiModule, addAiLesson, toggleAiLesson, completeAiModule,
+        // Learning Domains
+        addLearningDomain, editLearningDomain, deleteLearningDomain,
+        addDomainTopic, editDomainTopic, deleteDomainTopic,
+        addDomainItem, toggleDomainItem, deleteDomainItem,
+        setLearningDomains, // Expose for bulk imports
         // Workouts
         addWorkout, editWorkout, deleteWorkout, logWorkout,
         // Settings & Utils

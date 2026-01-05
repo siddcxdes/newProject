@@ -4,17 +4,25 @@ import { useApp } from '../../context/AppContext';
 const Sidebar = () => {
     const { user } = useApp();
 
-    const navItems = [
+    const allNavItems = [
         { path: '/', label: 'Dashboard', icon: 'grid' },
         { path: '/checkin', label: 'Daily Check-In', icon: 'check' },
         { path: '/academics', label: 'Academics', icon: 'book' },
         { path: '/gym', label: 'Gym & Health', icon: 'activity' },
-        { path: '/jobs', label: 'Job Search', icon: 'briefcase' },
+        { path: '/jobs', label: 'Job Search', icon: 'briefcase', optional: 'showJobSearch' },
         { path: '/social', label: 'Goals', icon: 'target' },
         { path: '/analytics', label: 'Analytics', icon: 'chart' },
         { path: '/settings', label: 'Settings', icon: 'settings' },
         { path: '/admin', label: 'Admin', icon: 'terminal' },
     ];
+
+    // Filter based on user settings
+    const navItems = allNavItems.filter(item => {
+        if (item.optional && user?.settings?.[item.optional] === false) {
+            return false;
+        }
+        return true;
+    });
 
     const getIcon = (name) => {
         const icons = {

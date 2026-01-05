@@ -4,7 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root,
+:root {
+  /* Background colors - Clean, warm whites with subtle depth */
+  --color-bg-primary: #fafafa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f5f5f5;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #f0f0f0;
+  --color-bg-active: #e8e8e8;
+
+  /* Text colors - Rich, readable contrast */
+  --color-text-primary: #18181b;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted: #71717a;
+  --color-text-label: #a1a1aa;
+
+  /* Border colors - Subtle, refined */
+  --color-border: #e5e5e5;
+  --color-border-subtle: #f0f0f0;
+  --color-border-hover: #d4d4d4;
+
+  /* Accent colors (remain same for both themes) */
+  --color-accent: #8b5cf6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Scrollbar */
+  --color-scrollbar: #d4d4d4;
+  --color-scrollbar-hover: #a1a1aa;
+
+  /* Focus - Violet accent for consistency */
+  --color-focus: #8b5cf6;
+
+  /* Shadows - Soft, elegant depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
 [data-theme="dark"] {
   /* Background colors */
   --color-bg-primary: #000000;
@@ -25,12 +64,6 @@
   --color-border-subtle: #222222;
   --color-border-hover: #2a2a2a;
 
-  /* Accent colors (remain same for both themes) */
-  --color-accent: #8b5cf6;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-
   /* Scrollbar */
   --color-scrollbar: #333;
   --color-scrollbar-hover: #444;
@@ -46,37 +79,7 @@
 }
 
 [data-theme="light"] {
-  /* Background colors - Clean, warm whites with subtle depth */
-  --color-bg-primary: #fafafa;
-  --color-bg-secondary: #ffffff;
-  --color-bg-tertiary: #f5f5f5;
-  --color-bg-card: #ffffff;
-  --color-bg-hover: #f0f0f0;
-  --color-bg-active: #e8e8e8;
-
-  /* Text colors - Rich, readable contrast */
-  --color-text-primary: #18181b;
-  --color-text-secondary: #3f3f46;
-  --color-text-muted: #71717a;
-  --color-text-label: #a1a1aa;
-
-  /* Border colors - Subtle, refined */
-  --color-border: #e5e5e5;
-  --color-border-subtle: #f0f0f0;
-  --color-border-hover: #d4d4d4;
-
-  /* Scrollbar */
-  --color-scrollbar: #d4d4d4;
-  --color-scrollbar-hover: #a1a1aa;
-
-  /* Focus - Violet accent for consistency */
-  --color-focus: #8b5cf6;
-
-  /* Shadows - Soft, elegant depth */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  /* Explicit light theme matches root */
 }
 
 * {

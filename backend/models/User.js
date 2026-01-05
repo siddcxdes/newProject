@@ -2,142 +2,107 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        default: 'Champion'
-    },
-    phone: {
-        type: String,
-        unique: true,
-        sparse: true, // Allows null values while maintaining uniqueness
-        trim: true
-    },
-    email: {
-        type: String,
-        unique: true,
-        sparse: true, // Now optional
-        lowercase: true,
-        trim: true
-    },
-    password: {
-        type: String,
-        minlength: 6
-        // No longer required
-    },
-    level: {
-        type: Number,
-        default: 1
-    },
-    xp: {
-        type: Number,
-        default: 0
-    },
-    xpToNextLevel: {
-        type: Number,
-        default: 500
-    },
-    streak: {
-        current: { type: Number, default: 0 },
-        longest: { type: Number, default: 0 },
-        lastActivityDate: { type: Date, default: null }
-    },
-    stats: {
-        dsaProblemsTotal: { type: Number, default: 0 },
-        dsaProblemsToday: { type: Number, default: 0 },
-        dsaTodayDate: { type: Date, default: null },
-        aiModulesCompleted: { type: Number, default: 0 },
-        aiProgress: { type: Number, default: 0 },
-        gymDaysThisWeek: { type: Number, default: 0 },
-        gymWeekStart: { type: Date, default: null },
-        jobApplications: { type: Number, default: 0 },
-        personalWins: { type: Number, default: 0 }
-    },
-    journey: {
-        startDate: { type: Date, default: Date.now },
-        totalWeeks: { type: Number, default: 17 },
-        currentWeek: { type: Number, default: 1 }
-    },
-    settings: {
-        dailyDsaGoal: { type: Number, default: 3 },
-        weeklyGymGoal: { type: Number, default: 5 },
-        theme: { type: String, default: 'dark' }
-    },
-    // Data storage
-    dsaTopics: { type: Array, default: [] },
-    aiModules: { type: Array, default: [] },
-    workouts: { type: Array, default: [] },
-    goals: { type: Array, default: [] },
-    activities: { type: Array, default: [] },
-    // Heatmap data for activity visualization (keyed by date string, e.g., "2025-01-02")
-    heatmapData: { type: Object, default: {} },
-    // Daily check-in tasks, keyed by date string (e.g., "2025-12-08")
-    // Each date contains: { dsa: [...], ai: [...], other: [...] }
-    dailyTasks: { type: Object, default: {} }
-}, {
-    timestamps: true
-});
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
+  name: { type: String, default: 'Champion', trim: true },
+  avatar: { type: String, default: '' },
+  quote: { type: String, default: "The only way to do great work is to love what you do." },
+  
+  // Password reset
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  
+  // Gamification
+  stats: {
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    lastActiveDate: { type: Date, default: null }
+  },
+  
+  // User Settings
+  settings: {
+    weeklyGymGoal: { type: Number, default: 6 },
+    dailyDsaGoal: { type: Number, default: 3 },
+    theme: { type: String, default: 'dark' },
+    notifications: { type: Boolean, default: true }
+  },
+  
+  // Journey tracking
+  journey: {
+    startDate: { type: Date, default: Date.now },
+    totalWeeks: { type: Number, default: 17 },
+    currentWeek: { type: Number, default: 1 }
+  }
+}, { timestamps: true });
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 12);
-    next();
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Calculate level thresholds
-userSchema.methods.calculateXpForLevel = function (level) {
-    if (level <= 1) return 0;
-    return Math.floor(500 * Math.pow(1.5, level - 2)) + this.calculateXpForLevel(level - 1);
+// Calculate level from XP
+userSchema.methods.calculateLevel = function() {
+  const xp = this.stats.xp;
+  if (xp < 100) return 1;
+  if (xp < 300) return 2;
+  if (xp < 600) return 3;
+  if (xp < 1000) return 4;
+  if (xp < 1500) return 5;
+  if (xp < 2100) return 6;
+  if (xp < 2800) return 7;
+  if (xp < 3600) return 8;
+  if (xp < 4500) return 9;
+  return 10;
 };
 
-// Check and handle level up
-userSchema.methods.checkLevelUp = function () {
-    let levelsGained = 0;
-    while (this.xp >= this.xpToNextLevel) {
-        this.level += 1;
-        levelsGained += 1;
-        this.xpToNextLevel = this.calculateXpForLevel(this.level + 1);
+// Update streak based on activity
+userSchema.methods.updateStreak = function(activityDateStr) {
+  const today = activityDateStr || new Date().toISOString().split('T')[0];
+  const lastDate = this.stats.lastActiveDate ? this.stats.lastActiveDate.toISOString().split('T')[0] : null;
+
+  if (!lastDate) {
+    this.stats.currentStreak = 1;
+    this.stats.longestStreak = 1;
+  } else if (lastDate === today) {
+    return; // Already logged today
+  } else {
+    const last = new Date(lastDate);
+    const curr = new Date(today);
+    const diffDays = Math.floor((curr - last) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      this.stats.currentStreak += 1;
+      this.stats.longestStreak = Math.max(this.stats.longestStreak, this.stats.currentStreak);
+    } else if (diffDays > 1) {
+      this.stats.currentStreak = 1;
     }
-    return levelsGained;
+  }
+  this.stats.lastActiveDate = new Date(today);
 };
 
-// Update streak
-userSchema.methods.updateStreak = function () {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (this.streak.lastActivityDate) {
-        const lastDate = new Date(this.streak.lastActivityDate);
-        lastDate.setHours(0, 0, 0, 0);
-        const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return;
-        else if (diffDays === 1) {
-            this.streak.current += 1;
-            if (this.streak.current > this.streak.longest) {
-                this.streak.longest = this.streak.current;
-            }
-        } else {
-            this.streak.current = 1;
-        }
-    } else {
-        this.streak.current = 1;
-    }
-    this.streak.lastActivityDate = today;
+// Check for level up after XP gain
+userSchema.methods.checkLevelUp = function() {
+  const oldLevel = this.stats.level;
+  this.stats.level = this.calculateLevel();
+  return this.stats.level - oldLevel;
 };
 
-// Return user data without password
-userSchema.methods.toJSON = function () {
-    const obj = this.toObject();
-    delete obj.password;
-    return obj;
+// Sanitize output (remove password)
+userSchema.methods.toJSON = function() {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.__v;
+  return obj;
 };
 
-const User = mongoose.model('User', userSchema);
-
-export default User;
+export default mongoose.model('User', userSchema);

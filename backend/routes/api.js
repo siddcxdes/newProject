@@ -1,4 +1,5 @@
 import express from 'express';
+import { protect } from '../middleware/auth.js';
 import {
     getUser,
     updateUser,
@@ -10,6 +11,9 @@ import {
 } from '../controllers/userController.js';
 
 const router = express.Router();
+
+// All routes require authentication
+router.use(protect);
 
 // User routes
 router.get('/profile', getUser);

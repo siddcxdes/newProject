@@ -6,9 +6,9 @@ const Settings = () => {
     const navigate = useNavigate();
     const { user, updateSettings, logout, updateUserProfile } = useApp();
     const [settings, setSettings] = useState({
-        dailyDsaGoal: user?.settings?.dailyDsaGoal || 3,
         weeklyGymGoal: user?.settings?.weeklyGymGoal || 5,
-        theme: user?.settings?.theme || 'dark',
+        theme: user?.settings?.theme || 'light',
+        showJobSearch: user?.settings?.showJobSearch !== false, // Default to true
     });
     const [name, setName] = useState(user?.name || '');
     const [isEditingName, setIsEditingName] = useState(false);
@@ -105,20 +105,8 @@ const Settings = () => {
 
             {/* Goals Settings */}
             <div className="glass-card p-5">
-                <h3 className="text-base font-semibold text-white mb-5">Daily Goals</h3>
+                <h3 className="text-base font-semibold text-white mb-5">Gym Goals</h3>
                 <div className="space-y-6">
-                    <div>
-                        <label className="flex items-center justify-between mb-3">
-                            <span className="text-sm text-zinc-400">Daily DSA Problems</span>
-                            <span className="text-sm font-semibold font-mono text-white">{settings.dailyDsaGoal}</span>
-                        </label>
-                        <input type="range" min="1" max="10" value={settings.dailyDsaGoal} onChange={(e) => setSettings({ ...settings, dailyDsaGoal: parseInt(e.target.value) })} className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer accent-violet-500" />
-                        <div className="flex justify-between text-xs text-zinc-600 mt-2">
-                            <span>1 problem</span>
-                            <span>10 problems</span>
-                        </div>
-                    </div>
-
                     <div>
                         <label className="flex items-center justify-between mb-3">
                             <span className="text-sm text-zinc-400">Weekly Gym Sessions</span>
@@ -129,6 +117,25 @@ const Settings = () => {
                             <span>1 day</span>
                             <span>7 days</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Features Settings */}
+            <div className="glass-card p-5">
+                <h3 className="text-base font-semibold text-white mb-4">Features</h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-white">Job Search</p>
+                            <p className="text-xs text-zinc-500">Show job search section in sidebar</p>
+                        </div>
+                        <button
+                            onClick={() => setSettings({ ...settings, showJobSearch: !settings.showJobSearch })}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${settings.showJobSearch ? 'bg-violet-600' : 'bg-zinc-700'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${settings.showJobSearch ? 'left-7' : 'left-1'}`}></div>
+                        </button>
                     </div>
                 </div>
             </div>

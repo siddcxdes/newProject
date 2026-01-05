@@ -3,9 +3,12 @@ import { useApp } from '../context/AppContext';
 
 const Academics = () => {
     const {
-        dsaTopics, aiModules, logActivity,
+        dsaTopics, aiModules, logActivity, learningDomains,
         addDsaTopic, editDsaTopic, deleteDsaTopic, addDsaSubtopic, toggleDsaSubtopic, deleteDsaSubtopic,
-        addAiModule, editAiModule, deleteAiModule, addAiLesson, toggleAiLesson, completeAiModule
+        addAiModule, editAiModule, deleteAiModule, addAiLesson, toggleAiLesson, completeAiModule,
+        addLearningDomain, editLearningDomain, deleteLearningDomain,
+        addDomainTopic, editDomainTopic, deleteDomainTopic,
+        addDomainItem, toggleDomainItem, deleteDomainItem
     } = useApp();
 
     const [activeSection, setActiveSection] = useState('dsa');
@@ -22,6 +25,23 @@ const Academics = () => {
     const [newLessonName, setNewLessonName] = useState('');
     const [editingTopic, setEditingTopic] = useState(null);
     const [editingModule, setEditingModule] = useState(null);
+
+    // Domain editing state
+    const [showAddDomain, setShowAddDomain] = useState(false);
+    const [newDomainName, setNewDomainName] = useState('');
+    const [newDomainShortName, setNewDomainShortName] = useState('');
+    const [newDomainIcon, setNewDomainIcon] = useState('📚');
+    const [newDomainColor, setNewDomainColor] = useState('blue');
+    const [newDomainType, setNewDomainType] = useState('module-based');
+    const [editingDomain, setEditingDomain] = useState(null);
+    const [activeDomain, setActiveDomain] = useState(null);
+    const [expandedDomainTopic, setExpandedDomainTopic] = useState(null);
+    const [showAddDomainTopic, setShowAddDomainTopic] = useState(false);
+    const [newDomainTopicName, setNewDomainTopicName] = useState('');
+    const [showAddDomainItem, setShowAddDomainItem] = useState(null);
+    const [newDomainItemName, setNewDomainItemName] = useState('');
+    const [newDomainItemDifficulty, setNewDomainItemDifficulty] = useState('medium');
+    const [editingDomainTopic, setEditingDomainTopic] = useState(null);
 
     // Stats
     const totalDsaProblems = dsaTopics.reduce((sum, t) => sum + t.subtopics.length, 0);
@@ -68,417 +88,337 @@ const Academics = () => {
         hard: { label: 'Hard', color: 'red', xp: 50 }
     };
 
+    const colorOptions = ['violet', 'emerald', 'blue', 'amber', 'red', 'pink', 'cyan', 'orange'];
+
+    // Domain handlers
+    const handleAddDomain = () => {
+        if (!newDomainName.trim()) return;
+        addLearningDomain(
+            newDomainName.trim(),
+            newDomainShortName.trim() || newDomainName.trim().substring(0, 10),
+            newDomainIcon,
+            newDomainColor,
+            newDomainType
+        );
+        setNewDomainName('');
+        setNewDomainShortName('');
+        setNewDomainIcon('📚');
+        setNewDomainColor('blue');
+        setNewDomainType('module-based');
+        setShowAddDomain(false);
+    };
+
+    const handleAddDomainTopicLocal = () => {
+        if (!newDomainTopicName.trim() || !activeDomain) return;
+        addDomainTopic(activeDomain, newDomainTopicName.trim());
+        setNewDomainTopicName('');
+        setShowAddDomainTopic(false);
+    };
+
+    const handleAddDomainItemLocal = (topicId) => {
+        if (!newDomainItemName.trim() || !activeDomain) return;
+        addDomainItem(activeDomain, topicId, newDomainItemName.trim(), newDomainItemDifficulty);
+        setNewDomainItemName('');
+        setNewDomainItemDifficulty('medium');
+        setShowAddDomainItem(null);
+    };
+
+    // Get domain names for subtitle
+    const domainNames = learningDomains.map(d => d.shortName).join(', ') || 'custom domains';
+
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-semibold text-white mb-1">Academics</h1>
-                    <p className="text-sm text-zinc-500">Master DSA and AI/ML through structured learning</p>
+                    <p className="text-sm text-zinc-500">Master DSA, AI/ML, and custom domains</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => logActivity('dsa', { difficulty: 'medium' })} className="btn-secondary text-xs">
-                        Quick DSA +25
-                    </button>
-                    <button onClick={() => logActivity('ai')} className="btn-primary text-xs">
-                        Quick AI +30
+                    <button onClick={() => setShowAddDomain(true)} className="btn-secondary text-xs">
+                        + Add Domain
                     </button>
                 </div>
             </div>
 
-            {/* Progress Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* DSA Progress Card */}
-                <div
-                    className={`glass-card p-5 cursor-pointer transition-all ${activeSection === 'dsa' ? 'ring-2 ring-violet-500/50' : 'hover:border-[#222]'}`}
-                    onClick={() => setActiveSection('dsa')}
-                >
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-2 h-2 rounded-full bg-violet-500"></div>
-                                <h3 className="text-sm font-semibold text-white">Data Structures & Algorithms</h3>
-                            </div>
-                            <p className="text-xs text-zinc-500">{dsaTopics.length} topics · {totalDsaProblems} problems</p>
+            {/* Add Domain Modal */}
+            {showAddDomain && (
+                <div className="glass-card p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-white">Add New Learning Domain</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input
+                            type="text"
+                            value={newDomainName}
+                            onChange={(e) => setNewDomainName(e.target.value)}
+                            placeholder="Domain name (e.g., CSS, Web Dev)"
+                            className="input-field"
+                            autoFocus
+                        />
+                        <input
+                            type="text"
+                            value={newDomainShortName}
+                            onChange={(e) => setNewDomainShortName(e.target.value)}
+                            placeholder="Short name (e.g., CSS)"
+                            className="input-field"
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-500">Icon:</span>
+                            <select value={newDomainIcon} onChange={(e) => setNewDomainIcon(e.target.value)} className="input-field w-16">
+                                <option value="📚">📚</option>
+                                <option value="💻">💻</option>
+                                <option value="🌐">🌐</option>
+                                <option value="🎨">🎨</option>
+                                <option value="📱">📱</option>
+                                <option value="☁️">☁️</option>
+                                <option value="🔧">🔧</option>
+                                <option value="📊">📊</option>
+                            </select>
                         </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold font-mono text-violet-400">{totalDsaSolved}</p>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Solved</p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-500">Color:</span>
+                            <select value={newDomainColor} onChange={(e) => setNewDomainColor(e.target.value)} className="input-field w-24">
+                                <option value="blue">Blue</option>
+                                <option value="violet">Violet</option>
+                                <option value="emerald">Emerald</option>
+                                <option value="amber">Amber</option>
+                                <option value="pink">Pink</option>
+                                <option value="cyan">Cyan</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-500">Type:</span>
+                            <select value={newDomainType} onChange={(e) => setNewDomainType(e.target.value)} className="input-field w-36">
+                                <option value="module-based">Module (flat XP)</option>
+                                <option value="problem-based">Problem (difficulty)</option>
+                            </select>
                         </div>
                     </div>
-                    <div className="relative">
-                        <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-500" style={{ width: `${dsaProgress}%` }}></div>
-                        </div>
-                        <div className="flex justify-between mt-2">
-                            <span className="text-xs text-zinc-500">{dsaProgress}% complete</span>
-                            <span className="text-xs text-zinc-600">{totalDsaProblems - totalDsaSolved} remaining</span>
-                        </div>
+                    <div className="flex gap-2">
+                        <button onClick={handleAddDomain} className="btn-primary text-xs">Create Domain</button>
+                        <button onClick={() => setShowAddDomain(false)} className="btn-secondary text-xs">Cancel</button>
                     </div>
                 </div>
+            )}
 
-                {/* AI/ML Progress Card */}
-                <div
-                    className={`glass-card p-5 cursor-pointer transition-all ${activeSection === 'ai' ? 'ring-2 ring-emerald-500/50' : 'hover:border-[#222]'}`}
-                    onClick={() => setActiveSection('ai')}
-                >
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <h3 className="text-sm font-semibold text-white">AI & Machine Learning</h3>
-                            </div>
-                            <p className="text-xs text-zinc-500">{aiModules.length} modules · {totalAiLessons} lessons</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold font-mono text-emerald-400">{totalAiCompleted}</p>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Completed</p>
-                        </div>
+            {/* Custom Learning Domains */}
+            {learningDomains.length > 0 && (
+                <div className="glass-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-white">Your Custom Domains</h3>
+                        <span className="text-xs text-zinc-500">{learningDomains.length} domains</span>
                     </div>
-                    <div className="relative">
-                        <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-500" style={{ width: `${aiProgress}%` }}></div>
-                        </div>
-                        <div className="flex justify-between mt-2">
-                            <span className="text-xs text-zinc-500">{aiProgress}% complete</span>
-                            <span className="text-xs text-zinc-600">{aiModules.length - totalAiCompleted} modules left</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* DSA Section */}
-            {activeSection === 'dsa' && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-white">DSA Topics</h2>
-                        <button onClick={() => setShowAddDsaTopic(true)} className="btn-secondary text-xs">+ New Topic</button>
-                    </div>
-
-                    {showAddDsaTopic && (
-                        <div className="glass-card p-4 flex gap-3">
-                            <input
-                                type="text"
-                                value={newDsaTopicName}
-                                onChange={(e) => setNewDsaTopicName(e.target.value)}
-                                placeholder="Enter topic name (e.g., Binary Search, Graphs)"
-                                className="input-field flex-1"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddDsaTopic()}
-                            />
-                            <button onClick={handleAddDsaTopic} className="btn-primary text-xs">Add</button>
-                            <button onClick={() => { setShowAddDsaTopic(false); setNewDsaTopicName(''); }} className="btn-secondary text-xs">Cancel</button>
-                        </div>
-                    )}
-
-                    {dsaTopics.length === 0 ? (
-                        <div className="glass-card p-12 text-center">
-                            <div className="w-12 h-12 bg-violet-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                            </div>
-                            <p className="text-white font-medium mb-1">No DSA topics yet</p>
-                            <p className="text-sm text-zinc-500 mb-4">Create your first topic to start tracking problems</p>
-                            <button onClick={() => setShowAddDsaTopic(true)} className="btn-primary text-sm">Create First Topic</button>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {dsaTopics.map((topic) => (
-                                <div key={topic.id} className="glass-card overflow-hidden">
-                                    {/* Topic Header */}
-                                    <div
-                                        className="p-4 cursor-pointer hover:bg-[#0d0d0d] transition-all"
-                                        onClick={() => setExpandedDsaTopic(expandedDsaTopic === topic.id ? null : topic.id)}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex-shrink-0">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${topic.completed === topic.total && topic.total > 0
-                                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                                    : 'bg-[#111] text-white'
-                                                    }`}>
-                                                    {topic.completed === topic.total && topic.total > 0 ? '✓' : topic.completed}
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                {editingTopic === topic.id ? (
-                                                    <input
-                                                        type="text"
-                                                        defaultValue={topic.name}
-                                                        className="bg-[#111] px-3 py-1.5 rounded-lg text-white text-sm font-semibold w-full"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onBlur={(e) => { editDsaTopic(topic.id, { name: e.target.value }); setEditingTopic(null); }}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') { editDsaTopic(topic.id, { name: e.target.value }); setEditingTopic(null); } }}
-                                                        autoFocus
-                                                    />
-                                                ) : (
-                                                    <h4 className="text-sm font-semibold text-white truncate">{topic.name}</h4>
-                                                )}
-                                                <div className="flex items-center gap-3 mt-1">
-                                                    <span className="text-xs text-zinc-500">{topic.subtopics.length} problems</span>
-                                                    <div className="flex-1 max-w-32">
-                                                        <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
-                                                            <div className="h-full bg-violet-500 rounded-full" style={{ width: `${topic.total > 0 ? (topic.completed / topic.total) * 100 : 0}%` }}></div>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs font-mono text-violet-400">{topic.total > 0 ? Math.round((topic.completed / topic.total) * 100) : 0}%</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => setEditingTopic(topic.id)} className="p-2 text-zinc-600 hover:text-white hover:bg-[#111] rounded-lg transition-all">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                </button>
-                                                <button onClick={() => deleteDsaTopic(topic.id)} className="p-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                </button>
-                                            </div>
-                                            <svg className={`w-5 h-5 text-zinc-500 transition-transform ${expandedDsaTopic === topic.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </div>
+                    <div className="flex flex-wrap gap-2">
+                        {learningDomains.map((domain) => {
+                            const totalItems = domain.topics?.reduce((sum, t) => sum + (t.items?.length || 0), 0) || 0;
+                            const completedItems = domain.topics?.reduce((sum, t) => sum + (t.items?.filter(i => i.completed).length || 0), 0) || 0;
+                            const isActive = activeDomain === domain.id;
+                            return (
+                                <div
+                                    key={domain.id}
+                                    onClick={() => setActiveDomain(isActive ? null : domain.id)}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${isActive ? 'ring-2 ring-blue-500/50 bg-blue-500/10' : 'bg-[#111] hover:bg-[#1a1a1a]'
+                                        }`}
+                                >
+                                    <span className="text-lg">{domain.icon}</span>
+                                    <div>
+                                        <p className="text-sm font-medium text-white">{domain.shortName}</p>
+                                        <p className="text-[10px] text-zinc-500">{completedItems}/{totalItems} items</p>
                                     </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
+                                        className="ml-2 p-1 text-zinc-600 hover:text-red-400 rounded"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
-                                    {/* Expanded Content */}
-                                    {expandedDsaTopic === topic.id && (
-                                        <div className="border-t border-[#111] bg-black p-4">
-                                            {/* Add Problem */}
-                                            {showAddProblem === topic.id ? (
-                                                <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                                                    <input
-                                                        type="text"
-                                                        value={newProblemName}
-                                                        onChange={(e) => setNewProblemName(e.target.value)}
-                                                        placeholder="Problem name"
-                                                        className="input-field flex-1 text-sm"
-                                                        autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddProblem(topic.id)}
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        <select
-                                                            value={newProblemDifficulty}
-                                                            onChange={(e) => setNewProblemDifficulty(e.target.value)}
-                                                            className="input-field w-24 text-sm"
-                                                        >
-                                                            <option value="easy">Easy</option>
-                                                            <option value="medium">Medium</option>
-                                                            <option value="hard">Hard</option>
-                                                        </select>
-                                                        <button onClick={() => handleAddProblem(topic.id)} className="px-4 py-2 bg-violet-500 text-white rounded-lg text-xs font-semibold hover:bg-violet-600 transition-all">Add</button>
-                                                        <button onClick={() => setShowAddProblem(null)} className="px-3 py-2 text-zinc-500 hover:text-white text-sm">×</button>
+            {/* Active Domain Detail View */}
+            {activeDomain && (() => {
+                const domain = learningDomains.find(d => d.id === activeDomain);
+                if (!domain) return null;
+                return (
+                    <div className="glass-card p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">{domain.icon}</span>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">{domain.name}</h2>
+                                    <p className="text-xs text-zinc-500">{domain.type === 'problem-based' ? 'Difficulty-based XP' : 'Flat XP per item'}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAddDomainTopic(true)} className="btn-secondary text-xs">+ Add Topic</button>
+                        </div>
+
+                        {showAddDomainTopic && (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newDomainTopicName}
+                                    onChange={(e) => setNewDomainTopicName(e.target.value)}
+                                    placeholder="Topic name"
+                                    className="input-field flex-1"
+                                    autoFocus
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddDomainTopicLocal()}
+                                />
+                                <button onClick={handleAddDomainTopicLocal} className="btn-primary text-xs">Add</button>
+                                <button onClick={() => setShowAddDomainTopic(false)} className="btn-secondary text-xs">Cancel</button>
+                            </div>
+                        )}
+
+                        {(!domain.topics || domain.topics.length === 0) ? (
+                            <p className="text-center text-zinc-600 py-8">No topics yet. Add your first topic!</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {domain.topics.map((topic) => (
+                                    <div key={topic.id} className="bg-[#0a0a0a] rounded-xl overflow-hidden">
+                                        <div
+                                            className="p-4 cursor-pointer flex items-center gap-3 hover:bg-[#0d0d0d]"
+                                            onClick={() => setExpandedDomainTopic(expandedDomainTopic === topic.id ? null : topic.id)}
+                                        >
+                                            <span>{topic.icon || '📝'}</span>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-white">{topic.name}</p>
+                                                <p className="text-xs text-zinc-500">{topic.completed || 0}/{topic.items?.length || 0} completed</p>
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); deleteDomainTopic(domain.id, topic.id); }} className="p-1 text-zinc-600 hover:text-red-400">
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                            <svg className={`w-5 h-5 text-zinc-500 transition-transform ${expandedDomainTopic === topic.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
+
+                                        {expandedDomainTopic === topic.id && (
+                                            <div className="p-4 border-t border-[#111] bg-black">
+                                                {showAddDomainItem === topic.id ? (
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        <input
+                                                            type="text"
+                                                            value={newDomainItemName}
+                                                            onChange={(e) => setNewDomainItemName(e.target.value)}
+                                                            placeholder="Item name"
+                                                            className="input-field flex-1 text-sm"
+                                                            autoFocus
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleAddDomainItemLocal(topic.id)}
+                                                        />
+                                                        {domain.type === 'problem-based' && (
+                                                            <select value={newDomainItemDifficulty} onChange={(e) => setNewDomainItemDifficulty(e.target.value)} className="input-field w-24 text-xs">
+                                                                <option value="easy">Easy</option>
+                                                                <option value="medium">Medium</option>
+                                                                <option value="hard">Hard</option>
+                                                            </select>
+                                                        )}
+                                                        <button onClick={() => handleAddDomainItemLocal(topic.id)} className="btn-primary text-xs">Add</button>
+                                                        <button onClick={() => setShowAddDomainItem(null)} className="px-3 py-2 text-zinc-500 text-sm">×</button>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setShowAddProblem(topic.id)}
-                                                    className="w-full py-3 border border-dashed border-[#222] rounded-xl text-zinc-500 hover:border-violet-500/50 hover:text-violet-400 text-sm font-medium transition-all mb-4"
-                                                >
-                                                    + Add Problem
-                                                </button>
-                                            )}
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setShowAddDomainItem(topic.id)}
+                                                        className="w-full py-3 border border-dashed border-[#222] rounded-xl text-zinc-500 hover:border-blue-500/50 hover:text-blue-400 text-sm font-medium transition-all mb-3"
+                                                    >
+                                                        + Add Item
+                                                    </button>
+                                                )}
 
-                                            {/* Problems List */}
-                                            {topic.subtopics.length === 0 ? (
-                                                <p className="text-center text-zinc-600 text-sm py-4">No problems added yet</p>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    {topic.subtopics.map((problem) => {
-                                                        const config = difficultyConfig[problem.difficulty] || difficultyConfig.medium;
-                                                        return (
-                                                            <div key={problem.id} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${problem.completed ? 'bg-emerald-500/5 border border-emerald-500/10' : 'bg-[#0a0a0a] hover:bg-[#0d0d0d] border border-transparent'}`}>
+                                                {(!topic.items || topic.items.length === 0) ? (
+                                                    <p className="text-center text-zinc-600 text-sm py-4">No items yet</p>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {topic.items.map((item) => (
+                                                            <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl ${item.completed ? 'bg-emerald-500/5' : 'bg-[#0a0a0a]'}`}>
                                                                 <button
-                                                                    onClick={() => toggleDsaSubtopic(topic.id, problem.id)}
-                                                                    className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${problem.completed
-                                                                        ? 'bg-emerald-500 text-white'
-                                                                        : 'border-2 border-zinc-700 hover:border-violet-500 hover:bg-violet-500/10'
+                                                                    onClick={() => toggleDomainItem(domain.id, topic.id, item.id)}
+                                                                    className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${item.completed ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-700 hover:border-blue-500'
                                                                         }`}
                                                                 >
-                                                                    {problem.completed && '✓'}
+                                                                    {item.completed && '✓'}
                                                                 </button>
-                                                                <span className={`flex-1 text-sm ${problem.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>
-                                                                    {problem.name}
-                                                                </span>
-                                                                <span className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide ${config.color === 'emerald' ? 'bg-emerald-500/15 text-emerald-400' :
-                                                                    config.color === 'amber' ? 'bg-amber-500/15 text-amber-400' :
-                                                                        'bg-red-500/15 text-red-400'
-                                                                    }`}>
-                                                                    {config.label}
-                                                                </span>
-                                                                <span className="text-xs font-mono text-zinc-500">+{config.xp}</span>
-                                                                <button
-                                                                    onClick={() => deleteDsaSubtopic(topic.id, problem.id)}
-                                                                    className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                                                                >
+                                                                <span className={`flex-1 text-sm ${item.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>{item.name}</span>
+                                                                {domain.type === 'problem-based' && item.difficulty && (
+                                                                    <span className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase ${item.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
+                                                                        item.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                                                                        }`}>{item.difficulty}</span>
+                                                                )}
+                                                                <button onClick={() => deleteDomainItem(domain.id, topic.id, item.id)} className="p-1 text-zinc-600 hover:text-red-400">
                                                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                                                 </button>
                                                             </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* AI/ML Section */}
-            {activeSection === 'ai' && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-white">AI/ML Modules</h2>
-                        <button onClick={() => setShowAddAiModule(true)} className="btn-secondary text-xs">+ New Module</button>
-                    </div>
-
-                    {showAddAiModule && (
-                        <div className="glass-card p-4 flex gap-3">
-                            <input
-                                type="text"
-                                value={newAiModuleName}
-                                onChange={(e) => setNewAiModuleName(e.target.value)}
-                                placeholder="Enter module name (e.g., Neural Networks, Transformers)"
-                                className="input-field flex-1"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddAiModule()}
-                            />
-                            <button onClick={handleAddAiModule} className="btn-primary text-xs">Add</button>
-                            <button onClick={() => { setShowAddAiModule(false); setNewAiModuleName(''); }} className="btn-secondary text-xs">Cancel</button>
-                        </div>
-                    )}
-
-                    {aiModules.length === 0 ? (
-                        <div className="glass-card p-12 text-center">
-                            <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                </svg>
-                            </div>
-                            <p className="text-white font-medium mb-1">No AI modules yet</p>
-                            <p className="text-sm text-zinc-500 mb-4">Create your first module to track AI/ML learning</p>
-                            <button onClick={() => setShowAddAiModule(true)} className="btn-primary text-sm">Create First Module</button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {aiModules.map((module) => (
-                                <div key={module.id} className={`glass-card overflow-hidden transition-all ${module.completed ? 'ring-1 ring-emerald-500/30' : ''}`}>
-                                    {/* Module Header */}
-                                    <div
-                                        className="p-4 cursor-pointer hover:bg-[#0d0d0d] transition-all"
-                                        onClick={() => setExpandedAiModule(expandedAiModule === module.id ? null : module.id)}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${module.completed ? 'bg-emerald-500/20' : 'bg-[#111]'
-                                                }`}>
-                                                {module.completed ? (
-                                                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                ) : (
-                                                    <span className="text-sm font-bold text-white">{module.progress}%</span>
+                                                        ))}
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                {editingModule === module.id ? (
-                                                    <input
-                                                        type="text"
-                                                        defaultValue={module.name}
-                                                        className="bg-[#111] px-3 py-1.5 rounded-lg text-white text-sm font-semibold w-full"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onBlur={(e) => { editAiModule(module.id, { name: e.target.value }); setEditingModule(null); }}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') { editAiModule(module.id, { name: e.target.value }); setEditingModule(null); } }}
-                                                        autoFocus
-                                                    />
-                                                ) : (
-                                                    <h4 className={`text-sm font-semibold truncate ${module.completed ? 'text-emerald-400' : 'text-white'}`}>{module.name}</h4>
-                                                )}
-                                                <p className="text-xs text-zinc-500 mt-0.5">{module.lessons.filter(l => l.completed).length}/{module.lessons.length} lessons</p>
-                                            </div>
-                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => setEditingModule(module.id)} className="p-1.5 text-zinc-600 hover:text-white hover:bg-[#111] rounded-lg transition-all">
-                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                </button>
-                                                <button onClick={() => deleteAiModule(module.id)} className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
-                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3">
-                                            <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-                                                <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-500" style={{ width: `${module.progress}%` }}></div>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
-                                    {/* Expanded Content */}
-                                    {expandedAiModule === module.id && (
-                                        <div className="border-t border-[#111] bg-black p-4">
-                                            {/* Complete Module Button */}
-                                            {!module.completed && (
-                                                <button
-                                                    onClick={() => completeAiModule(module.id)}
-                                                    className="w-full py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-sm font-semibold transition-all mb-4"
-                                                >
-                                                    Mark Module Complete +30 XP
-                                                </button>
-                                            )}
+            {/* Progress Overview - Dynamic Domain Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {learningDomains.map((domain) => {
+                    const totalItems = domain.topics?.reduce((sum, t) => sum + (t.items?.length || 0), 0) || 0;
+                    const completedItems = domain.topics?.reduce((sum, t) => sum + (t.items?.filter(i => i.completed).length || 0), 0) || 0;
+                    const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                    const colorClass = {
+                        violet: { ring: 'ring-violet-500/50', dot: 'bg-violet-500', bar: 'from-violet-600 to-violet-400', text: 'text-violet-400' },
+                        emerald: { ring: 'ring-emerald-500/50', dot: 'bg-emerald-500', bar: 'from-emerald-600 to-emerald-400', text: 'text-emerald-400' },
+                        blue: { ring: 'ring-blue-500/50', dot: 'bg-blue-500', bar: 'from-blue-600 to-blue-400', text: 'text-blue-400' },
+                        amber: { ring: 'ring-amber-500/50', dot: 'bg-amber-500', bar: 'from-amber-600 to-amber-400', text: 'text-amber-400' },
+                        pink: { ring: 'ring-pink-500/50', dot: 'bg-pink-500', bar: 'from-pink-600 to-pink-400', text: 'text-pink-400' },
+                        cyan: { ring: 'ring-cyan-500/50', dot: 'bg-cyan-500', bar: 'from-cyan-600 to-cyan-400', text: 'text-cyan-400' },
+                    }[domain.color] || { ring: 'ring-zinc-500/50', dot: 'bg-zinc-500', bar: 'from-zinc-600 to-zinc-400', text: 'text-zinc-400' };
 
-                                            {/* Add Lesson */}
-                                            {showAddLesson === module.id ? (
-                                                <div className="flex gap-2 mb-4">
-                                                    <input
-                                                        type="text"
-                                                        value={newLessonName}
-                                                        onChange={(e) => setNewLessonName(e.target.value)}
-                                                        placeholder="Lesson name"
-                                                        className="input-field flex-1 text-sm"
-                                                        autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddLesson(module.id)}
-                                                    />
-                                                    <button onClick={() => handleAddLesson(module.id)} className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:bg-emerald-600 transition-all">Add</button>
-                                                    <button onClick={() => setShowAddLesson(null)} className="px-3 py-2 text-zinc-500 hover:text-white text-sm">×</button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setShowAddLesson(module.id)}
-                                                    className="w-full py-3 border border-dashed border-[#222] rounded-xl text-zinc-500 hover:border-emerald-500/50 hover:text-emerald-400 text-sm font-medium transition-all mb-4"
-                                                >
-                                                    + Add Lesson
-                                                </button>
-                                            )}
+                    return (
+                        <div
+                            key={domain.id}
+                            className={`glass-card p-5 cursor-pointer transition-all relative group ${activeDomain === domain.id ? `ring-2 ${colorClass.ring}` : 'hover:border-[#222]'}`}
+                            onClick={() => setActiveDomain(activeDomain === domain.id ? null : domain.id)}
+                        >
+                            {/* Delete button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
+                                className="absolute top-3 right-3 p-1.5 rounded-lg bg-[#111] opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                title="Remove domain"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
 
-                                            {/* Lessons List */}
-                                            {module.lessons.length === 0 ? (
-                                                <p className="text-center text-zinc-600 text-sm py-4">No lessons added yet</p>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    {module.lessons.map((lesson) => (
-                                                        <div key={lesson.id} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${lesson.completed ? 'bg-emerald-500/5 border border-emerald-500/10' : 'bg-[#0a0a0a] hover:bg-[#0d0d0d] border border-transparent'}`}>
-                                                            <button
-                                                                onClick={() => toggleAiLesson(module.id, lesson.id)}
-                                                                className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${lesson.completed
-                                                                    ? 'bg-emerald-500 text-white'
-                                                                    : 'border-2 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-500/10'
-                                                                    }`}
-                                                            >
-                                                                {lesson.completed && '✓'}
-                                                            </button>
-                                                            <span className={`flex-1 text-sm ${lesson.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>
-                                                                {lesson.name}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className={`w-2 h-2 rounded-full ${colorClass.dot}`}></div>
+                                        <h3 className="text-sm font-semibold text-white">{domain.name}</h3>
+                                    </div>
+                                    <p className="text-xs text-zinc-500">{domain.topics?.length || 0} topics · {totalItems} {domain.type === 'problem-based' ? 'problems' : 'items'}</p>
                                 </div>
-                            ))}
+                                <div className="text-right">
+                                    <p className={`text-2xl font-bold font-mono ${colorClass.text}`}>{completedItems}</p>
+                                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide">{domain.type === 'problem-based' ? 'Solved' : 'Completed'}</p>
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                                    <div className={`h-full bg-gradient-to-r ${colorClass.bar} rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
+                                </div>
+                                <div className="flex justify-between mt-2">
+                                    <span className="text-xs text-zinc-500">{progress}% complete</span>
+                                    <span className="text-xs text-zinc-600">{totalItems - completedItems} remaining</span>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
-            )}
+                    );
+                })}
+            </div>
+
         </div>
     );
 };
-
 export default Academics;
