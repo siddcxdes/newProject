@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 const Admin = () => {
     const {
         user, activities, learningDomains, workouts, goals,
-        setLearningDomains, showNotification, resetAll
+        setLearningDomains, showNotification, resetAll, forceSyncNow
     } = useApp();
 
     const [activeTab, setActiveTab] = useState('overview');
@@ -144,6 +144,11 @@ const Admin = () => {
 
             // Single state update with all changes
             setLearningDomains(newDomains);
+
+            // Persist immediately so a refresh right after import doesn't lose the data
+            if (typeof forceSyncNow === 'function') {
+                forceSyncNow();
+            }
 
             setJsonInput('');
             showNotification(`✅ Imported ${totalItems} items across ${newDomainsCount} new domains!`, 'success');
