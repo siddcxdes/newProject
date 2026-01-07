@@ -71,7 +71,18 @@ router.post('/login', async (req, res) => {
 // @desc    Get current user
 // @access  Private
 router.get('/me', protect, async (req, res) => {
-    res.json({ user: req.user });
+    try {
+        // IMPORTANT: return the full persisted user state from DB.
+        // `protect` attaches a user, but this route is the entrypoint for hydration.
+        const user = await User.findById(req.user._id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ user: user.toJSON() });
+    } catch (error) {
+        console.error('Get me error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 // @route   PUT /api/auth/sync
