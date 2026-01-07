@@ -89,6 +89,11 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  // If a legacy/broken user record exists without a password hash, bcrypt will throw.
+  // Treat it as invalid credentials instead of crashing the route.
+  if (!candidatePassword || !this.password) {
+    return false;
+  }
   return bcrypt.compare(candidatePassword, this.password);
 };
 

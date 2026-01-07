@@ -52,6 +52,12 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        // Handle legacy/broken records gracefully
+        if (!user.password) {
+            console.error('Login error: user record has no password hash for', user.email);
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
