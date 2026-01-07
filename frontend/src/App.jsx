@@ -27,7 +27,7 @@ const Notification = () => {
         ? 'bg-emerald-500/90'
         : notification.type === 'error'
             ? 'bg-red-500/90'
-            : 'bg-violet-500/90';
+            : 'bg-sky-500/90';
 
     return (
         <div className={`fixed top-16 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium text-center sm:text-left`}>
@@ -43,8 +43,8 @@ const ProtectedRoute = ({ children }) => {
     // Show nothing while loading auth state
     if (loading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-sky-500"></div>
             </div>
         );
     }
@@ -60,7 +60,7 @@ const ProtectedRoute = ({ children }) => {
 // Layout wrapper for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
     return (
-        <div className="min-h-screen flex flex-col bg-black">
+        <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
             <Header />
             <Sidebar />
             <MobileNav />

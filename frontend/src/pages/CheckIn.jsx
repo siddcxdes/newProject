@@ -39,7 +39,7 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
     });
 
     const colorClass = {
-        violet: { dot: 'bg-violet-500', btn: 'bg-violet-500 hover:bg-violet-600', text: 'text-violet-400' },
+        violet: { dot: 'bg-sky-500', btn: 'bg-sky-500 hover:bg-sky-600', text: 'text-sky-400' },
         emerald: { dot: 'bg-emerald-500', btn: 'bg-emerald-500 hover:bg-emerald-600', text: 'text-emerald-400' },
         blue: { dot: 'bg-blue-500', btn: 'bg-blue-500 hover:bg-blue-600', text: 'text-blue-400' },
         amber: { dot: 'bg-amber-500', btn: 'bg-amber-500 hover:bg-amber-600', text: 'text-amber-400' },
@@ -121,7 +121,7 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
         <div className="glass-card p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3">
                 <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${colorClass.dot}`}></div>
-                <h3 className="text-sm sm:text-base font-semibold text-white">{domain.shortName || domain.name}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-heading">{domain.shortName || domain.name}</h3>
                 <span className="text-[10px] sm:text-xs text-zinc-600 ml-auto">{completedCount}/{domainTasks.length}</span>
             </div>
 
@@ -137,7 +137,7 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
                     </button>
 
                     {showPicker && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f0f0f] border border-[#222] rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-elevated border border-subtle rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
                             {selectedTopic === null ? (
                                 <div className="p-2">
                                     <p className="text-[10px] text-zinc-500 uppercase px-2 py-1 mb-1">Select Topic</p>
@@ -146,9 +146,9 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
                                             <button
                                                 key={topic.id}
                                                 onClick={(e) => { e.stopPropagation(); setSelectedTopic(topic.id); }}
-                                                className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2"
+                                                className="w-full text-left px-3 py-2 hover:bg-elevated rounded-lg flex items-center gap-2"
                                             >
-                                                <span className="text-sm text-white flex-1 truncate">{topic.name}</span>
+                                                <span className="text-sm text-heading flex-1 truncate">{topic.name}</span>
                                                 <span className="text-[10px] text-zinc-500">{topic.items?.filter(i => !i.completed).length} left</span>
                                             </button>
                                         ))
@@ -169,9 +169,9 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
                                             key={item.id}
                                             onClick={(e) => { e.stopPropagation(); addFromAcademic({ ...item, topicId: selectedTopic }); }}
                                             disabled={domainTasks.some(t => t.academicId === item.id)}
-                                            className="w-full text-left px-3 py-2 hover:bg-[#1a1a1a] rounded-lg flex items-center gap-2 disabled:opacity-40"
+                                            className="w-full text-left px-3 py-2 hover:bg-elevated rounded-lg flex items-center gap-2 disabled:opacity-40"
                                         >
-                                            <span className="text-sm text-white flex-1 truncate">{item.name}</span>
+                                            <span className="text-sm text-heading flex-1 truncate">{item.name}</span>
                                             {item.difficulty && (
                                                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${item.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
                                                     item.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
@@ -207,7 +207,7 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
                         <option value="hard">Hard</option>
                     </select>
                 )}
-                <button onClick={addManualTask} className={`px-2.5 sm:px-3 py-2 ${colorClass.btn} text-white rounded-lg text-xs font-semibold`}>+</button>
+                <button onClick={addManualTask} className={`px-2.5 sm:px-3 py-2 ${colorClass.btn} text-heading rounded-lg text-xs font-semibold`}>+</button>
             </div>
 
             {/* Tasks List */}
@@ -216,15 +216,15 @@ const DomainTaskBox = ({ domain, todayStr, dailyTasks, setDailyTasks, toggleDoma
                     <p className="text-center text-zinc-600 text-xs py-4 sm:py-6">No tasks added</p>
                 ) : (
                     domainTasks.map((task) => (
-                        <div key={task.id} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg group ${task.completed ? 'bg-emerald-500/5' : 'bg-[#0a0a0a]'}`}>
+                        <div key={task.id} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg group ${task.completed ? 'bg-emerald-500/5' : 'bg-elevated'}`}>
                             <button
                                 onClick={() => toggleTask(task)}
                                 disabled={task.completed}
-                                className={`w-4 h-4 sm:w-5 sm:h-5 rounded flex items-center justify-center flex-shrink-0 text-[10px] ${task.completed ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-700'}`}
+                                className={`w-4 h-4 sm:w-5 sm:h-5 rounded flex items-center justify-center flex-shrink-0 text-[10px] ${task.completed ? 'bg-emerald-500 text-heading' : 'border-2 border-zinc-700'}`}
                             >
                                 {task.completed && '✓'}
                             </button>
-                            <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                            <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-heading'}`}>
                                 {!task.isManual && <span className={`${colorClass.text} mr-1`}>📚</span>}
                                 {task.text}
                             </span>
@@ -311,7 +311,7 @@ const CheckIn = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-white mb-0.5 sm:mb-1">Daily Check-In</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-heading mb-0.5 sm:mb-1">Daily Check-In</h1>
                     <p className="text-xs sm:text-sm text-zinc-500">{formatDate(todayStr)} · IST</p>
                 </div>
                 <div className="flex items-center gap-4 sm:gap-6">
@@ -320,7 +320,7 @@ const CheckIn = () => {
                         <p className="text-[9px] sm:text-[10px] text-zinc-600 uppercase">Streak</p>
                     </div>
                     <div className="text-center sm:text-right">
-                        <p className="text-xl sm:text-2xl font-bold font-mono text-violet-400">{user?.xp || 0}</p>
+                        <p className="text-xl sm:text-2xl font-bold font-mono text-sky-400">{user?.xp || 0}</p>
                         <p className="text-[9px] sm:text-[10px] text-zinc-600 uppercase">XP</p>
                     </div>
                 </div>
@@ -333,8 +333,8 @@ const CheckIn = () => {
                         <span className="text-xs sm:text-sm text-zinc-400">{completedTasks}/{totalTasks} done</span>
                         {progress === 100 && <span className="text-[10px] sm:text-xs font-semibold text-emerald-400">Complete!</span>}
                     </div>
-                    <div className="h-1.5 sm:h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-violet-500'}`} style={{ width: `${progress}%` }}></div>
+                    <div className="h-1.5 sm:h-2 bg-elevated rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-sky-500'}`} style={{ width: `${progress}%` }}></div>
                     </div>
                 </div>
             )}
@@ -358,7 +358,7 @@ const CheckIn = () => {
             <div className="glass-card p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-500"></div>
-                    <h3 className="text-sm sm:text-base font-semibold text-white">Other Tasks</h3>
+                    <h3 className="text-sm sm:text-base font-semibold text-heading">Other Tasks</h3>
                     <span className="text-[10px] sm:text-xs text-zinc-500 ml-1 hidden sm:inline">Gym, Goals...</span>
                     <span className="text-[10px] sm:text-xs text-zinc-600 ml-auto">{otherTasks.filter(t => t.completed).length}/{otherTasks.length}</span>
                 </div>
@@ -372,7 +372,7 @@ const CheckIn = () => {
                         className="input-field flex-1 text-xs sm:text-sm py-2"
                         onKeyDown={(e) => e.key === 'Enter' && addOtherTask()}
                     />
-                    <button onClick={addOtherTask} className="px-2.5 sm:px-3 py-2 bg-pink-500 text-white rounded-lg text-xs font-semibold hover:bg-pink-600">+</button>
+                    <button onClick={addOtherTask} className="px-2.5 sm:px-3 py-2 bg-pink-500 text-heading rounded-lg text-xs font-semibold hover:bg-pink-600">+</button>
                 </div>
 
                 <div className="space-y-1.5 max-h-36 sm:max-h-48 overflow-y-auto">
@@ -380,15 +380,15 @@ const CheckIn = () => {
                         <p className="text-center text-zinc-600 text-xs py-4 sm:py-6">No tasks added</p>
                     ) : (
                         otherTasks.map((task) => (
-                            <div key={task.id} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg group ${task.completed ? 'bg-emerald-500/5' : 'bg-[#0a0a0a]'}`}>
+                            <div key={task.id} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg group ${task.completed ? 'bg-emerald-500/5' : 'bg-elevated'}`}>
                                 <button
                                     onClick={() => toggleOtherTask(task.id)}
                                     disabled={task.completed}
-                                    className={`w-4 h-4 sm:w-5 sm:h-5 rounded flex items-center justify-center flex-shrink-0 text-[10px] ${task.completed ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-700'}`}
+                                    className={`w-4 h-4 sm:w-5 sm:h-5 rounded flex items-center justify-center flex-shrink-0 text-[10px] ${task.completed ? 'bg-emerald-500 text-heading' : 'border-2 border-zinc-700'}`}
                                 >
                                     {task.completed && '✓'}
                                 </button>
-                                <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-white'}`}>{task.text}</span>
+                                <span className={`flex-1 text-xs sm:text-sm truncate ${task.completed ? 'text-zinc-500 line-through' : 'text-heading'}`}>{task.text}</span>
                                 <span className="text-[9px] sm:text-[10px] font-mono text-zinc-600">+10</span>
                                 <button onClick={() => deleteOtherTask(task.id)} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 text-sm">×</button>
                             </div>

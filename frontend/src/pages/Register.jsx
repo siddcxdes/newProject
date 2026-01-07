@@ -36,21 +36,21 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-3 mb-4">
                         <div className="relative w-10 h-10">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-xl rotate-45"></div>
-                            <div className="absolute inset-[3px] bg-black rounded-[9px] rotate-45"></div>
+                            <div className="absolute inset-0 bg-gradient-to-tr from-sky-600 to-cyan-500 rounded-xl rotate-45"></div>
+                            <div className="absolute inset-[3px] rounded-[9px] rotate-45" style={{ backgroundColor: 'var(--color-bg-primary)' }}></div>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <svg className="w-4 h-4 text-heading" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <path d="M12 19V5M5 12l7-7 7 7" />
                                 </svg>
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-white">ASCENSION</h1>
+                        <h1 className="text-2xl font-bold text-heading">ASCENSION</h1>
                     </div>
                     <p className="text-zinc-500 text-sm">Start your journey to level up</p>
                 </div>
@@ -113,7 +113,7 @@ const Register = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                        className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 text-heading font-semibold rounded-xl hover:from-sky-500 hover:to-cyan-500 transition-all disabled:opacity-50"
                     >
                         {loading ? 'Creating account...' : 'Create Account'}
                     </button>
@@ -121,7 +121,7 @@ const Register = () => {
 
                 <p className="text-center text-zinc-500 text-sm mt-6">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-violet-400 hover:text-violet-300">
+                    <Link to="/login" className="text-sky-400 hover:text-sky-300">
                         Sign in
                     </Link>
                 </p>

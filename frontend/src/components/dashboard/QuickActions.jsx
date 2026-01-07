@@ -35,7 +35,7 @@ const QuickActions = () => {
 
     return (
         <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
+            <h3 className="text-sm font-semibold text-heading mb-4">Quick Actions</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {actions.map((action) => (
@@ -43,7 +43,7 @@ const QuickActions = () => {
                         {action.difficulties ? (
                             <div className="glass-card p-4 space-y-3">
                                 <div>
-                                    <p className="text-sm font-semibold text-white">{action.label}</p>
+                                    <p className="text-sm font-semibold text-heading">{action.label}</p>
                                     <p className="text-xs text-zinc-500">{action.sub}</p>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
@@ -67,7 +67,7 @@ const QuickActions = () => {
                                 onClick={() => handleAction(action.type)}
                                 className="w-full glass-card-hover p-4 text-left h-full"
                             >
-                                <p className="text-sm font-semibold text-white mb-0.5">{action.label}</p>
+                                <p className="text-sm font-semibold text-heading mb-0.5">{action.label}</p>
                                 <p className="text-xs text-zinc-500 mb-2">{action.sub}</p>
                                 <p className="text-sm font-semibold font-mono text-emerald-400">+{action.xp} XP</p>
                             </button>

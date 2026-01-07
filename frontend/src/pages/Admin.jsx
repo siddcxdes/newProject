@@ -173,36 +173,34 @@ const Admin = () => {
     const tabs = [
         { id: 'overview', label: 'Overview' },
         { id: 'bulk', label: 'JSON Import' },
-        { id: 'export', label: 'Export/Import' },
-        { id: 'debug', label: 'Debug' },
     ];
 
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-white mb-1">Admin</h1>
+                    <h1 className="text-2xl font-semibold text-heading mb-1">Admin</h1>
                     <p className="text-sm text-zinc-500">Manage data, bulk import, and debug</p>
                 </div>
                 <button onClick={() => setShowResetConfirm(true)} className="btn-danger text-xs">Reset All Data</button>
             </div>
 
             {showResetConfirm && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-elevated/80 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="glass-card p-6 max-w-md w-full mx-4">
                         <h3 className="text-lg font-semibold text-red-400 mb-3">Reset All Data?</h3>
                         <p className="text-sm text-zinc-400 mb-5">This will permanently delete all your progress. This cannot be undone.</p>
                         <div className="flex gap-3">
-                            <button onClick={() => { resetAll(); setShowResetConfirm(false); }} className="flex-1 py-2.5 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-all">Reset Everything</button>
-                            <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 bg-[#111111] text-zinc-400 rounded-lg text-sm font-medium hover:bg-[#1a1a1a] transition-all">Cancel</button>
+                            <button onClick={() => { resetAll(); setShowResetConfirm(false); }} className="flex-1 py-2.5 bg-red-500 text-heading rounded-lg text-sm font-semibold hover:bg-red-600 transition-all">Reset Everything</button>
+                            <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 bg-elevated text-zinc-400 rounded-lg text-sm font-medium hover:bg-elevated transition-all">Cancel</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="flex gap-1 p-1.5 bg-[#0a0a0a] rounded-xl border border-[#111111]">
+            <div className="flex gap-1 p-1.5 bg-elevated rounded-xl border border-subtle">
                 {tabs.map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
                         {tab.label}
                     </button>
                 ))}
@@ -213,7 +211,7 @@ const Admin = () => {
                     <div className="glass-card p-4">
                         <p className="stat-label mb-1">Level</p>
                         <p className="stat-value">{user?.level || 1}</p>
-                        <p className="stat-sublabel text-violet-400 font-semibold">{user?.xp || 0} XP</p>
+                        <p className="stat-sublabel text-sky-400 font-semibold">{user?.xp || 0} XP</p>
                     </div>
                     <div className="glass-card p-4">
                         <p className="stat-label mb-1">Learning Domains</p>
@@ -256,10 +254,10 @@ const Admin = () => {
             {activeTab === 'bulk' && (
                 <div className="space-y-4">
                     <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-white mb-2">Bulk JSON Import</h3>
+                        <h3 className="text-base font-semibold text-heading mb-2">Bulk JSON Import</h3>
                         <p className="text-sm text-zinc-500 mb-4">Import domains, topics, and subtopics. They sync to Academics and CheckIn.</p>
 
-                        <div className="mb-4 p-3 bg-[#0a0a0a] rounded-lg border border-[#111111]">
+                        <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
                             <p className="text-xs text-zinc-500 mb-2">Required format:</p>
                             <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleJson}</pre>
                         </div>
@@ -282,12 +280,12 @@ const Admin = () => {
                     </div>
 
                     <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-white mb-4">Current Learning Domains ({learningDomains.length})</h3>
+                        <h3 className="text-base font-semibold text-heading mb-4">Current Learning Domains ({learningDomains.length})</h3>
                         <div className="space-y-2 max-h-96 overflow-auto">
                             {learningDomains.map(domain => (
-                                <div key={domain.id} className="p-3 bg-[#0a0a0a] rounded-lg border border-[#111111]">
+                                <div key={domain.id} className="p-3 bg-elevated rounded-lg border border-subtle">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-semibold text-white">{domain.icon} {domain.name} ({domain.shortName})</span>
+                                        <span className="text-sm font-semibold text-heading">{domain.icon} {domain.name} ({domain.shortName})</span>
                                         <span className="text-xs text-zinc-500">{domain.topics?.length || 0} topics</span>
                                     </div>
                                     {domain.topics?.slice(0, 5).map(topic => (
@@ -298,48 +296,6 @@ const Admin = () => {
                                     {domain.topics?.length > 5 && (
                                         <div className="ml-4 text-xs text-zinc-600 italic">...and {domain.topics.length - 5} more topics</div>
                                     )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'export' && (
-                <div className="space-y-4">
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-white mb-2">Export Data</h3>
-                        <p className="text-sm text-zinc-500 mb-4">Download all your data as a JSON backup file.</p>
-                        <button onClick={handleExport} className="btn-primary text-sm">Download Backup</button>
-                    </div>
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-white mb-2">Import Data</h3>
-                        <p className="text-sm text-zinc-500 mb-4">Restore your data from a previous backup file.</p>
-                        <label className="btn-secondary text-sm cursor-pointer inline-block">
-                            Upload Backup File
-                            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                        </label>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'debug' && (
-                <div className="glass-card p-5 space-y-5">
-                    <div>
-                        <p className="stat-label mb-2">User Data</p>
-                        <pre className="bg-black p-4 rounded-xl text-xs text-emerald-400 overflow-auto max-h-48 border border-[#111111] font-mono">{JSON.stringify(user, null, 2)}</pre>
-                    </div>
-                    <div>
-                        <p className="stat-label mb-2">Learning Domains</p>
-                        <pre className="bg-black p-4 rounded-xl text-xs text-emerald-400 overflow-auto max-h-64 border border-[#111111] font-mono">{JSON.stringify(learningDomains, null, 2)}</pre>
-                    </div>
-                    <div>
-                        <p className="stat-label mb-2">LocalStorage Keys</p>
-                        <div className="bg-black p-4 rounded-xl text-sm border border-[#111111]">
-                            {Object.keys(localStorage).filter(k => k.startsWith('ascension')).map(key => (
-                                <div key={key} className="flex justify-between py-2 border-b border-[#111111] last:border-0">
-                                    <span className="text-violet-400 font-mono text-xs">{key}</span>
-                                    <span className="text-zinc-500 text-xs">{(localStorage.getItem(key)?.length || 0).toLocaleString()} chars</span>
                                 </div>
                             ))}
                         </div>

@@ -31,13 +31,13 @@ const QuoteCard = () => {
                     <div className="flex gap-2 mt-3">
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-violet-500 text-white text-xs rounded-lg hover:bg-violet-600 transition-colors"
+                            className="px-3 py-1.5 bg-sky-500 text-heading text-xs rounded-lg hover:bg-sky-600 transition-colors"
                         >
                             Save
                         </button>
                         <button
                             onClick={handleCancel}
-                            className="px-3 py-1.5 bg-zinc-700 text-white text-xs rounded-lg hover:bg-zinc-600 transition-colors"
+                            className="px-3 py-1.5 bg-zinc-700 text-heading text-xs rounded-lg hover:bg-zinc-600 transition-colors"
                         >
                             Cancel
                         </button>

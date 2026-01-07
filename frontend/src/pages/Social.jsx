@@ -35,7 +35,7 @@ const Social = () => {
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-white mb-1">Goals</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-heading mb-1">Goals</h1>
                     <p className="text-sm text-zinc-500">Set and track your personal objectives</p>
                 </div>
                 <button onClick={() => setShowAddGoal(true)} className="btn-primary text-sm w-full sm:w-auto">+ Add Goal</button>
@@ -68,13 +68,13 @@ const Social = () => {
             {/* Add Goal Form */}
             {showAddGoal && (
                 <div className="glass-card p-5 space-y-4">
-                    <h3 className="text-base font-semibold text-white">New Goal</h3>
+                    <h3 className="text-base font-semibold text-heading">New Goal</h3>
                     <input type="text" value={newGoalText} onChange={(e) => setNewGoalText(e.target.value)} placeholder="What do you want to achieve?" className="input-field" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleAddGoal()} />
                     <div>
                         <label className="text-xs font-medium text-zinc-500 block mb-2">Category</label>
                         <div className="flex flex-wrap gap-2">
                             {categories.map((cat) => (
-                                <button key={cat.value} onClick={() => setNewGoalCategory(cat.value)} className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${newGoalCategory === cat.value ? 'bg-white text-black' : 'bg-[#111111] text-zinc-400 hover:text-white hover:bg-[#1a1a1a]'}`}>
+                                <button key={cat.value} onClick={() => setNewGoalCategory(cat.value)} className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${newGoalCategory === cat.value ? 'bg-white text-black' : 'bg-elevated text-zinc-400 hover:text-heading hover:bg-elevated'}`}>
                                     {cat.label}
                                 </button>
                             ))}
@@ -89,7 +89,7 @@ const Social = () => {
 
             {/* Active Goals */}
             <div className="glass-card p-5">
-                <h3 className="text-base font-semibold text-white mb-4">Active Goals</h3>
+                <h3 className="text-base font-semibold text-heading mb-4">Active Goals</h3>
                 {activeGoals.length === 0 ? (
                     <div className="text-center py-12">
                         <p className="text-zinc-500 mb-2">No active goals</p>
@@ -98,18 +98,18 @@ const Social = () => {
                 ) : (
                     <div className="space-y-2">
                         {activeGoals.map((goal) => (
-                            <div key={goal.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-[#0a0a0a] rounded-xl border border-[#111111] hover:border-[#1a1a1a] transition-all group">
+                            <div key={goal.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-elevated rounded-xl border border-subtle hover:border-subtle transition-all group">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <button onClick={() => toggleGoal(goal.id)} className="w-5 h-5 rounded-md border-2 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-500/10 flex items-center justify-center flex-shrink-0 transition-all"></button>
                                     {editingGoal === goal.id ? (
-                                        <input type="text" defaultValue={goal.text} className="flex-1 bg-[#111111] px-3 py-2 rounded-lg text-white text-sm min-w-0" autoFocus onBlur={(e) => handleSaveEdit(goal.id, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(goal.id, e.target.value); else if (e.key === 'Escape') setEditingGoal(null); }} />
+                                        <input type="text" defaultValue={goal.text} className="flex-1 bg-elevated px-3 py-2 rounded-lg text-heading text-sm min-w-0" autoFocus onBlur={(e) => handleSaveEdit(goal.id, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(goal.id, e.target.value); else if (e.key === 'Escape') setEditingGoal(null); }} />
                                     ) : (
-                                        <span className="flex-1 text-sm text-white truncate">{goal.text}</span>
+                                        <span className="flex-1 text-sm text-heading truncate">{goal.text}</span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2 ml-8 sm:ml-0">
                                     <span className="tag">{goal.category || 'general'}</span>
-                                    <button onClick={() => setEditingGoal(goal.id)} className="sm:opacity-0 sm:group-hover:opacity-100 text-xs text-zinc-600 hover:text-white font-medium transition-all">Edit</button>
+                                    <button onClick={() => setEditingGoal(goal.id)} className="sm:opacity-0 sm:group-hover:opacity-100 text-xs text-zinc-600 hover:text-heading font-medium transition-all">Edit</button>
                                     <button onClick={() => deleteGoal(goal.id)} className="sm:opacity-0 sm:group-hover:opacity-100 text-xs text-zinc-600 hover:text-red-400 font-medium transition-all">Del</button>
                                 </div>
                             </div>
@@ -121,12 +121,12 @@ const Social = () => {
             {/* Completed Goals */}
             {completedGoals.length > 0 && (
                 <div className="glass-card p-5">
-                    <h3 className="text-base font-semibold text-white mb-4">Completed</h3>
+                    <h3 className="text-base font-semibold text-heading mb-4">Completed</h3>
                     <div className="space-y-2">
                         {completedGoals.map((goal) => (
                             <div key={goal.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/10 group">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <button onClick={() => toggleGoal(goal.id)} className="w-5 h-5 rounded-md bg-emerald-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">✓</button>
+                                    <button onClick={() => toggleGoal(goal.id)} className="w-5 h-5 rounded-md bg-emerald-500 flex items-center justify-center flex-shrink-0 text-heading text-xs font-bold">✓</button>
                                     <span className="flex-1 text-sm text-emerald-400 line-through truncate">{goal.text}</span>
                                 </div>
                                 <div className="flex items-center gap-2 ml-8 sm:ml-0">

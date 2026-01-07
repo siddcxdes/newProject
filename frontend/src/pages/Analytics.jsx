@@ -34,7 +34,7 @@ const Analytics = () => {
         const domain = learningDomains.find(d => d.id === type);
         if (domain) {
             const colorMap = {
-                violet: 'bg-violet-500',
+                violet: 'bg-sky-500',
                 emerald: 'bg-emerald-500',
                 blue: 'bg-blue-500',
                 amber: 'bg-amber-500',
@@ -44,7 +44,7 @@ const Analytics = () => {
             return colorMap[domain.color] || 'bg-zinc-500';
         }
         // Fallback for legacy types
-        const legacyColors = { dsa: 'bg-violet-500', ai: 'bg-emerald-500', gym: 'bg-amber-500', job: 'bg-blue-500', personal: 'bg-pink-500' };
+        const legacyColors = { dsa: 'bg-sky-500', ai: 'bg-emerald-500', gym: 'bg-amber-500', job: 'bg-blue-500', personal: 'bg-pink-500' };
         return legacyColors[type] || 'bg-zinc-500';
     };
 
@@ -61,7 +61,7 @@ const Analytics = () => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div>
-                <h1 className="text-2xl font-semibold text-white mb-1">Analytics</h1>
+                <h1 className="text-2xl font-semibold text-heading mb-1">Analytics</h1>
                 <p className="text-sm text-zinc-500">Track your progress and achievements over time</p>
             </div>
 
@@ -69,7 +69,7 @@ const Analytics = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="glass-card p-4">
                     <p className="stat-label mb-1">Total XP</p>
-                    <p className="stat-value text-violet-400">{user?.xp || 0}</p>
+                    <p className="stat-value text-sky-400">{user?.xp || 0}</p>
                     <p className="stat-sublabel">earned all time</p>
                 </div>
                 <div className="glass-card p-4">
@@ -91,15 +91,15 @@ const Analytics = () => {
 
             {/* Weekly Activity Chart */}
             <div className="glass-card p-5">
-                <h3 className="text-base font-semibold text-white mb-5">Last 7 Days</h3>
+                <h3 className="text-base font-semibold text-heading mb-5">Last 7 Days</h3>
                 <div className="flex items-end gap-3 h-40">
                     {last7Days.map((day, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                            <div className="w-full bg-[#0a0a0a] rounded-t-lg flex flex-col justify-end" style={{ height: '120px' }}>
-                                <div className="w-full bg-gradient-to-t from-violet-600 to-violet-400 rounded-t-lg transition-all duration-500" style={{ height: `${(day.count / maxCount) * 100}%`, minHeight: day.count > 0 ? '8px' : '0' }} />
+                            <div className="w-full bg-elevated rounded-t-lg flex flex-col justify-end" style={{ height: '120px' }}>
+                                <div className="w-full bg-gradient-to-t from-sky-600 to-sky-400 rounded-t-lg transition-all duration-500" style={{ height: `${(day.count / maxCount) * 100}%`, minHeight: day.count > 0 ? '8px' : '0' }} />
                             </div>
                             <p className="text-xs font-medium text-zinc-500">{day.day}</p>
-                            <p className="text-xs font-semibold text-white">{day.count}</p>
+                            <p className="text-xs font-semibold text-heading">{day.count}</p>
                         </div>
                     ))}
                 </div>
@@ -108,7 +108,7 @@ const Analytics = () => {
             {/* Activity Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="glass-card p-5">
-                    <h3 className="text-base font-semibold text-white mb-4">By Category</h3>
+                    <h3 className="text-base font-semibold text-heading mb-4">By Category</h3>
                     {Object.keys(activityBreakdown).length === 0 ? (
                         <p className="text-sm text-zinc-500 text-center py-8">No activities logged yet</p>
                     ) : (
@@ -121,8 +121,8 @@ const Analytics = () => {
                                 return (
                                     <div key={type}>
                                         <div className="flex justify-between text-sm mb-2">
-                                            <span className="font-medium text-white">{displayName}</span>
-                                            <span className="text-zinc-500"><span className="text-white font-semibold">{count}</span> ({percent}%)</span>
+                                            <span className="font-medium text-heading">{displayName}</span>
+                                            <span className="text-zinc-500"><span className="text-heading font-semibold">{count}</span> ({percent}%)</span>
                                         </div>
                                         <div className="progress-bar h-2">
                                             <div className={`h-full rounded-full ${colorClass}`} style={{ width: `${percent}%` }}></div>
@@ -135,12 +135,12 @@ const Analytics = () => {
                 </div>
 
                 <div className="glass-card p-5">
-                    <h3 className="text-base font-semibold text-white mb-4">Progress Overview</h3>
+                    <h3 className="text-base font-semibold text-heading mb-4">Progress Overview</h3>
                     <div className="space-y-3">
                         {/* Dynamic domain stats */}
                         {domainStats.map(stat => {
                             const colorMap = {
-                                violet: 'text-violet-400',
+                                violet: 'text-sky-400',
                                 emerald: 'text-emerald-400',
                                 blue: 'text-blue-400',
                                 amber: 'text-amber-400',
@@ -149,21 +149,21 @@ const Analytics = () => {
                             };
                             const textColor = colorMap[stat.color] || 'text-zinc-400';
                             return (
-                                <div key={stat.id} className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
-                                    <span className="text-sm text-white">{stat.name} Completed</span>
+                                <div key={stat.id} className="flex items-center justify-between p-4 bg-elevated rounded-xl border border-subtle">
+                                    <span className="text-sm text-heading">{stat.name} Completed</span>
                                     <span className={`font-semibold font-mono ${textColor}`}>{stat.completed}/{stat.total}</span>
                                 </div>
                             );
                         })}
                         {/* Workouts */}
-                        <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
-                            <span className="text-sm text-white">Workouts Logged</span>
+                        <div className="flex items-center justify-between p-4 bg-elevated rounded-xl border border-subtle">
+                            <span className="text-sm text-heading">Workouts Logged</span>
                             <span className="font-semibold font-mono text-amber-400">{totalWorkouts}</span>
                         </div>
                         {/* Total XP */}
-                        <div className="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-[#111111]">
-                            <span className="text-sm text-white">Total XP Earned</span>
-                            <span className="font-semibold font-mono text-white">{totalXpEarned}</span>
+                        <div className="flex items-center justify-between p-4 bg-elevated rounded-xl border border-subtle">
+                            <span className="text-sm text-heading">Total XP Earned</span>
+                            <span className="font-semibold font-mono text-heading">{totalXpEarned}</span>
                         </div>
                     </div>
                 </div>

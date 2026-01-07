@@ -52,10 +52,10 @@ const Sidebar = () => {
                 <div className="mb-4 p-3 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border)]">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wide">Progress</span>
-                        <span className="text-[10px] font-mono text-violet-400 font-semibold">{user?.xp || 0} XP</span>
+                        <span className="text-[10px] font-mono text-sky-400 font-semibold">{user?.xp || 0} XP</span>
                     </div>
                     <div className="h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 rounded-full" style={{ width: `${Math.min(xpProgress, 100)}%` }}></div>
+                        <div className="h-full bg-gradient-to-r from-sky-600 to-cyan-500 rounded-full" style={{ width: `${Math.min(xpProgress, 100)}%` }}></div>
                     </div>
                     <p className="text-[9px] text-[var(--color-text-muted)] mt-1.5">
                         <span className="text-[var(--color-text-secondary)]">{user?.xpToNextLevel || 500}</span> XP to Level {(user?.level || 1) + 1}
@@ -86,7 +86,7 @@ const Sidebar = () => {
                         </div>
                         <div className="flex justify-between px-1">
                             <span className="text-[var(--color-text-muted)]">DSA</span>
-                            <span className="font-mono text-violet-400 font-semibold">{user?.stats?.dsaProblemsTotal || 0}</span>
+                            <span className="font-mono text-sky-400 font-semibold">{user?.stats?.dsaProblemsTotal || 0}</span>
                         </div>
                         <div className="flex justify-between px-1">
                             <span className="text-[var(--color-text-muted)]">Gym</span>

@@ -209,7 +209,7 @@ const Login = () => {
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-3 mb-4">
                         <div className="relative w-10 h-10">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-xl rotate-45"></div>
+                            <div className="absolute inset-0 bg-gradient-to-tr from-sky-600 to-cyan-500 rounded-xl rotate-45"></div>
                             <div className="absolute inset-[3px] bg-[var(--color-bg-primary)] rounded-[9px] rotate-45"></div>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <svg className="w-4 h-4 text-[var(--color-text-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -224,7 +224,7 @@ const Login = () => {
 
                 {/* Form Container */}
                 <div className="glass-card p-6 space-y-4">
-                    <h2 className="text-lg font-semibold text-white text-center">{getTitle()}</h2>
+                    <h2 className="text-lg font-semibold text-heading text-center">{getTitle()}</h2>
 
                     {error && (
                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
@@ -270,20 +270,20 @@ const Login = () => {
                             <button
                                 onClick={handleLogin}
                                 disabled={loading}
-                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                                className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 text-heading font-semibold rounded-xl hover:from-sky-500 hover:to-cyan-500 transition-all disabled:opacity-50"
                             >
                                 {loading ? 'Signing in...' : 'Sign In'}
                             </button>
                             <div className="flex justify-between text-sm">
                                 <button
                                     onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
-                                    className="text-violet-400 hover:text-violet-300"
+                                    className="text-sky-400 hover:text-sky-300"
                                 >
                                     Forgot password?
                                 </button>
                                 <button
                                     onClick={() => { setMode('register'); setError(''); setSuccess(''); }}
-                                    className="text-violet-400 hover:text-violet-300"
+                                    className="text-sky-400 hover:text-sky-300"
                                 >
                                     Create account
                                 </button>
@@ -347,7 +347,7 @@ const Login = () => {
                             <button
                                 onClick={handleRegister}
                                 disabled={loading}
-                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                                className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 text-heading font-semibold rounded-xl hover:from-sky-500 hover:to-cyan-500 transition-all disabled:opacity-50"
                             >
                                 {loading ? 'Creating account...' : 'Create Account'}
                             </button>
@@ -380,7 +380,7 @@ const Login = () => {
                             <button
                                 onClick={handleForgotPassword}
                                 disabled={loading}
-                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                                className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 text-heading font-semibold rounded-xl hover:from-sky-500 hover:to-cyan-500 transition-all disabled:opacity-50"
                             >
                                 {loading ? 'Sending...' : 'Send Reset Code'}
                             </button>
@@ -438,7 +438,7 @@ const Login = () => {
                             <button
                                 onClick={handleResetPassword}
                                 disabled={loading}
-                                className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all disabled:opacity-50"
+                                className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 text-heading font-semibold rounded-xl hover:from-sky-500 hover:to-cyan-500 transition-all disabled:opacity-50"
                             >
                                 {loading ? 'Resetting...' : 'Reset Password'}
                             </button>

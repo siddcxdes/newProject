@@ -22,7 +22,7 @@ const StreakCard = () => {
             {/* Streak Section */}
             <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-white">Streak</h3>
+                    <h3 className="text-xs sm:text-sm font-semibold text-heading">Streak</h3>
                     <p className="text-[10px] sm:text-xs text-zinc-500 hidden sm:block">Stay consistent</p>
                 </div>
                 <div className="text-right">
@@ -31,7 +31,7 @@ const StreakCard = () => {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#1a1a1a]">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-subtle">
                 <span className="text-[10px] sm:text-sm text-zinc-500">Best</span>
                 <span className="font-semibold font-mono text-xs sm:text-sm text-amber-400">{streak.longest} days</span>
             </div>
@@ -58,7 +58,7 @@ const StreakCard = () => {
                         <textarea
                             value={quote}
                             onChange={(e) => setQuote(e.target.value)}
-                            className="w-full bg-[#0a0a0a] text-zinc-300 text-xs italic resize-none focus:outline-none rounded-lg p-2 border border-zinc-800 focus:border-violet-500 transition-colors"
+                            className="w-full bg-elevated text-zinc-300 text-xs italic resize-none focus:outline-none rounded-lg p-2 border border-zinc-800 focus:border-sky-500 transition-colors"
                             rows={3}
                             placeholder="Enter your motivational quote..."
                             maxLength={150}
@@ -66,13 +66,13 @@ const StreakCard = () => {
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSave}
-                                className="px-2 py-1 bg-violet-500 text-white text-[10px] rounded hover:bg-violet-600 transition-colors"
+                                className="px-2 py-1 bg-sky-500 text-heading text-[10px] rounded hover:bg-sky-600 transition-colors"
                             >
                                 Save
                             </button>
                             <button
                                 onClick={handleCancel}
-                                className="px-2 py-1 bg-zinc-700 text-white text-[10px] rounded hover:bg-zinc-600 transition-colors"
+                                className="px-2 py-1 bg-zinc-700 text-heading text-[10px] rounded hover:bg-zinc-600 transition-colors"
                             >
                                 Cancel
                             </button>

@@ -21,7 +21,7 @@ const ProgressTracker = () => {
         <div className="glass-card p-6">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-white">Journey Overview</h3>
+                    <h3 className="text-lg font-semibold text-heading">Journey Overview</h3>
                     <p className="text-sm text-slate-400">Track your 4-month journey to success</p>
                 </div>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isOnTrack
@@ -36,7 +36,7 @@ const ProgressTracker = () => {
             <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
                     <span className="text-slate-400">Week {currentWeek} of {totalWeeks}</span>
-                    <span className="text-white font-semibold">{Math.round(progress)}% Complete</span>
+                    <span className="text-heading font-semibold">{Math.round(progress)}% Complete</span>
                 </div>
                 <div className="h-4 bg-slate-700/50 rounded-full overflow-hidden relative">
                     {/* Expected progress marker */}
@@ -46,7 +46,7 @@ const ProgressTracker = () => {
                     ></div>
                     {/* Actual progress */}
                     <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-700"
+                        className="h-full bg-gradient-to-r from-sky-500 to-pink-500 rounded-full transition-all duration-700"
                         style={{ width: `${progress}%` }}
                     ></div>
                 </div>
@@ -63,9 +63,9 @@ const ProgressTracker = () => {
                     <div
                         key={i}
                         className={`h-2 rounded-sm transition-all ${i < currentWeek
-                                ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                                ? 'bg-gradient-to-r from-sky-500 to-pink-500'
                                 : i === currentWeek
-                                    ? 'bg-purple-500/50 animate-pulse'
+                                    ? 'bg-sky-500/50 animate-pulse'
                                     : 'bg-slate-700/50'
                             }`}
                         title={`Week ${i + 1}`}

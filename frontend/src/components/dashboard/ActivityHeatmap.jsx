@@ -73,15 +73,15 @@ const ActivityHeatmap = () => {
     }, [days]);
 
     const getIntensityClass = (data, isToday) => {
-        if (isToday) return 'bg-gradient-to-br from-violet-400 to-fuchsia-500 ring-2 ring-violet-400/50 shadow-lg shadow-violet-500/30';
-        if (!data) return 'bg-[#1a1a1a] hover:bg-[#222]';
+        if (isToday) return 'bg-gradient-to-br from-sky-400 to-cyan-500 ring-2 ring-sky-400/50 shadow-lg shadow-sky-500/30';
+        if (!data) return 'heatmap-empty';
         const count = data.count;
         if (count >= 5) return 'bg-gradient-to-br from-emerald-400 to-cyan-400 shadow-lg shadow-emerald-500/20';
         if (count >= 4) return 'bg-gradient-to-br from-emerald-500 to-teal-500';
-        if (count >= 3) return 'bg-gradient-to-br from-violet-500 to-purple-600';
-        if (count >= 2) return 'bg-gradient-to-br from-violet-600 to-purple-700';
-        if (count >= 1) return 'bg-violet-800/60';
-        return 'bg-[#1a1a1a] hover:bg-[#222]';
+        if (count >= 3) return 'bg-gradient-to-br from-sky-500 to-sky-600';
+        if (count >= 2) return 'bg-gradient-to-br from-sky-600 to-sky-700';
+        if (count >= 1) return 'bg-sky-800/60';
+        return 'heatmap-empty';
     };
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -126,13 +126,13 @@ const ActivityHeatmap = () => {
     return (
         <div className="glass-card p-4 sm:p-5 relative overflow-hidden">
             {/* Decorative gradient background */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-violet-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-sky-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="flex items-center justify-between mb-4 sm:mb-5 relative">
                 <div>
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse"></span>
+                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 animate-pulse"></span>
                         Activity Heatmap
                     </h3>
                     <p className="text-xs text-[var(--color-text-muted)]">Past 365 days in IST</p>
@@ -147,7 +147,7 @@ const ActivityHeatmap = () => {
                         <p className="stat-label text-[9px] sm:text-[10px]">Active Days</p>
                     </div>
                     <div className="hidden sm:block">
-                        <p className="stat-value text-lg text-violet-400">{stats.totalXp}</p>
+                        <p className="stat-value text-lg text-sky-400">{stats.totalXp}</p>
                         <p className="stat-label text-[10px]">Total XP</p>
                     </div>
                 </div>
@@ -202,14 +202,14 @@ const ActivityHeatmap = () => {
 
             {/* Legend */}
             <div className="flex items-center justify-between mt-4 text-[11px] relative">
-                <span className="text-[var(--color-text-muted)] font-medium">Today: <span className="text-violet-400 font-semibold">{todayIST}</span></span>
+                <span className="text-[var(--color-text-muted)] font-medium">Today: <span className="text-sky-400 font-semibold">{todayIST}</span></span>
                 <div className="flex items-center gap-1.5">
                     <span className="text-[var(--color-text-muted)]">Less</span>
                     <div className="flex gap-[3px]">
-                        <div className="w-2.5 h-2.5 bg-[#1a1a1a] rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-violet-800/60 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-violet-600 to-purple-700 rounded-sm"></div>
-                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-elevated rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-sky-800/60 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-sky-600 to-sky-700 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-br from-sky-500 to-sky-600 rounded-sm"></div>
                         <div className="w-2.5 h-2.5 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-sm"></div>
                         <div className="w-2.5 h-2.5 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-sm shadow-sm shadow-emerald-400/30"></div>
                     </div>
@@ -227,7 +227,7 @@ const ActivityHeatmap = () => {
                     }}
                 >
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">{hoveredDay.date}</p>
-                    {hoveredDay.isToday && <p className="text-xs font-medium text-violet-400">Today</p>}
+                    {hoveredDay.isToday && <p className="text-xs font-medium text-sky-400">Today</p>}
                     {hoveredDay.data ? (
                         <>
                             <p className="text-xs text-emerald-400 font-medium">{hoveredDay.data.count} activities</p>

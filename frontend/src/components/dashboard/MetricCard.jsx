@@ -1,7 +1,8 @@
 const MetricCard = ({ label, value, sublabel, total, color = 'default' }) => {
     const colorClasses = {
-        default: 'text-white',
-        violet: 'text-violet-400',
+        default: 'text-heading',
+        violet: 'text-sky-400',
+        sky: 'text-sky-400',
         emerald: 'text-emerald-400',
         amber: 'text-amber-400',
         blue: 'text-blue-400',

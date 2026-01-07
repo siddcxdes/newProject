@@ -131,7 +131,7 @@ const Academics = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-white mb-1">Academics</h1>
+                    <h1 className="text-2xl font-semibold text-heading mb-1">Academics</h1>
                     <p className="text-sm text-zinc-500">Master DSA, AI/ML, and custom domains</p>
                 </div>
                 <div className="flex gap-2">
@@ -144,7 +144,7 @@ const Academics = () => {
             {/* Add Domain Modal */}
             {showAddDomain && (
                 <div className="glass-card p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-white">Add New Learning Domain</h3>
+                    <h3 className="text-sm font-semibold text-heading">Add New Learning Domain</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input
                             type="text"
@@ -206,7 +206,7 @@ const Academics = () => {
             {learningDomains.length > 0 && (
                 <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-white">Your Custom Domains</h3>
+                        <h3 className="text-sm font-semibold text-heading">Your Custom Domains</h3>
                         <span className="text-xs text-zinc-500">{learningDomains.length} domains</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -218,12 +218,12 @@ const Academics = () => {
                                 <div
                                     key={domain.id}
                                     onClick={() => setActiveDomain(isActive ? null : domain.id)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${isActive ? 'ring-2 ring-blue-500/50 bg-blue-500/10' : 'bg-[#111] hover:bg-[#1a1a1a]'
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${isActive ? 'ring-2 ring-blue-500/50 bg-blue-500/10' : 'bg-elevated hover:bg-elevated'
                                         }`}
                                 >
                                     <span className="text-lg">{domain.icon}</span>
                                     <div>
-                                        <p className="text-sm font-medium text-white">{domain.shortName}</p>
+                                        <p className="text-sm font-medium text-heading">{domain.shortName}</p>
                                         <p className="text-[10px] text-zinc-500">{completedItems}/{totalItems} items</p>
                                     </div>
                                     <button
@@ -249,7 +249,7 @@ const Academics = () => {
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">{domain.icon}</span>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-white">{domain.name}</h2>
+                                    <h2 className="text-lg font-semibold text-heading">{domain.name}</h2>
                                     <p className="text-xs text-zinc-500">{domain.type === 'problem-based' ? 'Difficulty-based XP' : 'Flat XP per item'}</p>
                                 </div>
                             </div>
@@ -277,14 +277,14 @@ const Academics = () => {
                         ) : (
                             <div className="space-y-3">
                                 {domain.topics.map((topic) => (
-                                    <div key={topic.id} className="bg-[#0a0a0a] rounded-xl overflow-hidden">
+                                    <div key={topic.id} className="bg-elevated rounded-xl overflow-hidden">
                                         <div
-                                            className="p-4 cursor-pointer flex items-center gap-3 hover:bg-[#0d0d0d]"
+                                            className="p-4 cursor-pointer flex items-center gap-3 hover:bg-elevated"
                                             onClick={() => setExpandedDomainTopic(expandedDomainTopic === topic.id ? null : topic.id)}
                                         >
                                             <span>{topic.icon || '📝'}</span>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-white">{topic.name}</p>
+                                                <p className="text-sm font-medium text-heading">{topic.name}</p>
                                                 <p className="text-xs text-zinc-500">{topic.completed || 0}/{topic.items?.length || 0} completed</p>
                                             </div>
                                             <button onClick={(e) => { e.stopPropagation(); deleteDomainTopic(domain.id, topic.id); }} className="p-1 text-zinc-600 hover:text-red-400">
@@ -294,7 +294,7 @@ const Academics = () => {
                                         </div>
 
                                         {expandedDomainTopic === topic.id && (
-                                            <div className="p-4 border-t border-[#111] bg-black">
+                                            <div className="p-4 border-t border-subtle bg-elevated">
                                                 {showAddDomainItem === topic.id ? (
                                                     <div className="flex flex-wrap gap-2 mb-3">
                                                         <input
@@ -319,7 +319,7 @@ const Academics = () => {
                                                 ) : (
                                                     <button
                                                         onClick={() => setShowAddDomainItem(topic.id)}
-                                                        className="w-full py-3 border border-dashed border-[#222] rounded-xl text-zinc-500 hover:border-blue-500/50 hover:text-blue-400 text-sm font-medium transition-all mb-3"
+                                                        className="w-full py-3 border border-dashed border-subtle rounded-xl text-zinc-500 hover:border-blue-500/50 hover:text-blue-400 text-sm font-medium transition-all mb-3"
                                                     >
                                                         + Add Item
                                                     </button>
@@ -330,15 +330,15 @@ const Academics = () => {
                                                 ) : (
                                                     <div className="space-y-2">
                                                         {topic.items.map((item) => (
-                                                            <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl ${item.completed ? 'bg-emerald-500/5' : 'bg-[#0a0a0a]'}`}>
+                                                            <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl ${item.completed ? 'bg-emerald-500/5' : 'bg-elevated'}`}>
                                                                 <button
                                                                     onClick={() => toggleDomainItem(domain.id, topic.id, item.id)}
-                                                                    className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${item.completed ? 'bg-emerald-500 text-white' : 'border-2 border-zinc-700 hover:border-blue-500'
+                                                                    className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${item.completed ? 'bg-emerald-500 text-heading' : 'border-2 border-zinc-700 hover:border-blue-500'
                                                                         }`}
                                                                 >
                                                                     {item.completed && '✓'}
                                                                 </button>
-                                                                <span className={`flex-1 text-sm ${item.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>{item.name}</span>
+                                                                <span className={`flex-1 text-sm ${item.completed ? 'text-emerald-400 line-through' : 'text-heading'}`}>{item.name}</span>
                                                                 {domain.type === 'problem-based' && item.difficulty && (
                                                                     <span className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase ${item.difficulty === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
                                                                         item.difficulty === 'hard' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
@@ -368,7 +368,7 @@ const Academics = () => {
                     const completedItems = domain.topics?.reduce((sum, t) => sum + (t.items?.filter(i => i.completed).length || 0), 0) || 0;
                     const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
                     const colorClass = {
-                        violet: { ring: 'ring-violet-500/50', dot: 'bg-violet-500', bar: 'from-violet-600 to-violet-400', text: 'text-violet-400' },
+                        violet: { ring: 'ring-sky-500/50', dot: 'bg-sky-500', bar: 'from-sky-600 to-sky-400', text: 'text-sky-400' },
                         emerald: { ring: 'ring-emerald-500/50', dot: 'bg-emerald-500', bar: 'from-emerald-600 to-emerald-400', text: 'text-emerald-400' },
                         blue: { ring: 'ring-blue-500/50', dot: 'bg-blue-500', bar: 'from-blue-600 to-blue-400', text: 'text-blue-400' },
                         amber: { ring: 'ring-amber-500/50', dot: 'bg-amber-500', bar: 'from-amber-600 to-amber-400', text: 'text-amber-400' },
@@ -379,13 +379,13 @@ const Academics = () => {
                     return (
                         <div
                             key={domain.id}
-                            className={`glass-card p-5 cursor-pointer transition-all relative group ${activeDomain === domain.id ? `ring-2 ${colorClass.ring}` : 'hover:border-[#222]'}`}
+                            className={`glass-card p-5 cursor-pointer transition-all relative group ${activeDomain === domain.id ? `ring-2 ${colorClass.ring}` : 'hover:border-subtle'}`}
                             onClick={() => setActiveDomain(activeDomain === domain.id ? null : domain.id)}
                         >
                             {/* Delete button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
-                                className="absolute top-3 right-3 p-1.5 rounded-lg bg-[#111] opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                className="absolute top-3 right-3 p-1.5 rounded-lg bg-elevated opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                 title="Remove domain"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -395,7 +395,7 @@ const Academics = () => {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <div className={`w-2 h-2 rounded-full ${colorClass.dot}`}></div>
-                                        <h3 className="text-sm font-semibold text-white">{domain.name}</h3>
+                                        <h3 className="text-sm font-semibold text-heading">{domain.name}</h3>
                                     </div>
                                     <p className="text-xs text-zinc-500">{domain.topics?.length || 0} topics · {totalItems} {domain.type === 'problem-based' ? 'problems' : 'items'}</p>
                                 </div>
@@ -405,7 +405,7 @@ const Academics = () => {
                                 </div>
                             </div>
                             <div className="relative">
-                                <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                                <div className="h-2 bg-elevated rounded-full overflow-hidden">
                                     <div className={`h-full bg-gradient-to-r ${colorClass.bar} rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
                                 </div>
                                 <div className="flex justify-between mt-2">
