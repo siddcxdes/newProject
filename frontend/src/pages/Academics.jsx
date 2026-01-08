@@ -226,6 +226,22 @@ const Academics = () => {
                                         <p className="text-sm font-medium text-heading">{domain.shortName}</p>
                                         <p className="text-[10px] text-zinc-500">{completedItems}/{totalItems} items</p>
                                     </div>
+
+                                    {/* Toggle: include in Daily Check-In */}
+                                    <label
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="ml-auto flex items-center gap-1.5 text-[10px] text-zinc-500 select-none"
+                                        title="Show this domain in Daily Check-In"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            className="accent-sky-500"
+                                            checked={domain.showInCheckIn !== false}
+                                            onChange={(e) => editLearningDomain(domain.id, { showInCheckIn: e.target.checked })}
+                                        />
+                                        Check-In
+                                    </label>
+
                                     <button
                                         onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
                                         className="ml-2 p-1 text-zinc-600 hover:text-red-400 rounded"

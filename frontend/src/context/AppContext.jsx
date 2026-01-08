@@ -974,7 +974,8 @@ export const AppProvider = ({ children }) => {
             color,
             type,
             xpPerItem: type === 'problem-based' ? { easy: 10, medium: 25, hard: 50 } : 30,
-            topics: []
+            topics: [],
+            showInCheckIn: true
         };
         const newDomains = [...learningDomains, newDomain];
         setLearningDomains(newDomains);
