@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+// Sub-schemas used by the main user schema.
+// These keep the persisted shape stable while still allowing future extension.
 const streakSchema = new mongoose.Schema(
   {
     current: { type: Number, default: 0 },
@@ -12,37 +14,25 @@ const streakSchema = new mongoose.Schema(
 
 const statsSchema = new mongoose.Schema(
   {
-    dsaProblemsTotal: { type: Number, default: 0 },
-    dsaProblemsToday: { type: Number, default: 0 },
-    dsaTodayDate: { type: String, default: null },
-
-    aiModulesCompleted: { type: Number, default: 0 },
-    aiProgress: { type: Number, default: 0 },
-
-    gymDaysThisWeek: { type: Number, default: 0 },
-    gymWeekStart: { type: Date, default: null },
-
-    jobApplications: { type: Number, default: 0 },
-    personalWins: { type: Number, default: 0 }
-  },
-  { _id: false }
-);
-
-const journeySchema = new mongoose.Schema(
-  {
-    startDate: { type: Date, default: Date.now },
-    totalWeeks: { type: Number, default: 17 },
-    currentWeek: { type: Number, default: 1 }
+    totalActivities: { type: Number, default: 0 },
+    totalXP: { type: Number, default: 0 }
   },
   { _id: false }
 );
 
 const settingsSchema = new mongoose.Schema(
   {
-    weeklyGymGoal: { type: Number, default: 6 },
-    dailyDsaGoal: { type: Number, default: 3 },
     theme: { type: String, default: 'dark' },
-    notifications: { type: Boolean, default: true }
+    timezone: { type: String, default: 'Asia/Kolkata' },
+    notificationsEnabled: { type: Boolean, default: true }
+  },
+  { _id: false }
+);
+
+const journeySchema = new mongoose.Schema(
+  {
+    startedAt: { type: Date, default: Date.now },
+    lastCheckInAt: { type: Date, default: null }
   },
   { _id: false }
 );

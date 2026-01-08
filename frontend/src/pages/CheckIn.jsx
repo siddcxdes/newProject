@@ -283,7 +283,9 @@ const CheckIn = () => {
     const deleteOtherTask = (id) => saveOtherTasks(otherTasks.filter(t => t.id !== id));
 
     // Calculate totals from all domains + other tasks
-    const domainTaskCounts = learningDomains.reduce((acc, domain) => {
+        const checkInDomains = learningDomains.filter((domain) => domain.showInCheckIn !== false);
+
+        const domainTaskCounts = checkInDomains.reduce((acc, domain) => {
         const tasks = dailyTasks[todayStr]?.[domain.id] || [];
         return {
             total: acc.total + tasks.length,
@@ -341,7 +343,9 @@ const CheckIn = () => {
 
             {/* Dynamic Learning Domain Task Boxes */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                {learningDomains.map((domain) => (
+                {learningDomains
+                    .filter((domain) => domain.showInCheckIn !== false)
+                    .map((domain) => (
                     <DomainTaskBox
                         key={domain.id}
                         domain={domain}

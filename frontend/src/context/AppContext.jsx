@@ -150,7 +150,8 @@ const DEFAULT_LEARNING_DOMAINS = [
         color: 'violet',
         type: 'problem-based', // has difficulty levels (easy/medium/hard)
         xpPerItem: { easy: 10, medium: 25, hard: 50 },
-        topics: []
+        topics: [],
+        showInCheckIn: true
     },
     {
         id: 'ai',
@@ -160,7 +161,8 @@ const DEFAULT_LEARNING_DOMAINS = [
         color: 'emerald',
         type: 'module-based', // flat XP per item
         xpPerItem: 30,
-        topics: []
+        topics: [],
+        showInCheckIn: true
     },
     {
         id: 'job',
@@ -170,7 +172,8 @@ const DEFAULT_LEARNING_DOMAINS = [
         color: 'blue',
         type: 'module-based',
         xpPerItem: 15,
-        topics: []
+        topics: [],
+        showInCheckIn: true
     }
 ];
 
@@ -268,7 +271,12 @@ export const AppProvider = ({ children }) => {
         const dailyTasksToSet = serverUser.dailyTasks ?? {};
         const heatmapDataToSet = serverUser.heatmapData ?? {};
         // For learningDomains, use server data if it exists (even empty array means user cleared it)
-        const learningDomainsToSet = serverUser.learningDomains !== undefined ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
+        // Also backfill `showInCheckIn` for older saved domains.
+        const learningDomainsRaw = serverUser.learningDomains !== undefined ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
+        const learningDomainsToSet = (learningDomainsRaw || []).map((d) => ({
+            ...d,
+            showInCheckIn: d.showInCheckIn !== undefined ? d.showInCheckIn : true
+        }));
 
         console.log('📊 Setting state from server:', {
             workouts: workoutsToSet.length,
