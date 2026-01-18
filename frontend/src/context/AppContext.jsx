@@ -123,6 +123,18 @@ const DEFAULT_WORKOUTS = [
     { id: 5, name: 'Full Body', icon: '🔥', exercises: ['Burpees', 'Mountain Climbers', 'Planks'], timesCompleted: 0 },
 ];
 
+// Default Recipes (Diet Tracking)
+const DEFAULT_RECIPES = [
+    { id: 1, name: 'Oatmeal with Berries', category: 'breakfast', calories: 350, protein: 12 },
+    { id: 2, name: 'Protein Pancakes', category: 'breakfast', calories: 420, protein: 25 },
+    { id: 3, name: 'Grilled Chicken Salad', category: 'lunch', calories: 450, protein: 35 },
+    { id: 4, name: 'Quinoa Bowl', category: 'lunch', calories: 520, protein: 22 },
+    { id: 5, name: 'Greek Yogurt', category: 'snack', calories: 150, protein: 15 },
+    { id: 6, name: 'Protein Shake', category: 'snack', calories: 200, protein: 30 },
+    { id: 7, name: 'Salmon with Veggies', category: 'dinner', calories: 550, protein: 40 },
+    { id: 8, name: 'Chicken Stir Fry', category: 'dinner', calories: 480, protein: 38 },
+];
+
 // Default goals
 const DEFAULT_GOALS = [
     { id: 1, text: 'Network with 5 people this week', completed: false, createdAt: new Date().toISOString() },
@@ -200,6 +212,7 @@ export const AppProvider = ({ children }) => {
 
     // Gym state
     const [workouts, setWorkouts] = useState(DEFAULT_WORKOUTS);
+    const [recipes, setRecipes] = useState(DEFAULT_RECIPES);
 
     // Daily check-in tasks state (keyed by date string, e.g., "2025-12-08")
     const [dailyTasks, setDailyTasks] = useState({});
@@ -264,6 +277,7 @@ export const AppProvider = ({ children }) => {
         // (Server data is the source of truth, even if empty)
         // Only fall back to defaults for learningDomains if completely empty (for UX)
         const workoutsToSet = serverUser.workouts ?? [];
+        const recipesToSet = serverUser.recipes ?? [];
         const dsaTopicsToSet = serverUser.dsaTopics ?? [];
         const aiModulesToSet = serverUser.aiModules ?? [];
         const goalsToSet = serverUser.goals ?? [];
@@ -280,6 +294,7 @@ export const AppProvider = ({ children }) => {
 
         console.log('📊 Setting state from server:', {
             workouts: workoutsToSet.length,
+            recipes: recipesToSet.length,
             dsaTopics: dsaTopicsToSet.length,
             aiModules: aiModulesToSet.length,
             dailyTasks: Object.keys(dailyTasksToSet).length,
@@ -290,6 +305,7 @@ export const AppProvider = ({ children }) => {
         setDsaTopics(dsaTopicsToSet);
         setAiModules(aiModulesToSet);
         setWorkouts(workoutsToSet);
+        setRecipes(recipesToSet);
         setGoals(goalsToSet);
         setActivities(activitiesToSet);
         setDailyTasks(dailyTasksToSet);
@@ -413,6 +429,7 @@ export const AppProvider = ({ children }) => {
                     dsaTopics: currentData.dsaTopics,
                     aiModules: currentData.aiModules,
                     workouts: currentData.workouts,
+                    recipes: currentData.recipes,
                     goals: currentData.goals,
                     activities: currentData.activities,
                     dailyTasks: currentData.dailyTasks,
@@ -513,13 +530,13 @@ export const AppProvider = ({ children }) => {
     const forceSyncNow = async () => {
         console.log('🚨 FORCE SYNC triggered!');
         // Update dataRef immediately before sync
-        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
+        dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, learningDomains };
         await syncToCloud();
     };
 
     // Keep dataRef updated with latest values (for sync to use)
     // This runs on EVERY render to ensure dataRef is always current
-    dataRef.current = { user, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains };
+    dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, learningDomains };
 
     // Trigger cloud sync on data changes (no localStorage)
     useEffect(() => {
@@ -552,6 +569,10 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [workouts, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [recipes, debouncedSyncToCloud]);
 
     useEffect(() => {
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
@@ -1176,6 +1197,33 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // ===== RECIPE FUNCTIONS =====
+    const addRecipe = (name, category = 'breakfast', calories = 0, protein = 0) => {
+        const prev = [...recipes];
+        const newRecipe = { id: Date.now(), name, category, calories, protein };
+        const newRecipes = [...recipes, newRecipe];
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification(`Added recipe: ${name}`, 'success');
+        return newRecipe;
+    };
+
+    const editRecipe = (recipeId, updates) => {
+        const prev = [...recipes];
+        const newRecipes = recipes.map(r => r.id === recipeId ? { ...r, ...updates } : r);
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification('Recipe updated!', 'success');
+    };
+
+    const deleteRecipe = (recipeId) => {
+        const prev = [...recipes];
+        const newRecipes = recipes.filter(r => r.id !== recipeId);
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification('Recipe deleted', 'info');
+    };
+
     // ===== GOAL FUNCTIONS =====
     const addGoal = (text) => {
         const prev = [...goals];
@@ -1265,7 +1313,7 @@ export const AppProvider = ({ children }) => {
         setHistoryIndex(-1);
 
         showNotification('🔄 All data reset! Fresh start!', 'success');
-        
+
         // Sync reset to cloud
         if (authToken) {
             setTimeout(() => syncToCloud(), 100);
@@ -1280,7 +1328,7 @@ export const AppProvider = ({ children }) => {
 
     const value = {
         // State - user now has dynamically computed stats
-        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks, learningDomains,
+        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, recipes, dailyTasks, learningDomains,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated, computedStats,
         // Daily Tasks
         setDailyTasks,
@@ -1301,7 +1349,9 @@ export const AppProvider = ({ children }) => {
         addDomainItem, toggleDomainItem, deleteDomainItem,
         setLearningDomains, // Expose for bulk imports
         // Workouts
-        addWorkout, editWorkout, deleteWorkout, logWorkout,
+        addWorkout, editWorkout, deleteWorkout, logWorkout, setWorkouts, // Expose setWorkouts for bulk imports
+        // Recipes
+        addRecipe, editRecipe, deleteRecipe, setRecipes, // Expose setRecipes for bulk imports
         // Settings & Utils
         updateSettings, refreshData, showNotification, resetAll,
         // Undo/Redo

@@ -3,14 +3,18 @@ import { useApp } from '../context/AppContext';
 
 const Admin = () => {
     const {
-        user, activities, learningDomains, workouts, goals,
-        setLearningDomains, showNotification, resetAll, forceSyncNow
+        user, activities, learningDomains, workouts, recipes, goals,
+        setLearningDomains, setRecipes, setWorkouts, showNotification, resetAll, forceSyncNow
     } = useApp();
 
     const [activeTab, setActiveTab] = useState('overview');
     const [jsonInput, setJsonInput] = useState('');
+    const [recipeJsonInput, setRecipeJsonInput] = useState('');
+    const [workoutJsonInput, setWorkoutJsonInput] = useState('');
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [isImportingRecipes, setIsImportingRecipes] = useState(false);
+    const [isImportingWorkouts, setIsImportingWorkouts] = useState(false);
 
     const handleExport = () => {
         const data = {
@@ -160,6 +164,118 @@ const Admin = () => {
         }
     };
 
+    const handleBulkRecipeImport = () => {
+        if (isImportingRecipes) return;
+        setIsImportingRecipes(true);
+
+        try {
+            let parsed = JSON.parse(recipeJsonInput);
+            if (!Array.isArray(parsed)) {
+                parsed = [parsed];
+            }
+
+            let newRecipes = [...recipes];
+            let addedCount = 0;
+
+            for (const item of parsed) {
+                const name = item.name || item.recipe;
+                const category = (item.category || item.meal || 'breakfast').toLowerCase();
+                const calories = parseInt(item.calories || item.cal || 0);
+                const protein = parseInt(item.protein || item.prot || 0);
+
+                if (!name) {
+                    throw new Error('Missing "name" field in recipe');
+                }
+
+                if (!['breakfast', 'lunch', 'snack', 'dinner'].includes(category)) {
+                    throw new Error(`Invalid category "${category}". Must be: breakfast, lunch, snack, or dinner`);
+                }
+
+                // Check if recipe already exists
+                const exists = newRecipes.some(r => r.name.toLowerCase() === name.toLowerCase());
+
+                if (!exists) {
+                    const newRecipe = {
+                        id: Date.now() + Math.floor(Math.random() * 10000),
+                        name,
+                        category,
+                        calories,
+                        protein
+                    };
+                    newRecipes.push(newRecipe);
+                    addedCount++;
+                }
+            }
+
+            setRecipes(newRecipes);
+
+            if (typeof forceSyncNow === 'function') {
+                forceSyncNow();
+            }
+
+            setRecipeJsonInput('');
+            showNotification(`✅ Imported ${addedCount} recipes!`, 'success');
+        } catch (error) {
+            console.error('Recipe import error:', error);
+            showNotification(`❌ ${error.message}`, 'error');
+        } finally {
+            setIsImportingRecipes(false);
+        }
+    };
+
+    const handleBulkWorkoutImport = () => {
+        if (isImportingWorkouts) return;
+        setIsImportingWorkouts(true);
+
+        try {
+            let parsed = JSON.parse(workoutJsonInput);
+            if (!Array.isArray(parsed)) {
+                parsed = [parsed];
+            }
+
+            let newWorkouts = [...workouts];
+            let addedCount = 0;
+
+            for (const item of parsed) {
+                const name = item.name || item.workout;
+                const exercises = Array.isArray(item.exercises) ? item.exercises : (item.exercises ? item.exercises.split(',').map(e => e.trim()) : []);
+
+                if (!name) {
+                    throw new Error('Missing "name" field in workout');
+                }
+
+                // Check if workout already exists
+                const exists = newWorkouts.some(w => w.name.toLowerCase() === name.toLowerCase());
+
+                if (!exists) {
+                    const newWorkout = {
+                        id: Date.now() + Math.floor(Math.random() * 10000),
+                        name,
+                        icon: '💪',
+                        exercises,
+                        timesCompleted: 0
+                    };
+                    newWorkouts.push(newWorkout);
+                    addedCount++;
+                }
+            }
+
+            setWorkouts(newWorkouts);
+
+            if (typeof forceSyncNow === 'function') {
+                forceSyncNow();
+            }
+
+            setWorkoutJsonInput('');
+            showNotification(`✅ Imported ${addedCount} workouts!`, 'success');
+        } catch (error) {
+            console.error('Workout import error:', error);
+            showNotification(`❌ ${error.message}`, 'error');
+        } finally {
+            setIsImportingWorkouts(false);
+        }
+    };
+
     const exampleJson = `[
   {
     "domain": "Data Structures",
@@ -175,9 +291,37 @@ const Admin = () => {
   }
 ]`;
 
+    const exampleRecipeJson = `[
+  {
+    "name": "Protein Oatmeal",
+    "category": "breakfast",
+    "calories": 350,
+    "protein": 20
+  },
+  {
+    "name": "Grilled Chicken Bowl",
+    "category": "lunch",
+    "calories": 520,
+    "protein": 45
+  }
+]`;
+
+    const exampleWorkoutJson = `[
+  {
+    "name": "Push Day",
+    "exercises": ["Bench Press", "Shoulder Press", "Tricep Dips"]
+  },
+  {
+    "name": "Pull Day",
+    "exercises": ["Deadlift", "Rows", "Bicep Curls"]
+  }
+]`;
+
     const tabs = [
         { id: 'overview', label: 'Overview' },
-        { id: 'bulk', label: 'JSON Import' },
+        { id: 'bulk', label: 'Learning Import' },
+        { id: 'recipes', label: 'Recipe Import' },
+        { id: 'workouts', label: 'Workout Import' },
     ];
 
     return (
@@ -301,6 +445,112 @@ const Admin = () => {
                                     {domain.topics?.length > 5 && (
                                         <div className="ml-4 text-xs text-zinc-600 italic">...and {domain.topics.length - 5} more topics</div>
                                     )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'recipes' && (
+                <div className="space-y-4">
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-2">Bulk Recipe Import</h3>
+                        <p className="text-sm text-zinc-500 mb-4">Import recipes for diet tracking. Recipes sync to Gym page.</p>
+
+                        <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
+                            <p className="text-xs text-zinc-500 mb-2">Required format:</p>
+                            <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleRecipeJson}</pre>
+                        </div>
+
+                        <textarea
+                            value={recipeJsonInput}
+                            onChange={(e) => setRecipeJsonInput(e.target.value)}
+                            placeholder="Paste your recipe JSON here..."
+                            className="input-field resize-none mb-4 font-mono text-sm"
+                            rows={12}
+                            disabled={isImportingRecipes}
+                        />
+                        <button
+                            onClick={handleBulkRecipeImport}
+                            className="btn-primary text-sm"
+                            disabled={!recipeJsonInput.trim() || isImportingRecipes}
+                        >
+                            {isImportingRecipes ? 'Importing...' : 'Import Recipes'}
+                        </button>
+                    </div>
+
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-4">Current Recipes ({recipes.length})</h3>
+                        <div className="space-y-2 max-h-96 overflow-auto">
+                            {recipes.map(recipe => (
+                                <div key={recipe.id} className="p-3 bg-elevated rounded-lg border border-subtle">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="text-sm font-semibold text-heading">{recipe.name}</span>
+                                            <span className="text-xs text-zinc-500 ml-2 capitalize">({recipe.category})</span>
+                                        </div>
+                                        <div className="flex gap-3 text-xs">
+                                            <span className="text-amber-400">{recipe.calories} kcal</span>
+                                            <span className="text-emerald-400">{recipe.protein}g protein</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'workouts' && (
+                <div className="space-y-4">
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-2">Bulk Workout Import</h3>
+                        <p className="text-sm text-zinc-500 mb-4">Import workout routines. Workouts sync to Gym page.</p>
+
+                        <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
+                            <p className="text-xs text-zinc-500 mb-2">Required format:</p>
+                            <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleWorkoutJson}</pre>
+                        </div>
+
+                        <textarea
+                            value={workoutJsonInput}
+                            onChange={(e) => setWorkoutJsonInput(e.target.value)}
+                            placeholder="Paste your workout JSON here..."
+                            className="input-field resize-none mb-4 font-mono text-sm"
+                            rows={12}
+                            disabled={isImportingWorkouts}
+                        />
+                        <button
+                            onClick={handleBulkWorkoutImport}
+                            className="btn-primary text-sm"
+                            disabled={!workoutJsonInput.trim() || isImportingWorkouts}
+                        >
+                            {isImportingWorkouts ? 'Importing...' : 'Import Workouts'}
+                        </button>
+                    </div>
+
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-4">Current Workouts ({workouts.length})</h3>
+                        <div className="space-y-2 max-h-96 overflow-auto">
+                            {workouts.map(workout => (
+                                <div key={workout.id} className="p-3 bg-elevated rounded-lg border border-subtle">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-semibold text-heading">{workout.name}</span>
+                                        <span className="text-xs text-zinc-500">{workout.exercises.length} exercises</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {workout.exercises.slice(0, 3).map((exercise, idx) => (
+                                            <span key={idx} className="text-xs px-2 py-0.5 bg-elevated border border-subtle rounded text-zinc-400">
+                                                {exercise}
+                                            </span>
+                                        ))}
+                                        {workout.exercises.length > 3 && (
+                                            <span className="text-xs px-2 py-0.5 text-zinc-600">
+                                                +{workout.exercises.length - 3} more
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

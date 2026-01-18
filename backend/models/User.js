@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, default: 'Champion', trim: true },
   avatar: { type: String, default: '' },
   quote: { type: String, default: "The only way to do great work is to love what you do." },
-  
+
   // Password reset
   resetPasswordToken: String,
   resetPasswordExpires: Date,
@@ -63,6 +63,7 @@ const userSchema = new mongoose.Schema({
   dsaTopics: { type: [mongoose.Schema.Types.Mixed], default: [] },
   aiModules: { type: [mongoose.Schema.Types.Mixed], default: [] },
   workouts: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  recipes: { type: [mongoose.Schema.Types.Mixed], default: [] },
   goals: { type: [mongoose.Schema.Types.Mixed], default: [] },
   dailyTasks: { type: mongoose.Schema.Types.Mixed, default: {} },
   heatmapData: { type: mongoose.Schema.Types.Mixed, default: {} }
@@ -70,7 +71,7 @@ const userSchema = new mongoose.Schema({
 
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -78,7 +79,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   // If a legacy/broken user record exists without a password hash, bcrypt will throw.
   // Treat it as invalid credentials instead of crashing the route.
   if (!candidatePassword || !this.password) {
@@ -88,7 +89,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 // Calculate level from XP
-userSchema.methods.calculateLevel = function() {
+userSchema.methods.calculateLevel = function () {
   const xp = this.xp;
   if (xp < 100) return 1;
   if (xp < 300) return 2;
@@ -103,7 +104,7 @@ userSchema.methods.calculateLevel = function() {
 };
 
 // Update streak based on activity
-userSchema.methods.updateStreak = function(activityDateStr) {
+userSchema.methods.updateStreak = function (activityDateStr) {
   const today = activityDateStr || new Date().toISOString().split('T')[0];
   const lastDate = this.streak.lastActivityDate ? this.streak.lastActivityDate.toISOString().split('T')[0] : null;
 
@@ -128,14 +129,14 @@ userSchema.methods.updateStreak = function(activityDateStr) {
 };
 
 // Check for level up after XP gain
-userSchema.methods.checkLevelUp = function() {
+userSchema.methods.checkLevelUp = function () {
   const oldLevel = this.level;
   this.level = this.calculateLevel();
   return this.level - oldLevel;
 };
 
 // Sanitize output (remove password)
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
   delete obj.__v;
