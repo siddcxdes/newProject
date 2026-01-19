@@ -255,38 +255,72 @@ const Admin = () => {
 
             for (const item of parsed) {
                 const name = item.name || item.workout;
-                const exercises = Array.isArray(item.exercises) ? item.exercises : (item.exercises ? item.exercises.split(',').map(e => e.trim()) : []);
 
                 if (!name) {
                     throw new Error('Missing "name" field in workout');
                 }
 
+                // Check if workout already exists
                 const exists = newWorkouts.some(w => w.name.toLowerCase() === name.toLowerCase());
 
                 if (!exists) {
+                    // Handle both simple and complex workout formats
+                    let exercises = [];
+
+                    // Simple format: just an array of exercise names
+                    if (Array.isArray(item.exercises) && typeof item.exercises[0] === 'string') {
+                        exercises = item.exercises;
+                    }
+                    // Complex format: exercises with muscle groups
+                    else if (Array.isArray(item.exercises) && typeof item.exercises[0] === 'object') {
+                        // Flatten the complex structure for display
+                        exercises = item.exercises.flatMap(group =>
+                            group.movements || []
+                        );
+                    }
+                    // String format: comma-separated
+                    else if (typeof item.exercises === 'string') {
+                        exercises = item.exercises.split(',').map(e => e.trim());
+                    }
+
                     const newWorkout = {
                         id: Date.now() + Math.floor(Math.random() * 10000),
                         name,
                         icon: '',
-                        exercises,
-                        timesCompleted: 0
+                        exercises: exercises || [],
+                        timesCompleted: 0,
+                        // Store the full complex structure if available
+                        ...(item.pre_workout_warmup && { preWorkoutWarmup: item.pre_workout_warmup }),
+                        ...(item.post_workout_stretch && { postWorkoutStretch: item.post_workout_stretch }),
+                        ...(item.exercises && typeof item.exercises[0] === 'object' && {
+                            exerciseGroups: item.exercises
+                        })
                     };
                     newWorkouts.push(newWorkout);
                     addedCount++;
                 }
             }
 
+            // Update state
             setWorkouts(newWorkouts);
 
-            if (typeof forceSyncNow === 'function') {
-                forceSyncNow();
-            }
+            // Try to sync, but don't crash if it fails
+            setTimeout(() => {
+                try {
+                    if (typeof forceSyncNow === 'function') {
+                        forceSyncNow();
+                    }
+                } catch (syncError) {
+                    console.error('Sync error:', syncError);
+                    showNotification('Workouts imported but sync failed. Try manual sync.', 'warning');
+                }
+            }, 100);
 
             setWorkoutJsonInput('');
             showNotification(`Imported ${addedCount} workouts!`, 'success');
         } catch (error) {
             console.error('Workout import error:', error);
-            showNotification(`${error.message}`, 'error');
+            showNotification(`Import failed: ${error.message}`, 'error');
         } finally {
             setIsImportingWorkouts(false);
         }
@@ -325,11 +359,22 @@ const Admin = () => {
     const exampleWorkoutJson = `[
   {
     "name": "Push Day",
-    "exercises": ["Bench Press", "Shoulder Press", "Tricep Dips"]
+    "pre_workout_warmup": ["Arm circles – 30 sec", "Band pull-aparts – 15 reps"],
+    "exercises": [
+      {
+        "muscle_group": "Chest",
+        "movements": ["Barbell Bench Press – 4×4–6", "Incline Dumbbell Press – 3×8–10"]
+      },
+      {
+        "muscle_group": "Shoulders",
+        "movements": ["Barbell Shoulder Press – 4×5", "Dumbbell Lateral Raises – 3×12–15"]
+      }
+    ],
+    "post_workout_stretch": ["Doorway chest stretch – 45 sec", "Overhead tricep stretch – 45 sec"]
   },
   {
-    "name": "Pull Day",
-    "exercises": ["Deadlift", "Rows", "Bicep Curls"]
+    "name": "Simple Workout",
+    "exercises": ["Squats", "Deadlifts", "Lunges"]
   }
 ]`;
 
