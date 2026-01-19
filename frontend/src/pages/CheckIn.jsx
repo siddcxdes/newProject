@@ -239,8 +239,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
         }));
     };
 
-    if (domainTasks.length === 0 && !showAdd) return null;
-
+    // Always show domain sections so users can add tasks
     return (
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl overflow-hidden">
             {/* Header */}
