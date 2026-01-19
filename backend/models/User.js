@@ -66,7 +66,16 @@ const userSchema = new mongoose.Schema({
   recipes: { type: [mongoose.Schema.Types.Mixed], default: [] },
   goals: { type: [mongoose.Schema.Types.Mixed], default: [] },
   dailyTasks: { type: mongoose.Schema.Types.Mixed, default: {} },
-  heatmapData: { type: mongoose.Schema.Types.Mixed, default: {} }
+  heatmapData: { type: mongoose.Schema.Types.Mixed, default: {} },
+  
+  // Timed tasks with schedules (gym, diet, etc.)
+  timedTasks: { type: mongoose.Schema.Types.Mixed, default: {} },
+  
+  // Points system for timed task completion
+  points: { type: Number, default: 0 },
+  
+  // User settings (timed tasks config, preferences, etc.)
+  settings: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 
 

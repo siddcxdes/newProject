@@ -36,7 +36,7 @@ const DEFAULT_DSA_TOPICS = [
     {
         id: 1,
         name: 'Arrays & Hashing',
-        icon: '📊',
+        icon: '',
         completed: 0,
         total: 20,
         subtopics: [
@@ -50,7 +50,7 @@ const DEFAULT_DSA_TOPICS = [
     {
         id: 2,
         name: 'Two Pointers',
-        icon: '👆',
+        icon: '',
         completed: 0,
         total: 15,
         subtopics: [
@@ -63,7 +63,7 @@ const DEFAULT_DSA_TOPICS = [
     {
         id: 3,
         name: 'Sliding Window',
-        icon: '🪟',
+        icon: '',
         completed: 0,
         total: 12,
         subtopics: [
@@ -72,11 +72,11 @@ const DEFAULT_DSA_TOPICS = [
             { id: 303, name: 'Minimum Window Substring', difficulty: 'hard', completed: false },
         ]
     },
-    { id: 4, name: 'Binary Search', icon: '🔍', completed: 0, total: 15, subtopics: [] },
-    { id: 5, name: 'Linked List', icon: '🔗', completed: 0, total: 18, subtopics: [] },
-    { id: 6, name: 'Trees', icon: '🌳', completed: 0, total: 25, subtopics: [] },
-    { id: 7, name: 'Graphs', icon: '🕸️', completed: 0, total: 20, subtopics: [] },
-    { id: 8, name: 'Dynamic Programming', icon: '📈', completed: 0, total: 30, subtopics: [] },
+    { id: 4, name: 'Binary Search', icon: '', completed: 0, total: 15, subtopics: [] },
+    { id: 5, name: 'Linked List', icon: '', completed: 0, total: 18, subtopics: [] },
+    { id: 6, name: 'Trees', icon: '', completed: 0, total: 25, subtopics: [] },
+    { id: 7, name: 'Graphs', icon: '', completed: 0, total: 20, subtopics: [] },
+    { id: 8, name: 'Dynamic Programming', icon: '', completed: 0, total: 30, subtopics: [] },
 ];
 
 // Default AI Modules with lessons
@@ -84,7 +84,7 @@ const DEFAULT_AI_MODULES = [
     {
         id: 1,
         name: 'Python Fundamentals',
-        icon: '🐍',
+        icon: '',
         completed: false,
         progress: 0,
         lessons: [
@@ -97,7 +97,7 @@ const DEFAULT_AI_MODULES = [
     {
         id: 2,
         name: 'NumPy & Pandas',
-        icon: '📊',
+        icon: '',
         completed: false,
         progress: 0,
         lessons: [
@@ -106,21 +106,21 @@ const DEFAULT_AI_MODULES = [
             { id: 203, name: 'Data Manipulation', completed: false },
         ]
     },
-    { id: 3, name: 'Machine Learning Basics', icon: '🤖', completed: false, progress: 0, lessons: [] },
-    { id: 4, name: 'Neural Networks', icon: '🧠', completed: false, progress: 0, lessons: [] },
-    { id: 5, name: 'Deep Learning', icon: '🔮', completed: false, progress: 0, lessons: [] },
-    { id: 6, name: 'NLP Fundamentals', icon: '💬', completed: false, progress: 0, lessons: [] },
-    { id: 7, name: 'Computer Vision', icon: '👁️', completed: false, progress: 0, lessons: [] },
-    { id: 8, name: 'Reinforcement Learning', icon: '🎮', completed: false, progress: 0, lessons: [] },
+    { id: 3, name: 'Machine Learning Basics', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 4, name: 'Neural Networks', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 5, name: 'Deep Learning', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 6, name: 'NLP Fundamentals', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 7, name: 'Computer Vision', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 8, name: 'Reinforcement Learning', icon: '', completed: false, progress: 0, lessons: [] },
 ];
 
 // Default Workout Routines
 const DEFAULT_WORKOUTS = [
-    { id: 1, name: 'Push Day', icon: '💪', exercises: ['Bench Press', 'Shoulder Press', 'Tricep Dips'], timesCompleted: 0 },
-    { id: 2, name: 'Pull Day', icon: '🏋️', exercises: ['Deadlift', 'Rows', 'Bicep Curls'], timesCompleted: 0 },
-    { id: 3, name: 'Leg Day', icon: '🦵', exercises: ['Squats', 'Lunges', 'Leg Press'], timesCompleted: 0 },
-    { id: 4, name: 'Cardio', icon: '🏃', exercises: ['Running', 'Cycling', 'Jump Rope'], timesCompleted: 0 },
-    { id: 5, name: 'Full Body', icon: '🔥', exercises: ['Burpees', 'Mountain Climbers', 'Planks'], timesCompleted: 0 },
+    { id: 1, name: 'Push Day', icon: '', exercises: ['Bench Press', 'Shoulder Press', 'Tricep Dips'], timesCompleted: 0 },
+    { id: 2, name: 'Pull Day', icon: '', exercises: ['Deadlift', 'Rows', 'Bicep Curls'], timesCompleted: 0 },
+    { id: 3, name: 'Leg Day', icon: '', exercises: ['Squats', 'Lunges', 'Leg Press'], timesCompleted: 0 },
+    { id: 4, name: 'Cardio', icon: '', exercises: ['Running', 'Cycling', 'Jump Rope'], timesCompleted: 0 },
+    { id: 5, name: 'Full Body', icon: '', exercises: ['Burpees', 'Mountain Climbers', 'Planks'], timesCompleted: 0 },
 ];
 
 // Default Recipes (Diet Tracking)
@@ -158,7 +158,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'dsa',
         name: 'Data Structures & Algorithms',
         shortName: 'DSA',
-        icon: '📊',
+        icon: '',
         color: 'violet',
         type: 'problem-based', // has difficulty levels (easy/medium/hard)
         xpPerItem: { easy: 10, medium: 25, hard: 50 },
@@ -169,7 +169,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'ai',
         name: 'AI & Machine Learning',
         shortName: 'AI/ML',
-        icon: '🤖',
+        icon: '',
         color: 'emerald',
         type: 'module-based', // flat XP per item
         xpPerItem: 30,
@@ -180,7 +180,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'job',
         name: 'Job Search',
         shortName: 'Jobs',
-        icon: '💼',
+        icon: '',
         color: 'blue',
         type: 'module-based',
         xpPerItem: 15,
@@ -216,6 +216,12 @@ export const AppProvider = ({ children }) => {
 
     // Daily check-in tasks state (keyed by date string, e.g., "2025-12-08")
     const [dailyTasks, setDailyTasks] = useState({});
+
+    // Timed tasks (gym, diet) with schedules
+    const [timedTasks, setTimedTasks] = useState({});
+
+    // Points system for timed task completion
+    const [points, setPoints] = useState(0);
 
     // Learning Domains - unified customizable domains
     const [learningDomains, setLearningDomains] = useState(DEFAULT_LEARNING_DOMAINS);
@@ -284,6 +290,8 @@ export const AppProvider = ({ children }) => {
         const activitiesToSet = serverUser.activities ?? [];
         const dailyTasksToSet = serverUser.dailyTasks ?? {};
         const heatmapDataToSet = serverUser.heatmapData ?? {};
+        const timedTasksToSet = serverUser.timedTasks ?? {};
+        const pointsToSet = serverUser.points ?? 0;
         // For learningDomains, use server data if it exists (even empty array means user cleared it)
         // Also backfill `showInCheckIn` for older saved domains.
         const learningDomainsRaw = serverUser.learningDomains !== undefined ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
@@ -292,13 +300,15 @@ export const AppProvider = ({ children }) => {
             showInCheckIn: d.showInCheckIn !== undefined ? d.showInCheckIn : true
         }));
 
-        console.log('📊 Setting state from server:', {
+        console.log('Setting state from server:', {
             workouts: workoutsToSet.length,
             recipes: recipesToSet.length,
             dsaTopics: dsaTopicsToSet.length,
             aiModules: aiModulesToSet.length,
             dailyTasks: Object.keys(dailyTasksToSet).length,
             heatmapData: Object.keys(heatmapDataToSet).length,
+            timedTasks: Object.keys(timedTasksToSet).length,
+            points: pointsToSet,
             learningDomains: learningDomainsToSet.length
         });
 
@@ -310,6 +320,8 @@ export const AppProvider = ({ children }) => {
         setActivities(activitiesToSet);
         setDailyTasks(dailyTasksToSet);
         setHeatmapData(heatmapDataToSet);
+        setTimedTasks(timedTasksToSet);
+        setPoints(pointsToSet);
         setLearningDomains(learningDomainsToSet);
 
         console.log('🎯 STATE SET - learningDomains:', learningDomainsToSet.map(d => d.name || d.shortName));
@@ -434,6 +446,8 @@ export const AppProvider = ({ children }) => {
                     activities: currentData.activities,
                     dailyTasks: currentData.dailyTasks,
                     heatmapData: currentData.heatmapData,
+                    timedTasks: currentData.timedTasks,
+                    points: currentData.points,
                     learningDomains: currentData.learningDomains,
                     stats: currentData.user?.stats,
                     streak: currentData.user?.streak,
@@ -530,13 +544,13 @@ export const AppProvider = ({ children }) => {
     const forceSyncNow = async () => {
         console.log('🚨 FORCE SYNC triggered!');
         // Update dataRef immediately before sync
-        dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, learningDomains };
+        dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, timedTasks, points, learningDomains };
         await syncToCloud();
     };
 
     // Keep dataRef updated with latest values (for sync to use)
     // This runs on EVERY render to ensure dataRef is always current
-    dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, learningDomains };
+    dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, timedTasks, points, learningDomains };
 
     // Trigger cloud sync on data changes (no localStorage)
     useEffect(() => {
@@ -577,6 +591,14 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [dailyTasks, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [timedTasks, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [points, debouncedSyncToCloud]);
 
     useEffect(() => {
         console.log('📦 learningDomains updated:', learningDomains.map(d => ({ id: d.id, name: d.shortName, topicsCount: d.topics?.length || 0, topics: d.topics?.map(t => ({ name: t.name, itemsCount: t.items?.length || 0 })) })));
@@ -827,7 +849,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== DSA TOPIC FUNCTIONS =====
-    const addDsaTopic = (name, icon = '📝') => {
+    const addDsaTopic = (name, icon = '') => {
         const prev = [...dsaTopics];
         const newTopic = { id: Date.now(), name, icon, completed: 0, total: 0, subtopics: [] };
         const newTopics = [...dsaTopics, newTopic];
@@ -906,7 +928,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== AI MODULE FUNCTIONS =====
-    const addAiModule = (name, icon = '📚') => {
+    const addAiModule = (name, icon = '') => {
         const prev = [...aiModules];
         const newModule = { id: Date.now(), name, icon, completed: false, progress: 0, lessons: [] };
         const newModules = [...aiModules, newModule];
@@ -985,7 +1007,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== LEARNING DOMAIN FUNCTIONS =====
-    const addLearningDomain = (name, shortName = '', icon = '📚', color = 'blue', type = 'module-based') => {
+    const addLearningDomain = (name, shortName = '', icon = '', color = 'blue', type = 'module-based') => {
         const prev = [...learningDomains];
         const newDomain = {
             id: `domain_${Date.now()}`,
@@ -1021,7 +1043,7 @@ export const AppProvider = ({ children }) => {
         showNotification('Domain deleted', 'info');
     };
 
-    const addDomainTopic = (domainId, name, icon = '📝') => {
+    const addDomainTopic = (domainId, name, icon = '') => {
         const prev = [...learningDomains];
         const newDomains = learningDomains.map(d => {
             if (d.id === domainId) {
@@ -1158,7 +1180,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== WORKOUT FUNCTIONS =====
-    const addWorkout = (name, icon = '💪', exercises = []) => {
+    const addWorkout = (name, icon = '', exercises = []) => {
         const prev = [...workouts];
         const newWorkout = { id: Date.now(), name, icon, exercises, timesCompleted: 0 };
         const newWorkouts = [...workouts, newWorkout];
@@ -1328,10 +1350,12 @@ export const AppProvider = ({ children }) => {
 
     const value = {
         // State - user now has dynamically computed stats
-        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, recipes, dailyTasks, learningDomains,
+        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, recipes, dailyTasks, timedTasks, points, learningDomains,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated, computedStats,
         // Daily Tasks
         setDailyTasks,
+        // Timed Tasks & Points
+        setTimedTasks, setPoints,
         // Auth
         login, register, logout, syncToCloud, updateUserProfile, forceSyncNow,
         hydrateFromServerData, setAuthToken, setIsAuthenticated,

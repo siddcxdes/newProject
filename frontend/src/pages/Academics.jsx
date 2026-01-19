@@ -30,7 +30,7 @@ const Academics = () => {
     const [showAddDomain, setShowAddDomain] = useState(false);
     const [newDomainName, setNewDomainName] = useState('');
     const [newDomainShortName, setNewDomainShortName] = useState('');
-    const [newDomainIcon, setNewDomainIcon] = useState('📚');
+    const [newDomainIcon, setNewDomainIcon] = useState('');
     const [newDomainColor, setNewDomainColor] = useState('blue');
     const [newDomainType, setNewDomainType] = useState('module-based');
     const [editingDomain, setEditingDomain] = useState(null);
@@ -102,7 +102,7 @@ const Academics = () => {
         );
         setNewDomainName('');
         setNewDomainShortName('');
-        setNewDomainIcon('📚');
+        setNewDomainIcon('');
         setNewDomainColor('blue');
         setNewDomainType('module-based');
         setShowAddDomain(false);
@@ -166,14 +166,14 @@ const Academics = () => {
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-zinc-500">Icon:</span>
                             <select value={newDomainIcon} onChange={(e) => setNewDomainIcon(e.target.value)} className="input-field w-16">
-                                <option value="📚">📚</option>
-                                <option value="💻">💻</option>
-                                <option value="🌐">🌐</option>
-                                <option value="🎨">🎨</option>
-                                <option value="📱">📱</option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
                                 <option value="☁️">☁️</option>
-                                <option value="🔧">🔧</option>
-                                <option value="📊">📊</option>
+                                <option value=""></option>
+                                <option value=""></option>
                             </select>
                         </div>
                         <div className="flex items-center gap-2">
@@ -298,7 +298,7 @@ const Academics = () => {
                                             className="p-4 cursor-pointer flex items-center gap-3 hover:bg-elevated"
                                             onClick={() => setExpandedDomainTopic(expandedDomainTopic === topic.id ? null : topic.id)}
                                         >
-                                            <span>{topic.icon || '📝'}</span>
+                                            <span>{topic.icon || ''}</span>
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium text-heading">{topic.name}</p>
                                                 <p className="text-xs text-zinc-500">{topic.completed || 0}/{topic.items?.length || 0} completed</p>
@@ -352,7 +352,7 @@ const Academics = () => {
                                                                     className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${item.completed ? 'bg-emerald-500 text-heading' : 'border-2 border-zinc-700 hover:border-blue-500'
                                                                         }`}
                                                                 >
-                                                                    {item.completed && '✓'}
+                                                                    {item.completed && ''}
                                                                 </button>
                                                                 <span className={`flex-1 text-sm ${item.completed ? 'text-emerald-400 line-through' : 'text-heading'}`}>{item.name}</span>
                                                                 {domain.type === 'problem-based' && item.difficulty && (

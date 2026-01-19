@@ -90,7 +90,7 @@ const Header = () => {
                     {/* Mobile Level Badge */}
                     <div className="lg:hidden flex items-center gap-1 px-2 py-1 rounded-md bg-sky-500/10 border border-sky-500/20">
                         <span className="text-[9px] sm:text-[10px] font-bold text-sky-400">LV{user?.level || 1}</span>
-                        <span className="text-[9px] sm:text-[10px] font-mono text-amber-400">{user?.streak?.current || 0}🔥</span>
+                        <span className="text-[9px] sm:text-[10px] font-mono text-amber-400">{user?.streak?.current || 0}</span>
                     </div>
 
                     {/* Time - Tablet+ */}

@@ -3,8 +3,8 @@ import { useApp } from '../context/AppContext';
 
 const Admin = () => {
     const {
-        user, activities, learningDomains, workouts, recipes, goals,
-        setLearningDomains, setRecipes, setWorkouts, showNotification, resetAll, forceSyncNow
+        user, activities, learningDomains, workouts, recipes, goals, settings,
+        setLearningDomains, setRecipes, setWorkouts, updateSettings, showNotification, resetAll, forceSyncNow
     } = useApp();
 
     const [activeTab, setActiveTab] = useState('overview');
@@ -15,6 +15,34 @@ const Admin = () => {
     const [isImporting, setIsImporting] = useState(false);
     const [isImportingRecipes, setIsImportingRecipes] = useState(false);
     const [isImportingWorkouts, setIsImportingWorkouts] = useState(false);
+
+    // Timed Tasks Settings State
+    const [timedTasksConfig, setTimedTasksConfig] = useState(settings?.timedTasks || {
+        gym: { startHour: 9, startMinute: 0, endHour: 11, endMinute: 0, points: 30 },
+        breakfast: { startHour: 8, startMinute: 0, endHour: 9, endMinute: 0, points: 20 },
+        lunch: { startHour: 12, startMinute: 0, endHour: 13, endMinute: 0, points: 20 },
+        snack: { startHour: 16, startMinute: 0, endHour: 17, endMinute: 0, points: 15 },
+        dinner: { startHour: 20, startMinute: 0, endHour: 21, endMinute: 0, points: 20 },
+    });
+
+    const saveTimedTasksConfig = () => {
+        const newSettings = { ...settings, timedTasks: timedTasksConfig };
+        updateSettings(newSettings);
+        showNotification('Timed tasks settings saved!', 'success');
+        if (typeof forceSyncNow === 'function') {
+            forceSyncNow();
+        }
+    };
+
+    const updateTaskTime = (taskName, field, value) => {
+        setTimedTasksConfig(prev => ({
+            ...prev,
+            [taskName]: {
+                ...prev[taskName],
+                [field]: parseInt(value) || 0
+            }
+        }));
+    };
 
     const handleExport = () => {
         const data = {
@@ -56,7 +84,6 @@ const Admin = () => {
                 parsed = [parsed];
             }
 
-            // Build entire new domains array in memory
             let newDomains = [...learningDomains];
             let totalItems = 0;
             let newDomainsCount = 0;
@@ -69,13 +96,11 @@ const Admin = () => {
                     throw new Error('Missing "domain" field');
                 }
 
-                // Find existing domain
                 let domainIndex = newDomains.findIndex(d =>
                     d.name.toLowerCase() === domainName.toLowerCase() ||
                     d.shortName.toLowerCase() === shortName.toLowerCase()
                 );
 
-                // Create domain if not exists
                 if (domainIndex === -1) {
                     const type = /dsa|data.?struct|algorithm|leetcode|array|tree|graph/i.test(domainName)
                         ? 'problem-based' : 'module-based';
@@ -84,7 +109,7 @@ const Admin = () => {
                         id: `domain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         name: domainName,
                         shortName: shortName,
-                        icon: '📚',
+                        icon: '',
                         color: 'violet',
                         type: type,
                         xpPerItem: type === 'problem-based' ? { easy: 10, medium: 25, hard: 50 } : 30,
@@ -95,23 +120,20 @@ const Admin = () => {
                     newDomainsCount++;
                 }
 
-                // Handle topics
                 const topicsArray = Array.isArray(item.topics) ? item.topics : (item.topics ? [item.topics] : []);
 
                 for (const topicName of topicsArray) {
                     if (!topicName) continue;
 
-                    // Find existing topic
                     let topicIndex = newDomains[domainIndex].topics.findIndex(t =>
                         t.name.toLowerCase() === topicName.toLowerCase()
                     );
 
-                    // Create topic if not exists
                     if (topicIndex === -1) {
                         const newTopic = {
                             id: Date.now() + Math.floor(Math.random() * 1000),
                             name: topicName,
-                            icon: '📝',
+                            icon: '',
                             completed: 0,
                             total: 0,
                             items: []
@@ -120,13 +142,11 @@ const Admin = () => {
                         topicIndex = newDomains[domainIndex].topics.length - 1;
                     }
 
-                    // Handle subtopics/items
                     const subtopicsArray = Array.isArray(item.subtopics) ? item.subtopics : (item.subtopics ? [item.subtopics] : []);
 
                     for (const itemName of subtopicsArray) {
                         if (!itemName) continue;
 
-                        // Check if item exists
                         const itemExists = newDomains[domainIndex].topics[topicIndex].items.some(i =>
                             i.name.toLowerCase() === itemName.toLowerCase()
                         );
@@ -146,19 +166,17 @@ const Admin = () => {
                 }
             }
 
-            // Single state update with all changes
             setLearningDomains(newDomains);
 
-            // Persist immediately so a refresh right after import doesn't lose the data
             if (typeof forceSyncNow === 'function') {
                 forceSyncNow();
             }
 
             setJsonInput('');
-            showNotification(`✅ Imported ${totalItems} items across ${newDomainsCount} new domains!`, 'success');
+            showNotification(`Imported ${totalItems} items across ${newDomainsCount} new domains!`, 'success');
         } catch (error) {
             console.error('Import error:', error);
-            showNotification(`❌ ${error.message}`, 'error');
+            showNotification(`${error.message}`, 'error');
         } finally {
             setIsImporting(false);
         }
@@ -191,7 +209,6 @@ const Admin = () => {
                     throw new Error(`Invalid category "${category}". Must be: breakfast, lunch, snack, or dinner`);
                 }
 
-                // Check if recipe already exists
                 const exists = newRecipes.some(r => r.name.toLowerCase() === name.toLowerCase());
 
                 if (!exists) {
@@ -214,10 +231,10 @@ const Admin = () => {
             }
 
             setRecipeJsonInput('');
-            showNotification(`✅ Imported ${addedCount} recipes!`, 'success');
+            showNotification(`Imported ${addedCount} recipes!`, 'success');
         } catch (error) {
             console.error('Recipe import error:', error);
-            showNotification(`❌ ${error.message}`, 'error');
+            showNotification(`${error.message}`, 'error');
         } finally {
             setIsImportingRecipes(false);
         }
@@ -244,14 +261,13 @@ const Admin = () => {
                     throw new Error('Missing "name" field in workout');
                 }
 
-                // Check if workout already exists
                 const exists = newWorkouts.some(w => w.name.toLowerCase() === name.toLowerCase());
 
                 if (!exists) {
                     const newWorkout = {
                         id: Date.now() + Math.floor(Math.random() * 10000),
                         name,
-                        icon: '💪',
+                        icon: '',
                         exercises,
                         timesCompleted: 0
                     };
@@ -267,10 +283,10 @@ const Admin = () => {
             }
 
             setWorkoutJsonInput('');
-            showNotification(`✅ Imported ${addedCount} workouts!`, 'success');
+            showNotification(`Imported ${addedCount} workouts!`, 'success');
         } catch (error) {
             console.error('Workout import error:', error);
-            showNotification(`❌ ${error.message}`, 'error');
+            showNotification(`${error.message}`, 'error');
         } finally {
             setIsImportingWorkouts(false);
         }
@@ -319,17 +335,26 @@ const Admin = () => {
 
     const tabs = [
         { id: 'overview', label: 'Overview' },
+        { id: 'timed', label: 'Timed Tasks' },
         { id: 'bulk', label: 'Learning Import' },
         { id: 'recipes', label: 'Recipe Import' },
         { id: 'workouts', label: 'Workout Import' },
     ];
+
+    const taskLabels = {
+        gym: 'Gym / Workout',
+        breakfast: 'Breakfast',
+        lunch: 'Lunch',
+        snack: 'Snack',
+        dinner: 'Dinner'
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-heading mb-1">Admin</h1>
-                    <p className="text-sm text-zinc-500">Manage data, bulk import, and debug</p>
+                    <p className="text-sm text-zinc-500">Manage data, bulk import, and configure settings</p>
                 </div>
                 <button onClick={() => setShowResetConfirm(true)} className="btn-danger text-xs">Reset All Data</button>
             </div>
@@ -347,9 +372,9 @@ const Admin = () => {
                 </div>
             )}
 
-            <div className="flex gap-1 p-1.5 bg-elevated rounded-xl border border-subtle">
+            <div className="flex gap-1 p-1.5 bg-elevated rounded-xl border border-subtle overflow-x-auto">
                 {tabs.map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
                         {tab.label}
                     </button>
                 ))}
@@ -400,6 +425,90 @@ const Admin = () => {
                 </div>
             )}
 
+            {activeTab === 'timed' && (
+                <div className="space-y-4">
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-2">Timed Tasks Configuration</h3>
+                        <p className="text-sm text-zinc-500 mb-6">Set custom time windows and points for gym and meal tasks</p>
+
+                        <div className="space-y-4">
+                            {Object.keys(timedTasksConfig).map(taskName => (
+                                <div key={taskName} className="p-4 bg-elevated rounded-lg border border-subtle">
+                                    <h4 className="text-sm font-semibold text-heading mb-3">{taskLabels[taskName]}</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                        <div>
+                                            <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Start Hour</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="23"
+                                                value={timedTasksConfig[taskName].startHour}
+                                                onChange={(e) => updateTaskTime(taskName, 'startHour', e.target.value)}
+                                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Start Min</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="59"
+                                                value={timedTasksConfig[taskName].startMinute}
+                                                onChange={(e) => updateTaskTime(taskName, 'startMinute', e.target.value)}
+                                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-zinc-600 mb-1.5 block font-medium">End Hour</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="23"
+                                                value={timedTasksConfig[taskName].endHour}
+                                                onChange={(e) => updateTaskTime(taskName, 'endHour', e.target.value)}
+                                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-zinc-600 mb-1.5 block font-medium">End Min</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="59"
+                                                value={timedTasksConfig[taskName].endMinute}
+                                                onChange={(e) => updateTaskTime(taskName, 'endMinute', e.target.value)}
+                                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Points</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={timedTasksConfig[taskName].points}
+                                                onChange={(e) => updateTaskTime(taskName, 'points', e.target.value)}
+                                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-zinc-600 mt-2">
+                                        Time window: {String(timedTasksConfig[taskName].startHour).padStart(2, '0')}:{String(timedTasksConfig[taskName].startMinute).padStart(2, '0')} - {String(timedTasksConfig[taskName].endHour).padStart(2, '0')}:{String(timedTasksConfig[taskName].endMinute).padStart(2, '0')} · {timedTasksConfig[taskName].points} points
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={saveTimedTasksConfig}
+                            className="mt-6 px-6 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors"
+                        >
+                            Save Timed Tasks Settings
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Rest of the tabs remain the same... */}
             {activeTab === 'bulk' && (
                 <div className="space-y-4">
                     <div className="glass-card p-5">
@@ -434,12 +543,12 @@ const Admin = () => {
                             {learningDomains.map(domain => (
                                 <div key={domain.id} className="p-3 bg-elevated rounded-lg border border-subtle">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-semibold text-heading">{domain.icon} {domain.name} ({domain.shortName})</span>
+                                        <span className="text-sm font-semibold text-heading">{domain.name} ({domain.shortName})</span>
                                         <span className="text-xs text-zinc-500">{domain.topics?.length || 0} topics</span>
                                     </div>
                                     {domain.topics?.slice(0, 5).map(topic => (
                                         <div key={topic.id} className="ml-4 text-xs text-zinc-400">
-                                            {topic.icon} {topic.name} ({topic.items?.length || 0} items)
+                                            {topic.name} ({topic.items?.length || 0} items)
                                         </div>
                                     ))}
                                     {domain.topics?.length > 5 && (

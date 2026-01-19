@@ -4,7 +4,7 @@ const Footer = () => {
             <p className="flex items-center justify-center gap-2">
                 <span>v1.0.0</span>
                 <span>•</span>
-                <span>Built with ❤️ for your success</span>
+                <span>Built with passion for your success</span>
             </p>
         </footer>
     );

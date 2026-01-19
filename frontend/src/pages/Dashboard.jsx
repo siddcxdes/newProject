@@ -6,7 +6,7 @@ import LevelCard from '../components/dashboard/LevelCard';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 
 const Dashboard = () => {
-    const { user, activities } = useApp();
+    const { user, activities, points } = useApp();
 
     const stats = user?.stats || {};
 
@@ -18,13 +18,13 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Level Card */}
                 <LevelCard level={user?.level} xp={user?.xp} xpToNextLevel={user?.xpToNextLevel} />
-                
+
                 {/* Streak Card */}
                 <StreakCard streak={user?.streak} />
             </div>
 
-            {/* Stats Grid - 4 Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {/* Stats Grid - 5 Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
                 <MetricCard
                     label="DSA Solved"
                     value={stats.dsaProblemsToday || 0}
@@ -43,6 +43,12 @@ const Dashboard = () => {
                     sublabel="this week"
                     total={7}
                     color="amber"
+                />
+                <MetricCard
+                    label="Points"
+                    value={points || 0}
+                    sublabel="earned"
+                    color="violet"
                 />
                 <MetricCard
                     label="Applications"

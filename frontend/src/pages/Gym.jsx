@@ -56,7 +56,7 @@ const Gym = () => {
 
     const handleAddWorkout = () => {
         if (!newWorkoutName.trim()) return;
-        addWorkout(newWorkoutName.trim(), '💪', newExercises.split(',').map(e => e.trim()).filter(Boolean));
+        addWorkout(newWorkoutName.trim(), '', newExercises.split(',').map(e => e.trim()).filter(Boolean));
         setNewWorkoutName(''); setNewExercises(''); setShowAddWorkout(false);
     };
 
