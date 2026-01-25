@@ -24,14 +24,9 @@ const settingsSchema = new mongoose.Schema(
   {
     theme: { type: String, default: 'dark' },
     timezone: { type: String, default: 'Asia/Kolkata' },
-    notificationsEnabled: { type: Boolean, default: true },
-    dailyDsaGoal: { type: Number, default: 3 },
-    weeklyGymGoal: { type: Number, default: 5 },
-    dailyCalorieGoal: { type: Number, default: 2200 },
-    dailyProteinGoal: { type: Number, default: 160 },
-    timedTasks: { type: mongoose.Schema.Types.Mixed, default: {} }
+    notificationsEnabled: { type: Boolean, default: true }
   },
-  { _id: false, strict: false }
+  { _id: false }
 );
 
 const journeySchema = new mongoose.Schema(
@@ -65,14 +60,22 @@ const userSchema = new mongoose.Schema({
 
   // Persisted “content state” (kept flexible to match current UI needs)
   learningDomains: { type: [mongoose.Schema.Types.Mixed], default: [] },
-  recipes: { type: [mongoose.Schema.Types.Mixed], default: [] },
   dsaTopics: { type: [mongoose.Schema.Types.Mixed], default: [] },
   aiModules: { type: [mongoose.Schema.Types.Mixed], default: [] },
   workouts: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  recipes: { type: [mongoose.Schema.Types.Mixed], default: [] },
   goals: { type: [mongoose.Schema.Types.Mixed], default: [] },
   dailyTasks: { type: mongoose.Schema.Types.Mixed, default: {} },
-  nutritionLogs: { type: mongoose.Schema.Types.Mixed, default: {} },
-  heatmapData: { type: mongoose.Schema.Types.Mixed, default: {} }
+  heatmapData: { type: mongoose.Schema.Types.Mixed, default: {} },
+  
+  // Timed tasks with schedules (gym, diet, etc.)
+  timedTasks: { type: mongoose.Schema.Types.Mixed, default: {} },
+  
+  // Points system for timed task completion
+  points: { type: Number, default: 0 },
+  
+  // User settings (timed tasks config, preferences, etc.)
+  settings: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 
 

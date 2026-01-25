@@ -30,7 +30,7 @@ const Academics = () => {
     const [showAddDomain, setShowAddDomain] = useState(false);
     const [newDomainName, setNewDomainName] = useState('');
     const [newDomainShortName, setNewDomainShortName] = useState('');
-    const [newDomainIcon, setNewDomainIcon] = useState('📚');
+    const [newDomainIcon, setNewDomainIcon] = useState('');
     const [newDomainColor, setNewDomainColor] = useState('blue');
     const [newDomainType, setNewDomainType] = useState('module-based');
     const [editingDomain, setEditingDomain] = useState(null);
@@ -96,13 +96,13 @@ const Academics = () => {
         addLearningDomain(
             newDomainName.trim(),
             newDomainShortName.trim() || newDomainName.trim().substring(0, 10),
-            '', // No icon
+            newDomainIcon,
             newDomainColor,
             newDomainType
         );
         setNewDomainName('');
         setNewDomainShortName('');
-        setNewDomainIcon(''); // Reset to empty
+        setNewDomainIcon('');
         setNewDomainColor('blue');
         setNewDomainType('module-based');
         setShowAddDomain(false);
@@ -163,7 +163,19 @@ const Academics = () => {
                         />
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        {/* Icon selector removed */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-500">Icon:</span>
+                            <select value={newDomainIcon} onChange={(e) => setNewDomainIcon(e.target.value)} className="input-field w-16">
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value=""></option>
+                                <option value="☁️">☁️</option>
+                                <option value=""></option>
+                                <option value=""></option>
+                            </select>
+                        </div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-zinc-500">Color:</span>
                             <select value={newDomainColor} onChange={(e) => setNewDomainColor(e.target.value)} className="input-field w-24">
@@ -193,59 +205,49 @@ const Academics = () => {
             {/* Custom Learning Domains */}
             {learningDomains.length > 0 && (
                 <div className="glass-card p-4">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-semibold text-heading">Your Custom Domains</h3>
                         <span className="text-xs text-zinc-500">{learningDomains.length} domains</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="flex flex-wrap gap-2">
                         {learningDomains.map((domain) => {
                             const totalItems = domain.topics?.reduce((sum, t) => sum + (t.items?.length || 0), 0) || 0;
                             const completedItems = domain.topics?.reduce((sum, t) => sum + (t.items?.filter(i => i.completed).length || 0), 0) || 0;
                             const isActive = activeDomain === domain.id;
-                            const colorClass = domain.color === 'violet' ? 'bg-sky-500' :
-                                domain.color === 'emerald' ? 'bg-emerald-500' :
-                                    domain.color === 'blue' ? 'bg-blue-500' :
-                                        domain.color === 'amber' ? 'bg-amber-500' :
-                                            domain.color === 'pink' ? 'bg-pink-500' :
-                                                'bg-zinc-500';
-
                             return (
                                 <div
                                     key={domain.id}
                                     onClick={() => setActiveDomain(isActive ? null : domain.id)}
-                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border ${isActive ? 'bg-sky-500/10 border-sky-500/30' : 'bg-elevated border-subtle hover:border-zinc-700'}`}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${isActive ? 'ring-2 ring-blue-500/50 bg-blue-500/10' : 'bg-elevated hover:bg-elevated'
+                                        }`}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-1.5 h-8 rounded-full ${colorClass}`}></div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-heading">{domain.shortName}</p>
-                                            <p className="text-[10px] text-zinc-500">{completedItems}/{totalItems} done</p>
-                                        </div>
+                                    <span className="text-lg">{domain.icon}</span>
+                                    <div>
+                                        <p className="text-sm font-medium text-heading">{domain.shortName}</p>
+                                        <p className="text-[10px] text-zinc-500">{completedItems}/{totalItems} items</p>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
-                                        {/* Toggle: include in Daily Check-In */}
-                                        <label
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="flex items-center gap-1.5 cursor-pointer bg-elevated px-2 py-1 rounded border border-subtle hover:border-zinc-600 transition-colors"
-                                            title="Show this domain in Daily Check-In"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                className="accent-sky-500 rounded-sm w-3 h-3"
-                                                checked={domain.showInCheckIn !== false}
-                                                onChange={(e) => editLearningDomain(domain.id, { showInCheckIn: e.target.checked })}
-                                            />
-                                            <span className="text-[10px] text-zinc-500">Check-In</span>
-                                        </label>
+                                    {/* Toggle: include in Daily Check-In */}
+                                    <label
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="ml-auto flex items-center gap-1.5 text-[10px] text-zinc-500 select-none"
+                                        title="Show this domain in Daily Check-In"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            className="accent-sky-500"
+                                            checked={domain.showInCheckIn !== false}
+                                            onChange={(e) => editLearningDomain(domain.id, { showInCheckIn: e.target.checked })}
+                                        />
+                                        Check-In
+                                    </label>
 
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
-                                            className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); deleteLearningDomain(domain.id); }}
+                                        className="ml-2 p-1 text-zinc-600 hover:text-red-400 rounded"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
                                 </div>
                             );
                         })}
@@ -257,21 +259,11 @@ const Academics = () => {
             {activeDomain && (() => {
                 const domain = learningDomains.find(d => d.id === activeDomain);
                 if (!domain) return null;
-
-                // Color mapping for the large detail view indicator
-                const colorDotClass = domain.color === 'violet' ? 'bg-sky-500' :
-                    domain.color === 'emerald' ? 'bg-emerald-500' :
-                        domain.color === 'blue' ? 'bg-blue-500' :
-                            domain.color === 'amber' ? 'bg-amber-500' :
-                                domain.color === 'pink' ? 'bg-pink-500' :
-                                    'bg-zinc-500';
-
                 return (
                     <div className="glass-card p-5 space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                {/* Replaced icon with colored bar/dot */}
-                                <div className={`w-2 h-10 rounded-full ${colorDotClass}`}></div>
+                                <span className="text-2xl">{domain.icon}</span>
                                 <div>
                                     <h2 className="text-lg font-semibold text-heading">{domain.name}</h2>
                                     <p className="text-xs text-zinc-500">{domain.type === 'problem-based' ? 'Difficulty-based XP' : 'Flat XP per item'}</p>
@@ -306,6 +298,7 @@ const Academics = () => {
                                             className="p-4 cursor-pointer flex items-center gap-3 hover:bg-elevated"
                                             onClick={() => setExpandedDomainTopic(expandedDomainTopic === topic.id ? null : topic.id)}
                                         >
+                                            <span>{topic.icon || ''}</span>
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium text-heading">{topic.name}</p>
                                                 <p className="text-xs text-zinc-500">{topic.completed || 0}/{topic.items?.length || 0} completed</p>
@@ -359,7 +352,7 @@ const Academics = () => {
                                                                     className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${item.completed ? 'bg-emerald-500 text-heading' : 'border-2 border-zinc-700 hover:border-blue-500'
                                                                         }`}
                                                                 >
-                                                                    {item.completed && '✓'}
+                                                                    {item.completed && ''}
                                                                 </button>
                                                                 <span className={`flex-1 text-sm ${item.completed ? 'text-emerald-400 line-through' : 'text-heading'}`}>{item.name}</span>
                                                                 {domain.type === 'problem-based' && item.difficulty && (

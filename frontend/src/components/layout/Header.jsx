@@ -23,9 +23,9 @@ const Header = () => {
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] safe-area-pt">
-            <div className="h-full w-full px-3 sm:px-4 md:px-6 flex items-center justify-between">
+            <div className="h-full max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between">
                 {/* Logo */}
-                <NavLink to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+                <NavLink to="/" className="flex items-center gap-2 sm:gap-3 group">
                     <div className="relative w-7 h-7 sm:w-8 sm:h-8">
                         <div className="absolute inset-0 bg-gradient-to-tr from-sky-600 to-cyan-500 rounded-lg rotate-45 group-hover:rotate-[50deg] transition-transform duration-300"></div>
                         <div className="absolute inset-[2px] bg-[var(--color-bg-primary)] rounded-[5px] sm:rounded-[6px] rotate-45"></div>
@@ -35,9 +35,9 @@ const Header = () => {
                             </svg>
                         </div>
                     </div>
-                    <div className="flex flex-col">
-                        <h1 className="text-[10px] sm:text-sm font-bold text-[var(--color-text-primary)] tracking-wide leading-none">ASCENSION</h1>
-                        <p className="hidden sm:block text-[8px] text-[var(--color-text-muted)] tracking-[0.15em] uppercase mt-0.5">Level Up Daily</p>
+                    <div className="hidden xs:block sm:block">
+                        <h1 className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)] tracking-wide leading-none">ASCENSION</h1>
+                        <p className="text-[7px] sm:text-[8px] text-[var(--color-text-muted)] tracking-[0.1em] sm:tracking-[0.15em] uppercase mt-0.5">Level Up Daily</p>
                     </div>
                 </NavLink>
 

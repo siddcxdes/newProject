@@ -28,7 +28,7 @@ const ProgressTracker = () => {
                         ? 'bg-green-500/20 text-green-400'
                         : 'bg-yellow-500/20 text-yellow-400'
                     }`}>
-                    {isOnTrack ? '✓' : '!'} {isOnTrack ? 'On Track' : 'Behind'}
+                    {isOnTrack ? '' : '!'} {isOnTrack ? 'On Track' : 'Behind'}
                 </div>
             </div>
 

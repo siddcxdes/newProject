@@ -89,20 +89,14 @@ const ActivityHeatmap = () => {
     const monthLabels = useMemo(() => {
         const labels = [];
         let lastMonth = -1;
-        let lastWeekIndex = -10; // Ensure first month isn't blocked
 
         weeks.forEach((week, weekIndex) => {
             const firstValidDay = week.find(d => d !== null);
             if (firstValidDay) {
-                const date = new Date(firstValidDay.date);
-                const month = date.getMonth();
-
-                // Only add if it's a new month AND it's at least 3 weeks since the last label
-                // This prevents overlapping Jan/Feb at the start/end of the 365-day range
-                if (month !== lastMonth && (weekIndex - lastWeekIndex) > 3) {
+                const month = new Date(firstValidDay.date).getMonth();
+                if (month !== lastMonth) {
                     labels.push({ month: months[month], weekIndex });
                     lastMonth = month;
-                    lastWeekIndex = weekIndex;
                 }
             }
         });
@@ -168,7 +162,7 @@ const ActivityHeatmap = () => {
                             <span
                                 key={i}
                                 className="absolute"
-                                style={{ left: `${label.weekIndex * 13}px` }}
+                                style={{ left: `${label.weekIndex * 12}px` }}
                             >
                                 {label.month}
                             </span>

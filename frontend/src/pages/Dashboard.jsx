@@ -4,10 +4,9 @@ import MetricCard from '../components/dashboard/MetricCard';
 import StreakCard from '../components/dashboard/StreakCard';
 import LevelCard from '../components/dashboard/LevelCard';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
-import ScheduledTasks from '../components/dashboard/ScheduledTasks';
 
 const Dashboard = () => {
-    const { user, activities } = useApp();
+    const { user, activities, points } = useApp();
 
     const stats = user?.stats || {};
 
@@ -24,10 +23,40 @@ const Dashboard = () => {
                 <StreakCard streak={user?.streak} />
             </div>
 
-
-
-            {/* Scheduled Tasks Widget */}
-            <ScheduledTasks />
+            {/* Stats Grid - 5 Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+                <MetricCard
+                    label="DSA Solved"
+                    value={stats.dsaProblemsToday || 0}
+                    sublabel="today"
+                    color="sky"
+                />
+                <MetricCard
+                    label="AI Modules"
+                    value={stats.aiModulesCompleted || 0}
+                    sublabel="completed"
+                    color="emerald"
+                />
+                <MetricCard
+                    label="Gym Days"
+                    value={stats.gymDaysThisWeek || 0}
+                    sublabel="this week"
+                    total={7}
+                    color="amber"
+                />
+                <MetricCard
+                    label="Points"
+                    value={points || 0}
+                    sublabel="earned"
+                    color="violet"
+                />
+                <MetricCard
+                    label="Applications"
+                    value={stats.jobApplications || 0}
+                    sublabel="sent"
+                    color="blue"
+                />
+            </div>
 
             {/* Activity Heatmap */}
             <ActivityHeatmap activities={activities} />

@@ -283,80 +283,14 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
             {showAdd && (
                 <div className="px-5 py-4 bg-zinc-900/60 border-b border-zinc-800">
                     <div className="space-y-3">
-                        {/* Mode Selector */}
-                        <div className="flex gap-2 p-1 bg-zinc-800 rounded-lg">
-                            <button
-                                onClick={() => setTaskMode('pick')}
-                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'pick' ? 'bg-white text-black' : 'text-zinc-400 hover:text-heading'
-                                    }`}
-                            >
-                                Pick from Academic
-                            </button>
-                            <button
-                                onClick={() => setTaskMode('manual')}
-                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'manual' ? 'bg-white text-black' : 'text-zinc-400 hover:text-heading'
-                                    }`}
-                            >
-                                Manual Entry
-                            </button>
-                        </div>
-
-                        {/* Pick Mode - Topic and Item Selectors */}
-                        {taskMode === 'pick' && (
-                            <>
-                                <div>
-                                    <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Select Topic</label>
-                                    <select
-                                        value={selectedTopic}
-                                        onChange={(e) => {
-                                            setSelectedTopic(e.target.value);
-                                            setSelectedItem('');
-                                        }}
-                                        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors"
-                                    >
-                                        <option value="">Choose a topic...</option>
-                                        {domain.topics?.map(topic => (
-                                            <option key={topic.id} value={topic.id}>
-                                                {topic.name} ({topic.items?.length || 0} items)
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {selectedTopic && (
-                                    <div>
-                                        <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Select Item</label>
-                                        <select
-                                            value={selectedItem}
-                                            onChange={(e) => setSelectedItem(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors"
-                                        >
-                                            <option value="">Choose an item...</option>
-                                            {domain.topics?.find(t => t.id.toString() === selectedTopic)?.items
-                                                ?.filter(item => !item.completed)
-                                                ?.map(item => (
-                                                    <option key={item.id} value={item.id}>
-                                                        {item.name} {item.difficulty ? `(${item.difficulty})` : ''}
-                                                    </option>
-                                                ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        {/* Manual Mode - Text Input */}
-                        {taskMode === 'manual' && (
-                            <input
-                                type="text"
-                                value={newTask}
-                                onChange={(e) => setNewTask(e.target.value)}
-                                placeholder="Task description"
-                                className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
-                                onKeyDown={(e) => e.key === 'Enter' && addTask()}
-                            />
-                        )}
-
-                        {/* Time and Points Inputs (shared by both modes) */}
+                        <input
+                            type="text"
+                            value={newTask}
+                            onChange={(e) => setNewTask(e.target.value)}
+                            placeholder="Task description"
+                            className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                            onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                        />
                         <div className="grid grid-cols-3 gap-3">
                             <div>
                                 <label className="text-xs text-zinc-600 mb-1.5 block font-medium">Hour</label>

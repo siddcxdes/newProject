@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as api from '../utils/api';
-import notificationManager from '../utils/notificationManager';
 
 const AppContext = createContext();
 
@@ -28,28 +27,16 @@ const DEFAULT_USER = {
     settings: {
         dailyDsaGoal: 3,
         weeklyGymGoal: 5,
-        theme: 'light',
-        timedTasks: {
-            gym: { startH: 9, startM: 0, endH: 11, endM: 0, points: 30 },
-            breakfast: { startH: 8, startM: 0, endH: 9, endM: 0, points: 20 },
-            lunch: { startH: 12, startM: 0, endH: 13, endM: 0, points: 20 },
-        }
+        theme: 'light'
     }
 };
-
-// Default Recipes
-const DEFAULT_RECIPES = [
-    { id: 1, name: 'Protein Oatmeal', category: 'breakfast', calories: 450, protein: 30 },
-    { id: 2, name: 'Chicken Rice Bowl', category: 'lunch', calories: 650, protein: 45 },
-    { id: 3, name: 'Greek Yogurt & Berries', category: 'dinner', calories: 350, protein: 20 },
-];
 
 // Default DSA Topics with subtopics
 const DEFAULT_DSA_TOPICS = [
     {
         id: 1,
         name: 'Arrays & Hashing',
-        icon: '📊',
+        icon: '',
         completed: 0,
         total: 20,
         subtopics: [
@@ -63,7 +50,7 @@ const DEFAULT_DSA_TOPICS = [
     {
         id: 2,
         name: 'Two Pointers',
-        icon: '👆',
+        icon: '',
         completed: 0,
         total: 15,
         subtopics: [
@@ -76,7 +63,7 @@ const DEFAULT_DSA_TOPICS = [
     {
         id: 3,
         name: 'Sliding Window',
-        icon: '🪟',
+        icon: '',
         completed: 0,
         total: 12,
         subtopics: [
@@ -85,11 +72,11 @@ const DEFAULT_DSA_TOPICS = [
             { id: 303, name: 'Minimum Window Substring', difficulty: 'hard', completed: false },
         ]
     },
-    { id: 4, name: 'Binary Search', icon: '🔍', completed: 0, total: 15, subtopics: [] },
-    { id: 5, name: 'Linked List', icon: '🔗', completed: 0, total: 18, subtopics: [] },
-    { id: 6, name: 'Trees', icon: '🌳', completed: 0, total: 25, subtopics: [] },
-    { id: 7, name: 'Graphs', icon: '🕸️', completed: 0, total: 20, subtopics: [] },
-    { id: 8, name: 'Dynamic Programming', icon: '📈', completed: 0, total: 30, subtopics: [] },
+    { id: 4, name: 'Binary Search', icon: '', completed: 0, total: 15, subtopics: [] },
+    { id: 5, name: 'Linked List', icon: '', completed: 0, total: 18, subtopics: [] },
+    { id: 6, name: 'Trees', icon: '', completed: 0, total: 25, subtopics: [] },
+    { id: 7, name: 'Graphs', icon: '', completed: 0, total: 20, subtopics: [] },
+    { id: 8, name: 'Dynamic Programming', icon: '', completed: 0, total: 30, subtopics: [] },
 ];
 
 // Default AI Modules with lessons
@@ -97,7 +84,7 @@ const DEFAULT_AI_MODULES = [
     {
         id: 1,
         name: 'Python Fundamentals',
-        icon: '🐍',
+        icon: '',
         completed: false,
         progress: 0,
         lessons: [
@@ -110,7 +97,7 @@ const DEFAULT_AI_MODULES = [
     {
         id: 2,
         name: 'NumPy & Pandas',
-        icon: '📊',
+        icon: '',
         completed: false,
         progress: 0,
         lessons: [
@@ -119,21 +106,33 @@ const DEFAULT_AI_MODULES = [
             { id: 203, name: 'Data Manipulation', completed: false },
         ]
     },
-    { id: 3, name: 'Machine Learning Basics', icon: '🤖', completed: false, progress: 0, lessons: [] },
-    { id: 4, name: 'Neural Networks', icon: '🧠', completed: false, progress: 0, lessons: [] },
-    { id: 5, name: 'Deep Learning', icon: '🔮', completed: false, progress: 0, lessons: [] },
-    { id: 6, name: 'NLP Fundamentals', icon: '💬', completed: false, progress: 0, lessons: [] },
-    { id: 7, name: 'Computer Vision', icon: '👁️', completed: false, progress: 0, lessons: [] },
-    { id: 8, name: 'Reinforcement Learning', icon: '🎮', completed: false, progress: 0, lessons: [] },
+    { id: 3, name: 'Machine Learning Basics', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 4, name: 'Neural Networks', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 5, name: 'Deep Learning', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 6, name: 'NLP Fundamentals', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 7, name: 'Computer Vision', icon: '', completed: false, progress: 0, lessons: [] },
+    { id: 8, name: 'Reinforcement Learning', icon: '', completed: false, progress: 0, lessons: [] },
 ];
 
 // Default Workout Routines
 const DEFAULT_WORKOUTS = [
-    { id: 1, name: 'Push Day', icon: '💪', exercises: ['Bench Press', 'Shoulder Press', 'Tricep Dips'], timesCompleted: 0 },
-    { id: 2, name: 'Pull Day', icon: '🏋️', exercises: ['Deadlift', 'Rows', 'Bicep Curls'], timesCompleted: 0 },
-    { id: 3, name: 'Leg Day', icon: '🦵', exercises: ['Squats', 'Lunges', 'Leg Press'], timesCompleted: 0 },
-    { id: 4, name: 'Cardio', icon: '🏃', exercises: ['Running', 'Cycling', 'Jump Rope'], timesCompleted: 0 },
-    { id: 5, name: 'Full Body', icon: '🔥', exercises: ['Burpees', 'Mountain Climbers', 'Planks'], timesCompleted: 0 },
+    { id: 1, name: 'Push Day', icon: '', exercises: ['Bench Press', 'Shoulder Press', 'Tricep Dips'], timesCompleted: 0 },
+    { id: 2, name: 'Pull Day', icon: '', exercises: ['Deadlift', 'Rows', 'Bicep Curls'], timesCompleted: 0 },
+    { id: 3, name: 'Leg Day', icon: '', exercises: ['Squats', 'Lunges', 'Leg Press'], timesCompleted: 0 },
+    { id: 4, name: 'Cardio', icon: '', exercises: ['Running', 'Cycling', 'Jump Rope'], timesCompleted: 0 },
+    { id: 5, name: 'Full Body', icon: '', exercises: ['Burpees', 'Mountain Climbers', 'Planks'], timesCompleted: 0 },
+];
+
+// Default Recipes (Diet Tracking)
+const DEFAULT_RECIPES = [
+    { id: 1, name: 'Oatmeal with Berries', category: 'breakfast', calories: 350, protein: 12 },
+    { id: 2, name: 'Protein Pancakes', category: 'breakfast', calories: 420, protein: 25 },
+    { id: 3, name: 'Grilled Chicken Salad', category: 'lunch', calories: 450, protein: 35 },
+    { id: 4, name: 'Quinoa Bowl', category: 'lunch', calories: 520, protein: 22 },
+    { id: 5, name: 'Greek Yogurt', category: 'snack', calories: 150, protein: 15 },
+    { id: 6, name: 'Protein Shake', category: 'snack', calories: 200, protein: 30 },
+    { id: 7, name: 'Salmon with Veggies', category: 'dinner', calories: 550, protein: 40 },
+    { id: 8, name: 'Chicken Stir Fry', category: 'dinner', calories: 480, protein: 38 },
 ];
 
 // Default goals
@@ -144,18 +143,13 @@ const DEFAULT_GOALS = [
     { id: 4, text: 'Help someone with their code', completed: false, createdAt: new Date().toISOString() },
 ];
 
-// XP values - on-time vs late completion
+// XP values
 const XP_VALUES = {
-    dsa: {
-        easy: { onTime: 10, late: 5 },
-        medium: { onTime: 25, late: 12 },
-        hard: { onTime: 50, late: 25 }
-    },
-    ai: { onTime: 30, late: 15 },
-    gym: { onTime: 20, late: 10 },
-    job: { onTime: 15, late: 7 },
-    personal: { onTime: 10, late: 5 },
-    diet: { onTime: 20, late: 10 }
+    dsa: { easy: 10, medium: 25, hard: 50 },
+    ai: 30,
+    gym: 20,
+    job: 15,
+    personal: 10
 };
 
 // Default Learning Domains - unified structure for customizable domains
@@ -164,7 +158,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'dsa',
         name: 'Data Structures & Algorithms',
         shortName: 'DSA',
-        icon: '📊',
+        icon: '',
         color: 'violet',
         type: 'problem-based', // has difficulty levels (easy/medium/hard)
         xpPerItem: { easy: 10, medium: 25, hard: 50 },
@@ -175,7 +169,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'ai',
         name: 'AI & Machine Learning',
         shortName: 'AI/ML',
-        icon: '🤖',
+        icon: '',
         color: 'emerald',
         type: 'module-based', // flat XP per item
         xpPerItem: 30,
@@ -186,7 +180,7 @@ const DEFAULT_LEARNING_DOMAINS = [
         id: 'job',
         name: 'Job Search',
         shortName: 'Jobs',
-        icon: '💼',
+        icon: '',
         color: 'blue',
         type: 'module-based',
         xpPerItem: 15,
@@ -218,14 +212,19 @@ export const AppProvider = ({ children }) => {
 
     // Gym state
     const [workouts, setWorkouts] = useState(DEFAULT_WORKOUTS);
+    const [recipes, setRecipes] = useState(DEFAULT_RECIPES);
 
     // Daily check-in tasks state (keyed by date string, e.g., "2025-12-08")
     const [dailyTasks, setDailyTasks] = useState({});
 
+    // Timed tasks (gym, diet) with schedules
+    const [timedTasks, setTimedTasks] = useState({});
+
+    // Points system for timed task completion
+    const [points, setPoints] = useState(0);
+
     // Learning Domains - unified customizable domains
     const [learningDomains, setLearningDomains] = useState(DEFAULT_LEARNING_DOMAINS);
-    const [recipes, setRecipes] = useState(DEFAULT_RECIPES);
-    const [nutritionLogs, setNutritionLogs] = useState({});
 
     // UI state
     const [loading, setLoading] = useState(true); // Start true for initial load
@@ -284,12 +283,15 @@ export const AppProvider = ({ children }) => {
         // (Server data is the source of truth, even if empty)
         // Only fall back to defaults for learningDomains if completely empty (for UX)
         const workoutsToSet = serverUser.workouts ?? [];
+        const recipesToSet = serverUser.recipes ?? [];
         const dsaTopicsToSet = serverUser.dsaTopics ?? [];
         const aiModulesToSet = serverUser.aiModules ?? [];
         const goalsToSet = serverUser.goals ?? [];
         const activitiesToSet = serverUser.activities ?? [];
         const dailyTasksToSet = serverUser.dailyTasks ?? {};
         const heatmapDataToSet = serverUser.heatmapData ?? {};
+        const timedTasksToSet = serverUser.timedTasks ?? {};
+        const pointsToSet = serverUser.points ?? 0;
         // For learningDomains, use server data if it exists (even empty array means user cleared it)
         // Also backfill `showInCheckIn` for older saved domains.
         const learningDomainsRaw = serverUser.learningDomains !== undefined ? serverUser.learningDomains : DEFAULT_LEARNING_DOMAINS;
@@ -298,30 +300,28 @@ export const AppProvider = ({ children }) => {
             showInCheckIn: d.showInCheckIn !== undefined ? d.showInCheckIn : true
         }));
 
-        const recipesToSet = serverUser.recipes && serverUser.recipes.length > 0 ? serverUser.recipes : DEFAULT_RECIPES;
-
-        const nutritionLogsToSet = serverUser.nutritionLogs ?? {};
-
-        console.log('📊 Setting state from server:', {
+        console.log('Setting state from server:', {
             workouts: workoutsToSet.length,
+            recipes: recipesToSet.length,
             dsaTopics: dsaTopicsToSet.length,
             aiModules: aiModulesToSet.length,
             dailyTasks: Object.keys(dailyTasksToSet).length,
             heatmapData: Object.keys(heatmapDataToSet).length,
-            learningDomains: learningDomainsToSet.length,
-            recipes: recipesToSet.length,
-            nutritionLogs: Object.keys(nutritionLogsToSet).length
+            timedTasks: Object.keys(timedTasksToSet).length,
+            points: pointsToSet,
+            learningDomains: learningDomainsToSet.length
         });
 
         setDsaTopics(dsaTopicsToSet);
         setAiModules(aiModulesToSet);
         setWorkouts(workoutsToSet);
-        setGoals(goalsToSet);
         setRecipes(recipesToSet);
-        setNutritionLogs(nutritionLogsToSet);
+        setGoals(goalsToSet);
         setActivities(activitiesToSet);
         setDailyTasks(dailyTasksToSet);
         setHeatmapData(heatmapDataToSet);
+        setTimedTasks(timedTasksToSet);
+        setPoints(pointsToSet);
         setLearningDomains(learningDomainsToSet);
 
         console.log('🎯 STATE SET - learningDomains:', learningDomainsToSet.map(d => d.name || d.shortName));
@@ -441,13 +441,14 @@ export const AppProvider = ({ children }) => {
                     dsaTopics: currentData.dsaTopics,
                     aiModules: currentData.aiModules,
                     workouts: currentData.workouts,
-                    goals: currentData.goals,
                     recipes: currentData.recipes,
+                    goals: currentData.goals,
                     activities: currentData.activities,
                     dailyTasks: currentData.dailyTasks,
                     heatmapData: currentData.heatmapData,
+                    timedTasks: currentData.timedTasks,
+                    points: currentData.points,
                     learningDomains: currentData.learningDomains,
-                    nutritionLogs: currentData.nutritionLogs,
                     stats: currentData.user?.stats,
                     streak: currentData.user?.streak,
                     xp: currentData.user?.xp,
@@ -485,7 +486,6 @@ export const AppProvider = ({ children }) => {
                     aiModules: currentData.aiModules,
                     workouts: currentData.workouts,
                     goals: currentData.goals,
-                    recipes: currentData.recipes,
                     activities: currentData.activities,
                     stats: currentData.user?.stats,
                     streak: currentData.user?.streak,
@@ -540,37 +540,17 @@ export const AppProvider = ({ children }) => {
         }
     }, [isAuthenticated, authToken]);
 
-    // Start notification monitoring when authenticated
-    useEffect(() => {
-        if (isAuthenticated && hydrationCompleteRef.current) {
-            // Request permission and start monitoring
-            notificationManager.requestPermission().then(granted => {
-                if (granted) {
-                    console.log('🔔 Notifications enabled');
-                    // Use dataRef to always get latest activities without restarting interval
-                    notificationManager.startMonitoring(() => dataRef.current.activities);
-                } else {
-                    console.log('🔕 Notifications denied or not supported');
-                }
-            });
-
-            return () => {
-                notificationManager.stopMonitoring();
-            };
-        }
-    }, [isAuthenticated]);
-
     // Force sync function (for manual triggering)
     const forceSyncNow = async () => {
         console.log('🚨 FORCE SYNC triggered!');
         // Update dataRef immediately before sync
-        dataRef.current = { user, dsaTopics, aiModules, workouts, goals, recipes, activities, dailyTasks, heatmapData, learningDomains, nutritionLogs };
+        dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, timedTasks, points, learningDomains };
         await syncToCloud();
     };
 
     // Keep dataRef updated with latest values (for sync to use)
     // This runs on EVERY render to ensure dataRef is always current
-    dataRef.current = { user, dsaTopics, aiModules, workouts, goals, recipes, activities, dailyTasks, heatmapData, learningDomains, nutritionLogs };
+    dataRef.current = { user, dsaTopics, aiModules, workouts, recipes, goals, activities, dailyTasks, heatmapData, timedTasks, points, learningDomains };
 
     // Trigger cloud sync on data changes (no localStorage)
     useEffect(() => {
@@ -606,11 +586,24 @@ export const AppProvider = ({ children }) => {
 
     useEffect(() => {
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [recipes, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
     }, [dailyTasks, debouncedSyncToCloud]);
 
     useEffect(() => {
         if (hydrationCompleteRef.current) debouncedSyncToCloud();
-    }, [learningDomains, recipes, nutritionLogs, debouncedSyncToCloud]);
+    }, [timedTasks, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [points, debouncedSyncToCloud]);
+
+    useEffect(() => {
+        console.log('📦 learningDomains updated:', learningDomains.map(d => ({ id: d.id, name: d.shortName, topicsCount: d.topics?.length || 0, topics: d.topics?.map(t => ({ name: t.name, itemsCount: t.items?.length || 0 })) })));
+        if (hydrationCompleteRef.current) debouncedSyncToCloud();
+    }, [learningDomains, debouncedSyncToCloud]);
 
     // Save to history for undo/redo
     const saveToHistory = useCallback((action, prevState, newState) => {
@@ -632,18 +625,6 @@ export const AppProvider = ({ children }) => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 4000);
     }, []);
-
-    // Toggle domain visibility for Check-In page
-    const toggleDomainVisibility = (domainId) => {
-        setLearningDomains(prev => prev.map(domain => {
-            if (domain.id === domainId) {
-                // Toggle showInCheckIn, defaulting to true if undefined
-                const current = domain.showInCheckIn !== false;
-                return { ...domain, showInCheckIn: !current };
-            }
-            return domain;
-        }));
-    };
 
     // Undo function
     const undo = useCallback(() => {
@@ -718,43 +699,9 @@ export const AppProvider = ({ children }) => {
     }, [undo, redo]);
 
     // Calculate XP
-    const calculateXp = (type, difficulty, scheduledTime = null) => {
-        let baseXp;
-
-        if (type === 'dsa') {
-            const diffXp = XP_VALUES.dsa[difficulty] || XP_VALUES.dsa.medium;
-            baseXp = diffXp;
-        } else if (type === 'gym' && user?.settings?.timedTasks?.gym) {
-            baseXp = { onTime: user.settings.timedTasks.gym.points, late: Math.floor(user.settings.timedTasks.gym.points / 2) };
-        } else if (type === 'diet') {
-            const mealType = details?.mealType;
-            if (mealType && user?.settings?.timedTasks?.[mealType]) {
-                const config = user.settings.dietPoints ? { onTime: user.settings.dietPoints[mealType] || 20, late: 10 } : user.settings.timedTasks[mealType];
-                // Wait, use the points from config directly
-                baseXp = { onTime: config.points, late: Math.floor(config.points / 2) };
-            } else {
-                baseXp = XP_VALUES.diet;
-            }
-        } else {
-            baseXp = XP_VALUES[type] || { onTime: 10, late: 5 };
-        }
-
-        // If no scheduled time, give full XP
-        if (!scheduledTime) {
-            return typeof baseXp === 'object' && baseXp.onTime ? baseXp.onTime : baseXp;
-        }
-
-        // Check if completed on time
-        const now = new Date();
-        const scheduled = new Date(scheduledTime);
-        const isLate = now > scheduled;
-
-        // Return appropriate XP based on timing
-        if (typeof baseXp === 'object') {
-            return isLate ? baseXp.late : baseXp.onTime;
-        }
-
-        return baseXp;
+    const calculateXp = (type, difficulty) => {
+        if (type === 'dsa') return XP_VALUES.dsa[difficulty] || XP_VALUES.dsa.medium;
+        return XP_VALUES[type] || 10;
     };
 
     // Check for level up
@@ -866,23 +813,11 @@ export const AppProvider = ({ children }) => {
 
     // Log activity (using IST for date key)
     const logActivity = async (type, details = {}) => {
-        const scheduledTime = details.scheduledTime || null;
-        const xpEarned = calculateXp(type, details.difficulty, scheduledTime);
+        const xpEarned = calculateXp(type, details.difficulty);
         const todayIST = getISTDateString();
         const prevState = { user: { ...user }, activities: [...activities], heatmap: { ...heatmapData } };
 
-        // Check if late
-        const isLate = scheduledTime && new Date() > new Date(scheduledTime);
-
-        const newActivity = {
-            _id: Date.now().toString(),
-            type,
-            xpEarned,
-            details,
-            date: new Date().toISOString(),
-            scheduledTime,
-            isLate
-        };
+        const newActivity = { _id: Date.now().toString(), type, xpEarned, details, date: new Date().toISOString() };
         const newXp = user.xp + xpEarned;
         const { newLevel, newXpToNext, levelsGained } = checkLevelUp(newXp, user.level);
         const newStreak = updateStreak(user.streak);
@@ -907,19 +842,14 @@ export const AppProvider = ({ children }) => {
         setHeatmapData(newHeatmap);
         saveToHistory('LOG_ACTIVITY', prevState, { user: newUser, activities: newActivities, heatmap: newHeatmap });
 
-        if (levelsGained > 0) {
-            showNotification(`🎉 Level Up! You're now Level ${newLevel}! +${xpEarned} XP`, 'success');
-        } else if (isLate) {
-            showNotification(`⚠️ Completed late! +${xpEarned} XP (reduced)`, 'warning');
-        } else {
-            showNotification(`+${xpEarned} XP earned!`, 'success');
-        }
+        if (levelsGained > 0) showNotification(`🎉 Level Up! You're now Level ${newLevel}! +${xpEarned} XP`, 'success');
+        else showNotification(`+${xpEarned} XP earned!`, 'success');
 
         return { xpEarned, activity: newActivity };
     };
 
     // ===== DSA TOPIC FUNCTIONS =====
-    const addDsaTopic = (name, icon = '📝') => {
+    const addDsaTopic = (name, icon = '') => {
         const prev = [...dsaTopics];
         const newTopic = { id: Date.now(), name, icon, completed: 0, total: 0, subtopics: [] };
         const newTopics = [...dsaTopics, newTopic];
@@ -998,7 +928,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== AI MODULE FUNCTIONS =====
-    const addAiModule = (name, icon = '📚') => {
+    const addAiModule = (name, icon = '') => {
         const prev = [...aiModules];
         const newModule = { id: Date.now(), name, icon, completed: false, progress: 0, lessons: [] };
         const newModules = [...aiModules, newModule];
@@ -1077,7 +1007,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== LEARNING DOMAIN FUNCTIONS =====
-    const addLearningDomain = (name, shortName = '', icon = '📚', color = 'blue', type = 'module-based') => {
+    const addLearningDomain = (name, shortName = '', icon = '', color = 'blue', type = 'module-based') => {
         const prev = [...learningDomains];
         const newDomain = {
             id: `domain_${Date.now()}`,
@@ -1113,7 +1043,7 @@ export const AppProvider = ({ children }) => {
         showNotification('Domain deleted', 'info');
     };
 
-    const addDomainTopic = (domainId, name, icon = '📝') => {
+    const addDomainTopic = (domainId, name, icon = '') => {
         const prev = [...learningDomains];
         const newDomains = learningDomains.map(d => {
             if (d.id === domainId) {
@@ -1250,7 +1180,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // ===== WORKOUT FUNCTIONS =====
-    const addWorkout = (name, icon = '💪', exercises = []) => {
+    const addWorkout = (name, icon = '', exercises = []) => {
         const prev = [...workouts];
         const newWorkout = { id: Date.now(), name, icon, exercises, timesCompleted: 0 };
         const newWorkouts = [...workouts, newWorkout];
@@ -1287,6 +1217,33 @@ export const AppProvider = ({ children }) => {
             setWorkouts(newWorkouts);
             saveToHistory('WORKOUT', prev, newWorkouts);
         }
+    };
+
+    // ===== RECIPE FUNCTIONS =====
+    const addRecipe = (name, category = 'breakfast', calories = 0, protein = 0) => {
+        const prev = [...recipes];
+        const newRecipe = { id: Date.now(), name, category, calories, protein };
+        const newRecipes = [...recipes, newRecipe];
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification(`Added recipe: ${name}`, 'success');
+        return newRecipe;
+    };
+
+    const editRecipe = (recipeId, updates) => {
+        const prev = [...recipes];
+        const newRecipes = recipes.map(r => r.id === recipeId ? { ...r, ...updates } : r);
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification('Recipe updated!', 'success');
+    };
+
+    const deleteRecipe = (recipeId) => {
+        const prev = [...recipes];
+        const newRecipes = recipes.filter(r => r.id !== recipeId);
+        setRecipes(newRecipes);
+        saveToHistory('RECIPE', prev, newRecipes);
+        showNotification('Recipe deleted', 'info');
     };
 
     // ===== GOAL FUNCTIONS =====
@@ -1372,7 +1329,6 @@ export const AppProvider = ({ children }) => {
         setDsaTopics(DEFAULT_DSA_TOPICS.map(t => ({ ...t, completed: 0, subtopics: t.subtopics.map(s => ({ ...s, completed: false })) })));
         setAiModules(DEFAULT_AI_MODULES.map(m => ({ ...m, completed: false, progress: 0, lessons: m.lessons.map(l => ({ ...l, completed: false })) })));
         setWorkouts(DEFAULT_WORKOUTS.map(w => ({ ...w, timesCompleted: 0 })));
-        setRecipes(DEFAULT_RECIPES);
 
         // Clear history
         setHistory([]);
@@ -1394,10 +1350,12 @@ export const AppProvider = ({ children }) => {
 
     const value = {
         // State - user now has dynamically computed stats
-        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, dailyTasks, learningDomains,
+        user: userWithComputedStats, activities, heatmapData, goals, dsaTopics, aiModules, workouts, recipes, dailyTasks, timedTasks, points, learningDomains,
         loading, lastSaved, notification, useLocalStorage, isAuthenticated, computedStats,
         // Daily Tasks
         setDailyTasks,
+        // Timed Tasks & Points
+        setTimedTasks, setPoints,
         // Auth
         login, register, logout, syncToCloud, updateUserProfile, forceSyncNow,
         hydrateFromServerData, setAuthToken, setIsAuthenticated,
@@ -1413,14 +1371,11 @@ export const AppProvider = ({ children }) => {
         addLearningDomain, editLearningDomain, deleteLearningDomain,
         addDomainTopic, editDomainTopic, deleteDomainTopic,
         addDomainItem, toggleDomainItem, deleteDomainItem,
-        setLearningDomains, toggleDomainVisibility, // Expose for bulk imports
+        setLearningDomains, // Expose for bulk imports
         // Workouts
-        addWorkout, editWorkout, deleteWorkout, logWorkout,
-        // Recipes & Timed Tasks
-        nutritionLogs,
-        updateNutritionLog: (date, data) => setNutritionLogs(prev => ({ ...prev, [date]: data })),
-        recipes, addRecipe: (recipe) => setRecipes(prev => [...prev, { ...recipe, id: Date.now() }]),
-        updateTimedConfig: (config) => updateSettings({ timedTasks: config }),
+        addWorkout, editWorkout, deleteWorkout, logWorkout, setWorkouts, // Expose setWorkouts for bulk imports
+        // Recipes
+        addRecipe, editRecipe, deleteRecipe, setRecipes, // Expose setRecipes for bulk imports
         // Settings & Utils
         updateSettings, refreshData, showNotification, resetAll,
         // Undo/Redo

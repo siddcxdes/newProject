@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 
 const Settings = () => {
     const navigate = useNavigate();
-    const { user, updateSettings, logout, updateUserProfile, learningDomains, toggleDomainVisibility } = useApp();
+    const { user, updateSettings, logout, updateUserProfile } = useApp();
     const [settings, setSettings] = useState({
         weeklyGymGoal: user?.settings?.weeklyGymGoal || 5,
         theme: user?.settings?.theme || 'light',
@@ -121,37 +121,6 @@ const Settings = () => {
                 </div>
             </div>
 
-            {/* Learning Domains */}
-            <div className="glass-card p-5">
-                <h3 className="text-base font-semibold text-heading mb-4">Focus Areas</h3>
-                <p className="text-sm text-zinc-500 mb-4">Select the domains you want to track in your daily check-in.</p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {learningDomains && learningDomains.map((domain) => (
-                        <div key={domain.id} className="flex items-center justify-between p-3 bg-elevated border border-subtle rounded-lg">
-                            <div className="flex items-center gap-3">
-                                {/* Color Indicator instead of Emoji */}
-                                <div className={`w-2 h-8 rounded-full bg-${domain.color === 'violet' ? 'sky' : domain.color}-500/50`}></div>
-                                <div>
-                                    <p className="text-sm font-semibold text-heading">{domain.shortName || domain.name}</p>
-                                    <p className="text-xs text-zinc-500">{domain.topics?.length || 0} topics</p>
-                                </div>
-                            </div>
-
-                            <label className="flex items-center cursor-pointer relative">
-                                <input
-                                    type="checkbox"
-                                    checked={domain.showInCheckIn !== false}
-                                    onChange={() => toggleDomainVisibility(domain.id)}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600"></div>
-                            </label>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* Features Settings */}
             <div className="glass-card p-5">
                 <h3 className="text-base font-semibold text-heading mb-4">Features</h3>
@@ -166,29 +135,6 @@ const Settings = () => {
                             className={`relative w-12 h-6 rounded-full transition-colors ${settings.showJobSearch ? 'bg-sky-600' : 'bg-zinc-700'}`}
                         >
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${settings.showJobSearch ? 'left-7' : 'left-1'}`}></div>
-                        </button>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-subtle">
-                        <div>
-                            <p className="text-sm text-heading">Browser Notifications</p>
-                            <p className="text-xs text-zinc-500">Get reminders for scheduled tasks</p>
-                        </div>
-                        <button
-                            onClick={async () => {
-                                const granted = await Notification.requestPermission();
-                                if (granted === 'granted') {
-                                    alert('✅ Notifications enabled! You\'ll get reminders 15 minutes before tasks.');
-                                } else {
-                                    alert('❌ Notifications blocked. Enable them in your browser settings.');
-                                }
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${Notification.permission === 'granted'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                                }`}
-                        >
-                            {Notification.permission === 'granted' ? 'Enabled' : 'Enable'}
                         </button>
                     </div>
                 </div>
