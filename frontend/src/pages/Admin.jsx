@@ -3,18 +3,15 @@ import { useApp } from '../context/AppContext';
 
 const Admin = () => {
     const {
-        user, activities, learningDomains, workouts, recipes, goals,
-        setLearningDomains, setRecipes, setWorkouts, showNotification, resetAll, forceSyncNow
+        user, activities, learningDomains, workouts, goals,
+        setLearningDomains, showNotification, resetAll, forceSyncNow,
+        addWorkout, addRecipe, updateTimedConfig
     } = useApp();
 
     const [activeTab, setActiveTab] = useState('overview');
     const [jsonInput, setJsonInput] = useState('');
-    const [recipeJsonInput, setRecipeJsonInput] = useState('');
-    const [workoutJsonInput, setWorkoutJsonInput] = useState('');
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
-    const [isImportingRecipes, setIsImportingRecipes] = useState(false);
-    const [isImportingWorkouts, setIsImportingWorkouts] = useState(false);
 
     const handleExport = () => {
         const data = {
@@ -164,115 +161,91 @@ const Admin = () => {
         }
     };
 
-    const handleBulkRecipeImport = () => {
-        if (isImportingRecipes) return;
-        setIsImportingRecipes(true);
-
+    const handleWorkoutImport = () => {
+        if (isImporting) return;
+        setIsImporting(true);
         try {
-            let parsed = JSON.parse(recipeJsonInput);
-            if (!Array.isArray(parsed)) {
-                parsed = [parsed];
-            }
+            const parsed = JSON.parse(jsonInput);
+            const items = Array.isArray(parsed) ? parsed : [parsed];
 
-            let newRecipes = [...recipes];
-            let addedCount = 0;
+            let count = 0;
+            items.forEach(w => {
+                if (!w.name) return;
 
-            for (const item of parsed) {
-                const name = item.name || item.recipe;
-                const category = (item.category || item.meal || 'breakfast').toLowerCase();
-                const calories = parseInt(item.calories || item.cal || 0);
-                const protein = parseInt(item.protein || item.prot || 0);
+                let exerciseList = [];
 
-                if (!name) {
-                    throw new Error('Missing "name" field in recipe');
+                // Add pre-workout if exists
+                if (Array.isArray(w.pre_workout_warmup)) {
+                    exerciseList.push(...w.pre_workout_warmup.map(ex => `Warmup: ${ex}`));
+                } else if (Array.isArray(w.pre_workout)) {
+                    exerciseList.push(...w.pre_workout.map(ex => `Warmup: ${ex}`));
                 }
 
-                if (!['breakfast', 'lunch', 'snack', 'dinner'].includes(category)) {
-                    throw new Error(`Invalid category "${category}". Must be: breakfast, lunch, snack, or dinner`);
+                // Handle exercises (can be array of strings OR array of objects)
+                if (Array.isArray(w.exercises)) {
+                    w.exercises.forEach(ex => {
+                        if (typeof ex === 'string') {
+                            exerciseList.push(ex);
+                        } else if (typeof ex === 'object' && ex !== null && Array.isArray(ex.movements)) {
+                            const groupPrefix = ex.muscle_group ? `[${ex.muscle_group}] ` : '';
+                            ex.movements.forEach(m => exerciseList.push(`${groupPrefix}${m}`));
+                        }
+                    });
                 }
 
-                // Check if recipe already exists
-                const exists = newRecipes.some(r => r.name.toLowerCase() === name.toLowerCase());
-
-                if (!exists) {
-                    const newRecipe = {
-                        id: Date.now() + Math.floor(Math.random() * 10000),
-                        name,
-                        category,
-                        calories,
-                        protein
-                    };
-                    newRecipes.push(newRecipe);
-                    addedCount++;
+                // Add post-workout if exists
+                if (Array.isArray(w.post_workout_stretch)) {
+                    exerciseList.push(...w.post_workout_stretch.map(ex => `Stretch: ${ex}`));
                 }
+
+                if (exerciseList.length > 0) {
+                    addWorkout(w.name, w.icon || '💪', exerciseList);
+                    count++;
+                }
+            });
+
+            if (count > 0) {
+                showNotification(`✅ Successfully imported ${count} workouts!`, 'success');
+                setJsonInput('');
+                if (typeof forceSyncNow === 'function') forceSyncNow();
+            } else {
+                showNotification('No valid workouts found in JSON', 'error');
             }
-
-            setRecipes(newRecipes);
-
-            if (typeof forceSyncNow === 'function') {
-                forceSyncNow();
-            }
-
-            setRecipeJsonInput('');
-            showNotification(`✅ Imported ${addedCount} recipes!`, 'success');
-        } catch (error) {
-            console.error('Recipe import error:', error);
-            showNotification(`❌ ${error.message}`, 'error');
+        } catch (e) {
+            showNotification(`Invalid JSON: ${e.message}`, 'error');
         } finally {
-            setIsImportingRecipes(false);
+            setIsImporting(false);
         }
     };
 
-    const handleBulkWorkoutImport = () => {
-        if (isImportingWorkouts) return;
-        setIsImportingWorkouts(true);
-
+    const handleRecipeImport = () => {
+        if (isImporting) return;
+        setIsImporting(true);
         try {
-            let parsed = JSON.parse(workoutJsonInput);
-            if (!Array.isArray(parsed)) {
-                parsed = [parsed];
-            }
+            const parsed = JSON.parse(jsonInput);
+            const items = Array.isArray(parsed) ? parsed : [parsed];
 
-            let newWorkouts = [...workouts];
-            let addedCount = 0;
-
-            for (const item of parsed) {
-                const name = item.name || item.workout;
-                const exercises = Array.isArray(item.exercises) ? item.exercises : (item.exercises ? item.exercises.split(',').map(e => e.trim()) : []);
-
-                if (!name) {
-                    throw new Error('Missing "name" field in workout');
+            let count = 0;
+            items.forEach(recipe => {
+                if (!recipe.name || !recipe.calories || !recipe.protein) {
+                    console.warn('Skipping invalid recipe:', recipe);
+                    return;
                 }
+                addRecipe(recipe);
+                count++;
+            });
 
-                // Check if workout already exists
-                const exists = newWorkouts.some(w => w.name.toLowerCase() === name.toLowerCase());
-
-                if (!exists) {
-                    const newWorkout = {
-                        id: Date.now() + Math.floor(Math.random() * 10000),
-                        name,
-                        icon: '💪',
-                        exercises,
-                        timesCompleted: 0
-                    };
-                    newWorkouts.push(newWorkout);
-                    addedCount++;
-                }
+            if (count > 0) {
+                showNotification(`✅ Successfully imported ${count} recipes!`, 'success');
+                setJsonInput('');
+                if (typeof forceSyncNow === 'function') forceSyncNow();
+            } else {
+                showNotification('No valid recipes found in JSON', 'error');
             }
-
-            setWorkouts(newWorkouts);
-
-            if (typeof forceSyncNow === 'function') {
-                forceSyncNow();
-            }
-
-            setWorkoutJsonInput('');
-            showNotification(`✅ Imported ${addedCount} workouts!`, 'success');
-        } catch (error) {
-            console.error('Workout import error:', error);
-            showNotification(`❌ ${error.message}`, 'error');
+        } catch (e) {
+            showNotification(`Invalid Recipe JSON: ${e.message}`, 'error');
         } finally {
-            setIsImportingWorkouts(false);
+            setIsImporting(false);
         }
     };
 
@@ -291,47 +264,48 @@ const Admin = () => {
   }
 ]`;
 
-    const exampleRecipeJson = `[
-  {
-    "name": "Protein Oatmeal",
-    "category": "breakfast",
-    "calories": 350,
-    "protein": 20
-  },
-  {
-    "name": "Grilled Chicken Bowl",
-    "category": "lunch",
-    "calories": 520,
-    "protein": 45
-  }
-]`;
-
-    const exampleWorkoutJson = `[
-  {
-    "name": "Push Day",
-    "exercises": ["Bench Press", "Shoulder Press", "Tricep Dips"]
-  },
-  {
-    "name": "Pull Day",
-    "exercises": ["Deadlift", "Rows", "Bicep Curls"]
-  }
-]`;
-
     const tabs = [
         { id: 'overview', label: 'Overview' },
-        { id: 'bulk', label: 'Learning Import' },
-        { id: 'recipes', label: 'Recipe Import' },
-        { id: 'workouts', label: 'Workout Import' },
+        { id: 'timed-tasks', label: 'Timed Tasks' },
+        { id: 'import-learning', label: 'Learning Import' },
+        { id: 'import-recipes', label: 'Recipe Import' },
+        { id: 'import-workouts', label: 'Workout Import' },
     ];
+
+    // Initialize timedConfig from user settings or defaults
+    const [timedConfig, setTimedConfig] = useState(user?.settings?.timedTasks || {
+        gym: { startH: 9, startM: 0, endH: 11, endM: 0, points: 30 },
+        breakfast: { startH: 8, startM: 0, endH: 9, endM: 0, points: 20 },
+        lunch: { startH: 12, startM: 0, endH: 13, endM: 0, points: 20 },
+    });
+
+    const handleTimedConfigChange = (task, field, value) => {
+        setTimedConfig(prev => ({
+            ...prev,
+            [task]: { ...prev[task], [field]: parseInt(value) || 0 }
+        }));
+    };
+
+    const saveTimedConfig = () => {
+        updateTimedConfig(timedConfig);
+        showNotification('Timed tasks configuration applied!', 'success');
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-heading mb-1">Admin</h1>
-                    <p className="text-sm text-zinc-500">Manage data, bulk import, and debug</p>
+                    <p className="text-sm text-zinc-500">Manage data, configurations, and imports</p>
                 </div>
-                <button onClick={() => setShowResetConfirm(true)} className="btn-danger text-xs">Reset All Data</button>
+                <div className="flex gap-2">
+                    <button onClick={handleExport} className="btn-secondary text-xs">Export Backup</button>
+                    <label className="btn-secondary text-xs cursor-pointer">
+                        Import File
+                        <input type="file" onChange={handleImport} className="hidden" accept=".json" />
+                    </label>
+                    <button onClick={() => setShowResetConfirm(true)} className="btn-danger text-xs">Reset All</button>
+                </div>
             </div>
 
             {showResetConfirm && (
@@ -347,9 +321,9 @@ const Admin = () => {
                 </div>
             )}
 
-            <div className="flex gap-1 p-1.5 bg-elevated rounded-xl border border-subtle">
+            <div className="flex overflow-x-auto gap-1 p-1.5 bg-elevated rounded-xl border border-subtle no-scrollbar">
                 {tabs.map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-shrink-0 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
                         {tab.label}
                     </button>
                 ))}
@@ -357,6 +331,7 @@ const Admin = () => {
 
             {activeTab === 'overview' && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {/* ... stats cards ... (kept same as before, abbreviated here for brevity if replace_file content logic allows) */}
                     <div className="glass-card p-4">
                         <p className="stat-label mb-1">Level</p>
                         <p className="stat-value">{user?.level || 1}</p>
@@ -400,161 +375,172 @@ const Admin = () => {
                 </div>
             )}
 
-            {activeTab === 'bulk' && (
+            {activeTab === 'timed-tasks' && (
+                <div className="glass-card p-5 max-w-3xl">
+                    <h3 className="text-lg font-semibold text-heading mb-4">Timed Tasks Configuration</h3>
+                    <p className="text-sm text-zinc-500 mb-6">Set time windows and XP points for your daily routine tasks.</p>
+
+                    <div className="space-y-6">
+                        {['gym', 'breakfast', 'lunch'].map((task) => (
+                            <div key={task} className="p-4 bg-elevated rounded-xl border border-subtle">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-base font-semibold text-heading capitalize">{task === 'gym' ? 'Gym / Workout' : task}</h4>
+                                    <span className="text-xs font-mono text-zinc-500">
+                                        {String(timedConfig[task].startH).padStart(2, '0')}:{String(timedConfig[task].startM).padStart(2, '0')} -
+                                        {String(timedConfig[task].endH).padStart(2, '0')}:{String(timedConfig[task].endM).padStart(2, '0')}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 items-end">
+                                    <div>
+                                        <label className="text-xs text-zinc-500 block mb-1">Start Hour</label>
+                                        <input type="number" min="0" max="23" value={timedConfig[task].startH} onChange={(e) => handleTimedConfigChange(task, 'startH', e.target.value)} className="input-field" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-zinc-500 block mb-1">Start Min</label>
+                                        <input type="number" min="0" max="59" value={timedConfig[task].startM} onChange={(e) => handleTimedConfigChange(task, 'startM', e.target.value)} className="input-field" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-zinc-500 block mb-1">End Hour</label>
+                                        <input type="number" min="0" max="23" value={timedConfig[task].endH} onChange={(e) => handleTimedConfigChange(task, 'endH', e.target.value)} className="input-field" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-zinc-500 block mb-1">End Min</label>
+                                        <input type="number" min="0" max="59" value={timedConfig[task].endM} onChange={(e) => handleTimedConfigChange(task, 'endM', e.target.value)} className="input-field" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-zinc-500 block mb-1">Points</label>
+                                        <input type="number" value={timedConfig[task].points} onChange={(e) => handleTimedConfigChange(task, 'points', e.target.value)} className="input-field" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <button onClick={saveTimedConfig} className="btn-primary">Save Configuration</button>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'import-learning' && (
                 <div className="space-y-4">
                     <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-2">Bulk JSON Import</h3>
-                        <p className="text-sm text-zinc-500 mb-4">Import domains, topics, and subtopics. They sync to Academics and CheckIn.</p>
-
+                        <h3 className="text-base font-semibold text-heading mb-2">Learning Import</h3>
+                        <p className="text-sm text-zinc-500 mb-4">Bulk import domains, topics, and subtopics.</p>
                         <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
                             <p className="text-xs text-zinc-500 mb-2">Required format:</p>
                             <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleJson}</pre>
                         </div>
-
                         <textarea
                             value={jsonInput}
                             onChange={(e) => setJsonInput(e.target.value)}
                             placeholder="Paste your JSON here..."
                             className="input-field resize-none mb-4 font-mono text-sm"
-                            rows={12}
+                            rows={10}
                             disabled={isImporting}
                         />
-                        <button
-                            onClick={handleBulkJsonImport}
-                            className="btn-primary text-sm"
-                            disabled={!jsonInput.trim() || isImporting}
-                        >
-                            {isImporting ? 'Importing...' : 'Import JSON'}
+                        <button onClick={handleBulkJsonImport} className="btn-primary text-sm" disabled={!jsonInput.trim() || isImporting}>
+                            {isImporting ? 'Importing...' : 'Import Data'}
                         </button>
                     </div>
-
                     <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-4">Current Learning Domains ({learningDomains.length})</h3>
-                        <div className="space-y-2 max-h-96 overflow-auto">
-                            {learningDomains.map(domain => (
-                                <div key={domain.id} className="p-3 bg-elevated rounded-lg border border-subtle">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-semibold text-heading">{domain.icon} {domain.name} ({domain.shortName})</span>
-                                        <span className="text-xs text-zinc-500">{domain.topics?.length || 0} topics</span>
-                                    </div>
-                                    {domain.topics?.slice(0, 5).map(topic => (
-                                        <div key={topic.id} className="ml-4 text-xs text-zinc-400">
-                                            {topic.icon} {topic.name} ({topic.items?.length || 0} items)
-                                        </div>
-                                    ))}
-                                    {domain.topics?.length > 5 && (
-                                        <div className="ml-4 text-xs text-zinc-600 italic">...and {domain.topics.length - 5} more topics</div>
-                                    )}
-                                </div>
-                            ))}
+                        <h3 className="text-base font-semibold text-heading mb-4">Current Data</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-3 bg-elevated rounded-lg border border-subtle">
+                                <p className="text-xs text-zinc-500 mb-1">Learning Domains</p>
+                                <p className="text-lg font-bold text-heading">{learningDomains.length}</p>
+                            </div>
+                            <div className="p-3 bg-elevated rounded-lg border border-subtle">
+                                <p className="text-xs text-zinc-500 mb-1">Workout Routines</p>
+                                <p className="text-lg font-bold text-heading">{workouts.length}</p>
+                            </div>
+                            <div className="p-3 bg-elevated rounded-lg border border-subtle">
+                                <p className="text-xs text-zinc-500 mb-1">Stored Recipes</p>
+                                <p className="text-lg font-bold text-heading">{recipes.length}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {activeTab === 'recipes' && (
-                <div className="space-y-4">
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-2">Bulk Recipe Import</h3>
-                        <p className="text-sm text-zinc-500 mb-4">Import recipes for diet tracking. Recipes sync to Gym page.</p>
-
-                        <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
-                            <p className="text-xs text-zinc-500 mb-2">Required format:</p>
-                            <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleRecipeJson}</pre>
-                        </div>
-
-                        <textarea
-                            value={recipeJsonInput}
-                            onChange={(e) => setRecipeJsonInput(e.target.value)}
-                            placeholder="Paste your recipe JSON here..."
-                            className="input-field resize-none mb-4 font-mono text-sm"
-                            rows={12}
-                            disabled={isImportingRecipes}
-                        />
-                        <button
-                            onClick={handleBulkRecipeImport}
-                            className="btn-primary text-sm"
-                            disabled={!recipeJsonInput.trim() || isImportingRecipes}
-                        >
-                            {isImportingRecipes ? 'Importing...' : 'Import Recipes'}
-                        </button>
+            {activeTab === 'import-recipes' && (
+                <div className="glass-card p-5">
+                    <h3 className="text-base font-semibold text-heading mb-2">Recipe Import</h3>
+                    <p className="text-sm text-zinc-500 mb-4">Import recipes for diet tracking.</p>
+                    <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
+                        <p className="text-xs text-zinc-500 mb-2">Required format:</p>
+                        <pre className="text-xs text-amber-400 font-mono overflow-auto">{`[
+  {
+    "name": "Protein Oatmeal",
+    "category": "breakfast",
+    "calories": 350,
+    "protein": 20
+  },
+  {
+    "name": "Grilled Chicken Bowl",
+    "category": "lunch",
+    "calories": 520,
+    "protein": 45
+  }
+]`}</pre>
                     </div>
-
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-4">Current Recipes ({recipes.length})</h3>
-                        <div className="space-y-2 max-h-96 overflow-auto">
-                            {recipes.map(recipe => (
-                                <div key={recipe.id} className="p-3 bg-elevated rounded-lg border border-subtle">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="text-sm font-semibold text-heading">{recipe.name}</span>
-                                            <span className="text-xs text-zinc-500 ml-2 capitalize">({recipe.category})</span>
-                                        </div>
-                                        <div className="flex gap-3 text-xs">
-                                            <span className="text-amber-400">{recipe.calories} kcal</span>
-                                            <span className="text-emerald-400">{recipe.protein}g protein</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <textarea
+                        value={jsonInput}
+                        onChange={(e) => setJsonInput(e.target.value)}
+                        placeholder="Paste recipe JSON here..."
+                        className="input-field resize-none mb-4 font-mono text-sm"
+                        rows={8}
+                        disabled={isImporting}
+                    />
+                    <button
+                        onClick={handleRecipeImport}
+                        className="btn-primary text-sm"
+                        disabled={!jsonInput.trim() || isImporting}
+                    >
+                        {isImporting ? 'Importing...' : 'Import Recipes'}
+                    </button>
                 </div>
             )}
 
-            {activeTab === 'workouts' && (
-                <div className="space-y-4">
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-2">Bulk Workout Import</h3>
-                        <p className="text-sm text-zinc-500 mb-4">Import workout routines. Workouts sync to Gym page.</p>
-
-                        <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
-                            <p className="text-xs text-zinc-500 mb-2">Required format:</p>
-                            <pre className="text-xs text-emerald-400 font-mono overflow-auto">{exampleWorkoutJson}</pre>
-                        </div>
-
-                        <textarea
-                            value={workoutJsonInput}
-                            onChange={(e) => setWorkoutJsonInput(e.target.value)}
-                            placeholder="Paste your workout JSON here..."
-                            className="input-field resize-none mb-4 font-mono text-sm"
-                            rows={12}
-                            disabled={isImportingWorkouts}
-                        />
-                        <button
-                            onClick={handleBulkWorkoutImport}
-                            className="btn-primary text-sm"
-                            disabled={!workoutJsonInput.trim() || isImportingWorkouts}
-                        >
-                            {isImportingWorkouts ? 'Importing...' : 'Import Workouts'}
-                        </button>
+            {activeTab === 'import-workouts' && (
+                <div className="glass-card p-5">
+                    <h3 className="text-base font-semibold text-heading mb-2">Workout Import</h3>
+                    <p className="text-sm text-zinc-500 mb-4">Import workout routines with exercises.</p>
+                    <div className="mb-4 p-3 bg-elevated rounded-lg border border-subtle">
+                        <p className="text-xs text-zinc-500 mb-2">Required format:</p>
+                        <pre className="text-xs text-sky-400 font-mono overflow-auto">{`[
+  {
+    "name": "Push Day",
+    "pre_workout_warmup": ["Arm circles – 30 sec"],
+    "exercises": [
+      {
+        "muscle_group": "Chest",
+        "movements": ["Barbell Bench Press – 4×4–6"]
+      }
+    ],
+    "post_workout_stretch": ["Doorway chest stretch – 45 sec"]
+  },
+  {
+    "name": "Simple Workout",
+    "exercises": ["Squats", "Deadlifts"]
+  }
+]`}</pre>
                     </div>
-
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-4">Current Workouts ({workouts.length})</h3>
-                        <div className="space-y-2 max-h-96 overflow-auto">
-                            {workouts.map(workout => (
-                                <div key={workout.id} className="p-3 bg-elevated rounded-lg border border-subtle">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-semibold text-heading">{workout.name}</span>
-                                        <span className="text-xs text-zinc-500">{workout.exercises.length} exercises</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                        {workout.exercises.slice(0, 3).map((exercise, idx) => (
-                                            <span key={idx} className="text-xs px-2 py-0.5 bg-elevated border border-subtle rounded text-zinc-400">
-                                                {exercise}
-                                            </span>
-                                        ))}
-                                        {workout.exercises.length > 3 && (
-                                            <span className="text-xs px-2 py-0.5 text-zinc-600">
-                                                +{workout.exercises.length - 3} more
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <textarea
+                        value={jsonInput}
+                        onChange={(e) => setJsonInput(e.target.value)}
+                        placeholder="Paste workout JSON here..."
+                        className="input-field resize-none mb-4 font-mono text-sm"
+                        rows={8}
+                        disabled={isImporting}
+                    />
+                    <button
+                        onClick={handleWorkoutImport}
+                        className="btn-primary text-sm"
+                        disabled={!jsonInput.trim() || isImporting}
+                    >
+                        {isImporting ? 'Importing...' : 'Import Workouts'}
+                    </button>
                 </div>
             )}
         </div>

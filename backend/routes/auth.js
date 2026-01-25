@@ -106,7 +106,7 @@ router.put('/sync', protect, async (req, res) => {
             activities: req.body.activities?.length || 0
         }));
 
-        const { name, dsaTopics, aiModules, workouts, goals, activities, dailyTasks, heatmapData, learningDomains, stats, streak, xp, level, xpToNextLevel, settings, quote } = req.body;
+        const { name, dsaTopics, aiModules, workouts, goals, recipes, nutritionLogs, activities, dailyTasks, heatmapData, learningDomains, stats, streak, xp, level, xpToNextLevel, settings, quote } = req.body;
 
         // Build update object with only defined fields
         const updateData = {};
@@ -115,6 +115,8 @@ router.put('/sync', protect, async (req, res) => {
         if (aiModules !== undefined) updateData.aiModules = aiModules;
         if (workouts !== undefined) updateData.workouts = workouts;
         if (goals !== undefined) updateData.goals = goals;
+        if (recipes !== undefined) updateData.recipes = recipes;
+        if (nutritionLogs !== undefined) updateData.nutritionLogs = nutritionLogs;
         if (activities !== undefined) updateData.activities = activities;
         if (dailyTasks !== undefined) updateData.dailyTasks = dailyTasks;
         if (heatmapData !== undefined) updateData.heatmapData = heatmapData;
@@ -130,6 +132,8 @@ router.put('/sync', protect, async (req, res) => {
         console.log('💾 Saving user with:', {
             workouts: updateData.workouts?.length || 0,
             learningDomains: updateData.learningDomains?.length || 0,
+            recipes: updateData.recipes?.length || 0,
+            nutritionLogs: Object.keys(updateData.nutritionLogs || {}).length,
             dsaTopics: updateData.dsaTopics?.length || 0
         });
 

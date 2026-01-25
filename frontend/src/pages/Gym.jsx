@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { formatTime, getTimeStatus } from '../utils/timeUtils';
 
 // IST Date helpers
 const getISTDate = () => {
@@ -37,22 +38,138 @@ const getCurrentWeekDays = () => {
 };
 
 const Gym = () => {
-    const { user, workouts, recipes, activities, logActivity, addWorkout, editWorkout, deleteWorkout, logWorkout, addRecipe, editRecipe, deleteRecipe } = useApp();
-    const [activeTab, setActiveTab] = useState('workouts'); // 'workouts' or 'diet'
+    const {
+        user, workouts, activities, logActivity, addWorkout, editWorkout,
+        deleteWorkout, logWorkout, recipes, updateSettings, nutritionLogs, updateNutritionLog, showNotification
+    } = useApp();
+
+    const [activeTab, setActiveTab] = useState('gym');
     const [showAddWorkout, setShowAddWorkout] = useState(false);
     const [newWorkoutName, setNewWorkoutName] = useState('');
     const [newExercises, setNewExercises] = useState('');
     const [editingWorkout, setEditingWorkout] = useState(null);
     const [expandedWorkout, setExpandedWorkout] = useState(null);
 
-    // Diet state
-    const [showAddRecipe, setShowAddRecipe] = useState(false);
-    const [newRecipeName, setNewRecipeName] = useState('');
-    const [newRecipeCategory, setNewRecipeCategory] = useState('breakfast');
-    const [newRecipeCalories, setNewRecipeCalories] = useState('');
-    const [newRecipeProtein, setNewRecipeProtein] = useState('');
-    const [editingRecipe, setEditingRecipe] = useState(null);
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    // Scheduling state
+    const [scheduledTime, setScheduledTime] = useState('');
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [selectedWorkoutForSchedule, setSelectedWorkoutForSchedule] = useState(null);
+
+    // Nutrition Goals
+    const [goals, setGoalsState] = useState({
+        calories: user?.settings?.dailyCalorieGoal || 2200,
+        protein: user?.settings?.dailyProteinGoal || 160
+    });
+
+    const todayStr = getISTDateString();
+
+    // Nutrition State - map recipes to daily slots
+    const [nutrition, setNutrition] = useState(() => {
+        // Hydrate from context if available
+        if (nutritionLogs && nutritionLogs[todayStr]) {
+            return nutritionLogs[todayStr];
+        }
+
+        const getMeal = (cat) => {
+            const r = recipes.find(rec => rec.category?.toLowerCase() === cat.toLowerCase());
+            return r ? {
+                name: r.name,
+                cals: Number(r.calories || r.cals || 0),
+                prot: Number(r.protein || r.prot || 0),
+                completed: false
+            } : { name: 'No Meal Set', cals: 0, prot: 0, completed: false };
+        };
+
+        return {
+            calories: 0,
+            protein: 0,
+            meals: {
+                breakfast: getMeal('breakfast'),
+                lunch: getMeal('lunch'),
+                'pre-gym': getMeal('pre-gym'),
+                dinner: getMeal('dinner'),
+            }
+        };
+    });
+
+    // Helper to update both local and global state
+    const updateNutritionAndPersist = (newNutrition) => {
+        setNutrition(newNutrition);
+        updateNutritionLog(todayStr, newNutrition);
+    };
+
+    const assignRecipe = (recipe) => {
+        const category = recipe.category?.toLowerCase() || 'other';
+        const recipeCals = Number(recipe.calories || recipe.cals || 0);
+        const recipeProt = Number(recipe.protein || recipe.prot || 0);
+
+        const currentItem = nutrition.meals[category];
+        const wasCompleted = currentItem?.completed || false;
+        const newMeals = { ...nutrition.meals };
+
+        newMeals[category] = {
+            name: recipe.name,
+            cals: recipeCals,
+            prot: recipeProt,
+            completed: false
+        };
+
+        const newNutrition = {
+            ...nutrition,
+            calories: Math.max(0, nutrition.calories - (wasCompleted ? (currentItem?.cals || 0) : 0)),
+            protein: Math.max(0, nutrition.protein - (wasCompleted ? (currentItem?.prot || 0) : 0)),
+            meals: newMeals
+        };
+
+        updateNutritionAndPersist(newNutrition);
+        showNotification(`Assigned to ${recipe.category}`, 'success');
+    };
+
+    const removeRecipe = (e, category) => {
+        e.stopPropagation();
+        const currentItem = nutrition.meals[category];
+        const wasCompleted = currentItem?.completed || false;
+        const newMeals = { ...nutrition.meals };
+
+        newMeals[category] = { name: 'No Meal Set', cals: 0, prot: 0, completed: false };
+
+        const newNutrition = {
+            ...nutrition,
+            calories: Math.max(0, nutrition.calories - (wasCompleted ? (currentItem?.cals || 0) : 0)),
+            protein: Math.max(0, nutrition.protein - (wasCompleted ? (currentItem?.prot || 0) : 0)),
+            meals: newMeals
+        };
+
+        updateNutritionAndPersist(newNutrition);
+    };
+
+    const toggleMeal = (mealType) => {
+        const meal = nutrition.meals[mealType];
+        if (!meal || meal.name === 'No Meal Set') return;
+
+        const isCompleting = !meal.completed;
+        const mealCals = Number(meal.cals || 0);
+        const mealProt = Number(meal.prot || 0);
+
+        const newNutrition = {
+            ...nutrition,
+            calories: Math.max(0, nutrition.calories + (isCompleting ? mealCals : -mealCals)),
+            protein: Math.max(0, nutrition.protein + (isCompleting ? mealProt : -mealProt)),
+            meals: {
+                ...nutrition.meals,
+                [mealType]: { ...meal, completed: isCompleting }
+            }
+        };
+
+        updateNutritionAndPersist(newNutrition);
+
+        if (!meal.completed) {
+            logActivity('diet', {
+                mealType,
+                notes: `${meal.name}`
+            });
+        }
+    };
 
     const handleAddWorkout = () => {
         if (!newWorkoutName.trim()) return;
@@ -65,15 +182,23 @@ const Gym = () => {
         setEditingWorkout(null); setNewWorkoutName(''); setNewExercises('');
     };
 
-    const handleAddRecipe = () => {
-        if (!newRecipeName.trim()) return;
-        addRecipe(newRecipeName.trim(), newRecipeCategory, parseInt(newRecipeCalories) || 0, parseInt(newRecipeProtein) || 0);
-        setNewRecipeName(''); setNewRecipeCategory('breakfast'); setNewRecipeCalories(''); setNewRecipeProtein(''); setShowAddRecipe(false);
+    const handleScheduleWorkout = (workout) => {
+        setSelectedWorkoutForSchedule(workout);
+        setShowScheduleModal(true);
     };
 
-    const saveRecipeEdit = (recipeId) => {
-        editRecipe(recipeId, { name: newRecipeName, category: newRecipeCategory, calories: parseInt(newRecipeCalories) || 0, protein: parseInt(newRecipeProtein) || 0 });
-        setEditingRecipe(null); setNewRecipeName(''); setNewRecipeCategory('breakfast'); setNewRecipeCalories(''); setNewRecipeProtein('');
+    const confirmSchedule = () => {
+        if (!scheduledTime || !selectedWorkoutForSchedule) return;
+
+        logWorkout(selectedWorkoutForSchedule.id);
+        logActivity('gym', {
+            notes: selectedWorkoutForSchedule.name,
+            scheduledTime: new Date(scheduledTime).toISOString()
+        });
+
+        setShowScheduleModal(false);
+        setScheduledTime('');
+        setSelectedWorkoutForSchedule(null);
     };
 
     const weekDays = getCurrentWeekDays();
@@ -97,99 +222,80 @@ const Gym = () => {
     const progressPercent = Math.min(100, (gymDaysCount / gymGoal) * 100);
     const totalSessions = workouts.reduce((sum, w) => sum + w.timesCompleted, 0);
 
-    // Diet stats
-    const categories = ['breakfast', 'lunch', 'snack', 'dinner'];
-    const recipesByCategory = categories.reduce((acc, cat) => {
-        acc[cat] = recipes.filter(r => r.category === cat);
-        return acc;
-    }, {});
-
-    const filteredRecipes = selectedCategory === 'all' ? recipes : recipes.filter(r => r.category === selectedCategory);
-
-    // Category badge colors
-    const getCategoryColor = (category) => {
-        const colors = {
-            breakfast: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-            lunch: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-            snack: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-            dinner: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
-        };
-        return colors[category] || 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30';
-    };
-
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-2xl font-semibold text-heading mb-1">Gym & Health</h1>
-                <p className="text-sm text-muted">Track your fitness journey, workouts, and nutrition</p>
-            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold text-heading mb-1">Gym & Diet</h1>
+                    <p className="text-sm text-muted">Manage your physical health and nutrition</p>
+                </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 p-1.5 bg-elevated rounded-xl border border-subtle">
-                <button onClick={() => setActiveTab('workouts')} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'workouts' ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
-                    Workouts
-                </button>
-                <button onClick={() => setActiveTab('diet')} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'diet' ? 'bg-white text-black' : 'text-zinc-500 hover:text-heading'}`}>
-                    Diet
-                </button>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="glass-card p-4">
-                    <p className="stat-label mb-1">This Week</p>
-                    <p className="stat-value text-amber-400">{gymDaysCount}<span className="text-zinc-500 text-lg">/{gymGoal}</span></p>
-                    <p className="stat-sublabel">sessions</p>
-                </div>
-                <div className="glass-card p-4">
-                    <p className="stat-label mb-1">Routines</p>
-                    <p className="stat-value">{workouts.length}</p>
-                    <p className="stat-sublabel">created</p>
-                </div>
-                <div className="glass-card p-4">
-                    <p className="stat-label mb-1">Total Sessions</p>
-                    <p className="stat-value text-emerald-400">{totalSessions}</p>
-                    <p className="stat-sublabel">completed</p>
-                </div>
-                <div className="glass-card p-4">
-                    <p className="stat-label mb-1">Recipes</p>
-                    <p className="stat-value text-violet-400">{recipes.length}</p>
-                    <p className="stat-sublabel">saved</p>
+                <div className="flex p-1 bg-elevated rounded-xl border border-subtle w-fit">
+                    <button
+                        onClick={() => setActiveTab('gym')}
+                        className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${activeTab === 'gym' ? 'bg-white text-black shadow-sm' : 'text-zinc-500 hover:text-heading'}`}
+                    >
+                        Workout
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('diet')}
+                        className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${activeTab === 'diet' ? 'bg-white text-black shadow-sm' : 'text-zinc-500 hover:text-heading'}`}
+                    >
+                        Diet
+                    </button>
                 </div>
             </div>
 
-            {/* Weekly Overview */}
-            <div className="glass-card p-4 sm:p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                        <h3 className="text-base font-semibold text-heading">Weekly Goal</h3>
-                        <p className="text-xs text-zinc-500">{gymDaysCount} of {gymGoal} sessions this week</p>
-                    </div>
-                    <button onClick={() => logActivity('gym', { notes: 'Gym session' })} className="btn-primary text-sm w-full sm:w-auto">Log Session +20 XP</button>
-                </div>
-
-                <div className="progress-bar h-2.5 mb-5">
-                    <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                    {weekDays.map((day, index) => {
-                        const hasGym = gymDaysSet.has(day.dateString);
-                        return (
-                            <div key={index} className={`p-2 sm:p-3 rounded-lg text-center transition-all relative ${hasGym ? 'bg-emerald-500/10 border border-emerald-500/30' : day.isFuture ? 'bg-elevated border border-subtle opacity-40' : 'bg-elevated border border-subtle'} ${day.isToday ? 'ring-2 ring-sky-500/50' : ''}`}>
-                                <p className="text-[10px] sm:text-xs font-medium text-zinc-500 mb-1 sm:mb-2">{day.name}</p>
-                                <div className={`w-3 h-3 sm:w-4 sm:h-4 mx-auto rounded-full ${hasGym ? 'bg-emerald-500' : 'bg-elevated'}`}></div>
-                                {day.isToday && <span className="absolute -top-1 -right-1 w-2 h-2 bg-sky-500 rounded-full"></span>}
-                            </div>
-                        );
-                    })}
-                </div>
-                <p className="text-xs text-zinc-600 mt-4 text-center">IST · Today: <span className="text-sky-400 font-medium">{weekDays.find(d => d.isToday)?.name}</span> · {gymDaysCount >= gymGoal ? <span className="text-emerald-400">Goal reached!</span> : `${gymGoal - gymDaysCount} more to goal`}</p>
-            </div>
-
-            {/* WORKOUTS TAB */}
-            {activeTab === 'workouts' && (
+            {activeTab === 'gym' ? (
                 <>
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="glass-card p-4">
+                            <p className="stat-label mb-1">This Week</p>
+                            <p className="stat-value text-amber-400">{gymDaysCount}<span className="text-zinc-500 text-lg">/{gymGoal}</span></p>
+                            <p className="stat-sublabel">sessions</p>
+                        </div>
+                        <div className="glass-card p-4">
+                            <p className="stat-label mb-1">Routines</p>
+                            <p className="stat-value">{workouts.length}</p>
+                            <p className="stat-sublabel">created</p>
+                        </div>
+                        <div className="glass-card p-4">
+                            <p className="stat-label mb-1">Total Sessions</p>
+                            <p className="stat-value text-emerald-400">{totalSessions}</p>
+                            <p className="stat-sublabel">completed</p>
+                        </div>
+                    </div>
+
+                    {/* Weekly Overview */}
+                    <div className="glass-card p-4 sm:p-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 className="text-base font-semibold text-heading">Weekly Goal</h3>
+                                <p className="text-xs text-zinc-500">{gymDaysCount} of {gymGoal} sessions this week</p>
+                            </div>
+                            <button onClick={() => logActivity('gym', { notes: 'Gym session' })} className="btn-primary text-sm w-full sm:w-auto">Log Session +20 XP</button>
+                        </div>
+
+                        <div className="progress-bar h-2.5 mb-5">
+                            <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                            {weekDays.map((day, index) => {
+                                const hasGym = gymDaysSet.has(day.dateString);
+                                return (
+                                    <div key={index} className={`p-2 sm:p-3 rounded-lg text-center transition-all relative ${hasGym ? 'bg-emerald-500/10 border border-emerald-500/30' : day.isFuture ? 'bg-elevated border border-subtle opacity-40' : 'bg-elevated border border-subtle'} ${day.isToday ? 'ring-2 ring-sky-500/50' : ''}`}>
+                                        <p className="text-[10px] sm:text-xs font-medium text-zinc-500 mb-1 sm:mb-2">{day.name}</p>
+                                        <div className={`w-3 h-3 sm:w-4 sm:h-4 mx-auto rounded-full ${hasGym ? 'bg-emerald-500' : 'bg-elevated'}`}></div>
+                                        {day.isToday && <span className="absolute -top-1 -right-1 w-2 h-2 bg-sky-500 rounded-full"></span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <p className="text-xs text-zinc-600 mt-4 text-center">IST · Today: <span className="text-sky-400 font-medium">{weekDays.find(d => d.isToday)?.name}</span> · {gymDaysCount >= gymGoal ? <span className="text-emerald-400">Goal reached!</span> : `${gymGoal - gymDaysCount} more to goal`}</p>
+                    </div>
+
                     {/* Workout Routines */}
                     <div className="glass-card p-5">
                         <div className="flex items-center justify-between mb-5">
@@ -248,7 +354,10 @@ const Gym = () => {
                                                             </div>
                                                         ))
                                                     )}
-                                                    <button onClick={() => logWorkout(workout.id)} className="w-full mt-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold transition-all">Complete Workout +20 XP</button>
+                                                    <div className="grid grid-cols-2 gap-2 mt-3">
+                                                        <button onClick={() => logWorkout(workout.id)} className="py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold transition-all">Complete Now +20 XP</button>
+                                                        <button onClick={() => handleScheduleWorkout(workout)} className="py-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 rounded-lg text-xs font-semibold transition-all">Schedule</button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </>
@@ -256,125 +365,138 @@ const Gym = () => {
                                 </div>
                             ))}
                         </div>
-
-                        {workouts.length === 0 && <p className="text-center text-zinc-600 py-8 text-sm">No routines yet. Create your first workout routine above.</p>}
                     </div>
 
-                    {/* Quick Log */}
-                    <div className="glass-card p-5">
-                        <h3 className="text-base font-semibold text-heading mb-4">Quick Log</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            {[{ label: 'Cardio', notes: 'Cardio session' }, { label: 'Weights', notes: 'Weight training' }, { label: 'Yoga', notes: 'Yoga session' }, { label: 'Swimming', notes: 'Swimming workout' }].map((item) => (
-                                <button key={item.label} onClick={() => logActivity('gym', { notes: item.notes })} className="glass-card-hover p-4 text-center">
-                                    <p className="text-sm font-semibold text-heading mb-1">{item.label}</p>
-                                    <p className="text-xs font-semibold font-mono text-emerald-400">+20 XP</p>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    {workouts.length === 0 && <p className="text-center text-zinc-600 py-8 text-sm">No routines yet. Create your first workout routine above.</p>}
                 </>
-            )}
-
-            {/* DIET TAB */}
-            {activeTab === 'diet' && (
-                <>
-                    {/* Diet Overview */}
+            ) : (
+                <div className="space-y-6 animate-fade-in">
+                    {/* Nutrition Overview */}
                     <div className="glass-card p-5">
                         <div className="flex items-center justify-between mb-5">
                             <div>
-                                <h3 className="text-base font-semibold text-heading">Meal Recipes</h3>
-                                <p className="text-xs text-zinc-500">{recipes.length} recipes · Track your nutrition</p>
+                                <h3 className="text-base font-semibold text-heading">Daily Totals</h3>
+                                <p className="text-xs text-zinc-500">Tracked for today</p>
                             </div>
-                            <button onClick={() => setShowAddRecipe(true)} className="btn-secondary text-xs">+ Add Recipe</button>
+                            <div className="flex gap-4">
+                                <div className="text-right">
+                                    <p className="text-xs text-zinc-500">Calories</p>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <p className="text-sm font-semibold text-orange-400">{Math.round(nutrition.calories)}</p>
+                                        <span className="text-zinc-600 text-sm">/</span>
+                                        <input
+                                            type="number"
+                                            value={goals.calories}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                setGoalsState(prev => ({ ...prev, calories: val }));
+                                                updateSettings({ dailyCalorieGoal: val });
+                                            }}
+                                            className="w-14 bg-transparent border-b border-transparent hover:border-subtle focus:border-sky-500 text-sm font-semibold text-zinc-400 outline-none transition-all text-center"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-zinc-500">Protein</p>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <p className="text-sm font-semibold text-blue-400">{Math.round(nutrition.protein)}g</p>
+                                        <span className="text-zinc-600 text-sm">/</span>
+                                        <input
+                                            type="number"
+                                            value={goals.protein}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                setGoalsState(prev => ({ ...prev, protein: val }));
+                                                updateSettings({ dailyProteinGoal: val });
+                                            }}
+                                            className="w-10 bg-transparent border-b border-transparent hover:border-subtle focus:border-sky-500 text-sm font-semibold text-zinc-400 outline-none transition-all text-center"
+                                        />
+                                        <span className="text-zinc-600 text-sm font-semibold -ml-1">g</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {showAddRecipe && (
-                            <div className="mb-5 p-4 bg-elevated rounded-lg border border-subtle space-y-3">
-                                <input type="text" value={newRecipeName} onChange={(e) => setNewRecipeName(e.target.value)} placeholder="Recipe name (e.g., Chicken Salad)" className="input-field" />
-                                <select value={newRecipeCategory} onChange={(e) => setNewRecipeCategory(e.target.value)} className="input-field">
-                                    <option value="breakfast">Breakfast</option>
-                                    <option value="lunch">Lunch</option>
-                                    <option value="snack">Snack</option>
-                                    <option value="dinner">Dinner</option>
-                                </select>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <input type="number" value={newRecipeCalories} onChange={(e) => setNewRecipeCalories(e.target.value)} placeholder="Calories" className="input-field" />
-                                    <input type="number" value={newRecipeProtein} onChange={(e) => setNewRecipeProtein(e.target.value)} placeholder="Protein (g)" className="input-field" />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={handleAddRecipe} className="btn-primary text-xs">Add Recipe</button>
-                                    <button onClick={() => setShowAddRecipe(false)} className="btn-secondary text-xs">Cancel</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Category Filter */}
-                        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                            <button onClick={() => setSelectedCategory('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${selectedCategory === 'all' ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30' : 'bg-elevated text-zinc-500 hover:text-heading border border-subtle'}`}>
-                                All ({recipes.length})
-                            </button>
-                            {categories.map(cat => (
-                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all capitalize ${selectedCategory === cat ? `${getCategoryColor(cat)} border` : 'bg-elevated text-zinc-500 hover:text-heading border border-subtle'}`}>
-                                    {cat} ({recipesByCategory[cat].length})
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Recipes Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {filteredRecipes.map((recipe) => (
-                                <div key={recipe.id} className="bg-elevated rounded-xl overflow-hidden border border-subtle hover:border-violet-500/30 transition-all">
-                                    {editingRecipe === recipe.id ? (
-                                        <div className="p-4 space-y-3">
-                                            <input type="text" value={newRecipeName} onChange={(e) => setNewRecipeName(e.target.value)} className="input-field" placeholder="Recipe name" />
-                                            <select value={newRecipeCategory} onChange={(e) => setNewRecipeCategory(e.target.value)} className="input-field">
-                                                <option value="breakfast">Breakfast</option>
-                                                <option value="lunch">Lunch</option>
-                                                <option value="snack">Snack</option>
-                                                <option value="dinner">Dinner</option>
-                                            </select>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <input type="number" value={newRecipeCalories} onChange={(e) => setNewRecipeCalories(e.target.value)} placeholder="Calories" className="input-field" />
-                                                <input type="number" value={newRecipeProtein} onChange={(e) => setNewRecipeProtein(e.target.value)} placeholder="Protein (g)" className="input-field" />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => saveRecipeEdit(recipe.id)} className="flex-1 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-semibold">Save</button>
-                                                <button onClick={() => setEditingRecipe(null)} className="flex-1 py-2 bg-elevated text-zinc-400 rounded-lg text-xs">Cancel</button>
-                                            </div>
+                        <div className="space-y-3">
+                            {Object.entries(nutrition.meals).map(([type, meal]) => (
+                                <div key={type} onClick={() => toggleMeal(type)} className={`p-4 rounded-xl border transition-all group relative ${meal.name === 'No Meal Set' ? 'bg-elevated/50 border-dashed border-subtle' : meal.completed ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-elevated border-subtle hover:border-zinc-600 cursor-pointer'}`}>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{type}</p>
+                                        <div className="flex items-center gap-2">
+                                            {meal.completed && <span className="text-emerald-400 text-[10px] font-semibold flex items-center gap-1">✓ EATEN</span>}
+                                            {meal.name !== 'No Meal Set' && (
+                                                <button onClick={(e) => removeRecipe(e, type)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-800 rounded transition-all text-zinc-500 hover:text-red-400">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="p-4">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div className="flex-1">
-                                                    <h4 className="text-sm font-semibold text-heading mb-1">{recipe.name}</h4>
-                                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize border ${getCategoryColor(recipe.category)}`}>
-                                                        {recipe.category}
-                                                    </span>
-                                                </div>
-                                                <div className="flex gap-2 ml-2">
-                                                    <button onClick={() => { setEditingRecipe(recipe.id); setNewRecipeName(recipe.name); setNewRecipeCategory(recipe.category); setNewRecipeCalories(recipe.calories.toString()); setNewRecipeProtein(recipe.protein.toString()); }} className="text-xs text-zinc-600 hover:text-heading font-medium">Edit</button>
-                                                    <button onClick={() => deleteRecipe(recipe.id)} className="text-xs text-zinc-600 hover:text-red-400 font-medium">Del</button>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="bg-elevated rounded-lg p-2 border border-subtle">
-                                                    <p className="text-xs text-zinc-500 mb-0.5">Calories</p>
-                                                    <p className="text-sm font-semibold text-amber-400">{recipe.calories}</p>
-                                                </div>
-                                                <div className="bg-elevated rounded-lg p-2 border border-subtle">
-                                                    <p className="text-xs text-zinc-500 mb-0.5">Protein</p>
-                                                    <p className="text-sm font-semibold text-emerald-400">{recipe.protein}g</p>
-                                                </div>
-                                            </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className={`text-sm font-medium ${meal.name === 'No Meal Set' ? 'text-zinc-600' : meal.completed ? 'text-emerald-300 line-through' : 'text-heading'}`}>{meal.name}</h4>
+                                        <div className="text-right">
+                                            <p className="text-[10px] text-zinc-500">{meal.cals > 0 ? `${meal.cals} kcal` : ' '}</p>
+                                            <p className="text-[10px] text-zinc-600">{meal.prot > 0 ? `${meal.prot}g prot` : ' '}</p>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
-
-                        {filteredRecipes.length === 0 && <p className="text-center text-zinc-600 py-8 text-sm">No recipes yet. Add your first recipe above.</p>}
                     </div>
-                </>
+
+                    {/* Recipe Quick List */}
+                    <div className="glass-card p-5">
+                        <h3 className="text-base font-semibold text-heading mb-4">Your Recipes</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {recipes.map(recipe => (
+                                <div
+                                    key={recipe.id}
+                                    onClick={() => assignRecipe(recipe)}
+                                    className="p-3 bg-elevated rounded-lg border border-subtle hover:border-zinc-500 hover:bg-zinc-800/50 cursor-pointer transition-all group"
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h4 className="text-sm font-medium text-heading group-hover:text-white">{recipe.name}</h4>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 group-hover:text-zinc-300 font-bold uppercase tracking-wider">{recipe.category}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs text-zinc-500">{recipe.calories} kcal · {recipe.protein}g protein</p>
+                                        <span className="opacity-0 group-hover:opacity-100 text-sky-400 text-[10px] font-bold">+ ADD</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Schedule Modal */}
+            {showScheduleModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass-card p-6 max-w-md w-full">
+                        <h3 className="text-lg font-semibold text-heading mb-4">Schedule Workout</h3>
+                        <p className="text-sm text-zinc-400 mb-4">When do you plan to do <span className="text-heading font-medium">{selectedWorkoutForSchedule?.name}</span>?</p>
+
+                        <input
+                            type="datetime-local"
+                            value={scheduledTime}
+                            onChange={(e) => setScheduledTime(e.target.value)}
+                            className="input-field mb-4"
+                        />
+
+                        <div className="bg-sky-500/10 border border-sky-500/30 rounded-lg p-3 mb-4">
+                            <p className="text-xs text-sky-400">
+                                ⏰ Complete on time: <span className="font-semibold">+20 XP</span>
+                            </p>
+                            <p className="text-xs text-orange-400 mt-1">
+                                ⚠️ Complete late: <span className="font-semibold">+10 XP (50% penalty)</span>
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button onClick={confirmSchedule} disabled={!scheduledTime} className="flex-1 btn-primary text-sm">Schedule</button>
+                            <button onClick={() => { setShowScheduleModal(false); setScheduledTime(''); setSelectedWorkoutForSchedule(null); }} className="flex-1 btn-secondary text-sm">Cancel</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
