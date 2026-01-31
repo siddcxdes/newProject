@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AI Chatbot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .success {
+            color: #10b981;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🤖 AI Chatbot Connection Test</h1>
+    <p>Click the button to test if the AI endpoint is accessible:</p>
+
+    <button onclick="testConnection()">Test AI Endpoint</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Testing connection...';
+
+            try {
+                const response = await fetch('http://localhost:5001/api/ai/generate-roadmap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: 'I want to learn React' })
+                });
+
+                const contentType = response.headers.get('content-type');
+                const text = await response.text();
+
+                let result = `<strong>Status:</strong> ${response.status}\n`;
+                result += `<strong>Content-Type:</strong> ${contentType}\n\n`;
+                result += `<strong>Response:</strong>\n${text}`;
+
+                if (contentType && contentType.includes('application/json')) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = '✅ SUCCESS! Backend is responding with JSON\n\n' + result;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = '❌ ERROR: Backend returned HTML instead of JSON\n\n' + result;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `❌ CONNECTION FAILED\n\nError: ${error.message}\n\nMake sure:\n1. Backend is running (npm run dev)\n2. Backend is on port 5001\n3. No CORS issues`;
+            }
+        }
+    </script>
+</body>
+
+</html>

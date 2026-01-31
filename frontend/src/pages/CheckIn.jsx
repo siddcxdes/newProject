@@ -108,7 +108,7 @@ const CheckIn = () => {
 
             {/* Progress Overview */}
             {totalTasks > 0 && (
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-xl p-5">
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <p className="text-sm font-semibold text-heading">{completedCount}/{totalTasks} completed</p>
@@ -257,12 +257,12 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
 
     // Always show domain sections so users can add tasks
     return (
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-xl overflow-hidden">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-subtle flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center">
-                        <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-8 h-8 rounded-lg bg-elevated border border-subtle flex items-center justify-center">
+                        <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
                     </div>
@@ -273,7 +273,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                 </div>
                 <button
                     onClick={() => setShowAdd(!showAdd)}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-elevated hover:bg-surface border border-subtle text-muted hover:text-heading text-xs font-medium rounded-lg transition-colors"
                 >
                     + Add Task
                 </button>
@@ -281,20 +281,20 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
 
             {/* Add Task Form */}
             {showAdd && (
-                <div className="px-5 py-4 bg-zinc-900/60 border-b border-zinc-800">
+                <div className="px-5 py-4 bg-gray-50 dark:bg-zinc-800/50 border-b border-subtle">
                     <div className="space-y-3">
                         {/* Mode Selector */}
-                        <div className="flex gap-2 p-1 bg-zinc-800 rounded-lg">
+                        <div className="flex gap-2 p-1 bg-elevated rounded-lg border border-subtle">
                             <button
                                 onClick={() => setTaskMode('pick')}
-                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'pick' ? 'bg-white text-black' : 'text-zinc-400 hover:text-heading'
+                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'pick' ? 'bg-white dark:bg-zinc-700 shadow-sm text-heading' : 'text-muted hover:text-heading'
                                     }`}
                             >
                                 Pick from Academic
                             </button>
                             <button
                                 onClick={() => setTaskMode('manual')}
-                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'manual' ? 'bg-white text-black' : 'text-zinc-400 hover:text-heading'
+                                className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-colors ${taskMode === 'manual' ? 'bg-white dark:bg-zinc-700 shadow-sm text-heading' : 'text-muted hover:text-heading'
                                     }`}
                             >
                                 Manual Entry
@@ -312,7 +312,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                             setSelectedTopic(e.target.value);
                                             setSelectedItem('');
                                         }}
-                                        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors"
+                                        className="input-field w-full px-4 py-2.5 bg-white dark:bg-zinc-800"
                                     >
                                         <option value="">Choose a topic...</option>
                                         {domain.topics?.map(topic => (
@@ -328,7 +328,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                         <select
                                             value={selectedItem}
                                             onChange={(e) => setSelectedItem(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors"
+                                            className="input-field w-full px-4 py-2.5 bg-white dark:bg-zinc-800"
                                         >
                                             <option value="">Choose an item...</option>
                                             {domain.topics?.find(t => t.id.toString() === selectedTopic)?.items
@@ -351,7 +351,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                 value={newTask}
                                 onChange={(e) => setNewTask(e.target.value)}
                                 placeholder="Task description"
-                                className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                                className="input-field w-full px-4 py-2.5 bg-white dark:bg-zinc-800"
                                 onKeyDown={(e) => e.key === 'Enter' && addTask()}
                             />
                         )}
@@ -366,7 +366,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                     max="23"
                                     value={hours}
                                     onChange={(e) => setHours(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                             <div>
@@ -377,7 +377,7 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                     max="59"
                                     value={minutes}
                                     onChange={(e) => setMinutes(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                             <div>
@@ -387,20 +387,20 @@ const DomainSection = ({ domain, todayStr, dailyTasks, setDailyTasks, currentTim
                                     min="1"
                                     value={taskPoints}
                                     onChange={(e) => setTaskPoints(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={addTask}
-                                className="flex-1 px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors"
+                                className="flex-1 px-4 py-2 btn-primary text-sm font-medium"
                             >
                                 Add Task
                             </button>
                             <button
                                 onClick={() => setShowAdd(false)}
-                                className="px-4 py-2 bg-zinc-800 text-zinc-400 text-sm font-medium rounded-lg hover:bg-zinc-700 transition-colors"
+                                className="px-4 py-2 bg-elevated text-muted text-sm font-medium rounded-lg hover:bg-surface border border-subtle transition-colors"
                             >
                                 Cancel
                             </button>
@@ -496,11 +496,11 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
     };
 
     return (
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-xl overflow-hidden">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-subtle flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center"><svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                    <div className="w-8 h-8 rounded-lg bg-elevated border border-subtle flex items-center justify-center"><svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
                     <div>
                         <h3 className="text-sm font-semibold text-heading">Other Tasks</h3>
                         <p className="text-xs text-zinc-600 tabular-nums">{completedCount}/{otherTasks.length} completed</p>
@@ -508,7 +508,7 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
                 </div>
                 <button
                     onClick={() => setShowAdd(!showAdd)}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-elevated hover:bg-surface border border-subtle text-muted hover:text-heading text-xs font-medium rounded-lg transition-colors"
                 >
                     + Add Task
                 </button>
@@ -516,14 +516,14 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
 
             {/* Add Task Form */}
             {showAdd && (
-                <div className="px-5 py-4 bg-zinc-900/60 border-b border-zinc-800">
+                <div className="px-5 py-4 bg-gray-50 dark:bg-zinc-800/50 border-b border-subtle">
                     <div className="space-y-3">
                         <input
                             type="text"
                             value={newTask}
                             onChange={(e) => setNewTask(e.target.value)}
                             placeholder="Task description"
-                            className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                            className="input-field w-full px-4 py-2.5"
                             onKeyDown={(e) => e.key === 'Enter' && addTask()}
                         />
                         <div className="grid grid-cols-3 gap-3">
@@ -535,7 +535,7 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
                                     max="23"
                                     value={hours}
                                     onChange={(e) => setHours(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                             <div>
@@ -546,7 +546,7 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
                                     max="59"
                                     value={minutes}
                                     onChange={(e) => setMinutes(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                             <div>
@@ -556,20 +556,20 @@ const OtherTasksSection = ({ todayStr, dailyTasks, setDailyTasks, currentTime, p
                                     min="1"
                                     value={taskPoints}
                                     onChange={(e) => setTaskPoints(e.target.value)}
-                                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-heading focus:outline-none focus:border-zinc-600 transition-colors tabular-nums"
+                                    className="input-field w-full px-3 py-2"
                                 />
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={addTask}
-                                className="flex-1 px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors"
+                                className="flex-1 px-4 py-2 btn-primary text-sm font-medium"
                             >
                                 Add Task
                             </button>
                             <button
                                 onClick={() => setShowAdd(false)}
-                                className="px-4 py-2 bg-zinc-800 text-zinc-400 text-sm font-medium rounded-lg hover:bg-zinc-700 transition-colors"
+                                className="px-4 py-2 bg-elevated text-muted text-sm font-medium rounded-lg hover:bg-surface border border-subtle transition-colors"
                             >
                                 Cancel
                             </button>
@@ -619,14 +619,14 @@ const TaskRow = ({ task, currentTime, onComplete, onDelete }) => {
             case 'due-soon':
                 return <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs font-medium rounded border border-amber-500/20">Due Soon</span>;
             case 'pending':
-                return <span className="px-2 py-0.5 bg-zinc-700 text-zinc-400 text-xs font-medium rounded">Pending</span>;
+                return <span className="px-2 py-0.5 bg-elevated border border-subtle text-muted text-xs font-medium rounded">Pending</span>;
             default:
                 return null;
         }
     };
 
     return (
-        <div className="px-5 py-4 hover:bg-zinc-900/60 transition-colors group">
+        <div className="px-5 py-4 hover:bg-active transition-colors group">
             <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1.5">
@@ -665,7 +665,7 @@ const TaskRow = ({ task, currentTime, onComplete, onDelete }) => {
                                 ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
                                 : status === 'due-soon'
                                     ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20'
-                                    : 'bg-white text-black hover:bg-zinc-200'
+                                    : 'btn-ghost border border-subtle text-heading hover:bg-elevated'
                                 }`}
                         >
                             Complete

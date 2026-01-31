@@ -35,9 +35,9 @@ const Header = () => {
                             </svg>
                         </div>
                     </div>
-                    <div className="hidden xs:block sm:block">
-                        <h1 className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)] tracking-wide leading-none">ASCENSION</h1>
-                        <p className="text-[7px] sm:text-[8px] text-[var(--color-text-muted)] tracking-[0.1em] sm:tracking-[0.15em] uppercase mt-0.5">Level Up Daily</p>
+                    <div className="flex flex-col">
+                        <h1 className="text-[10px] sm:text-xs font-bold text-[var(--color-text-primary)] tracking-tight sm:tracking-wide leading-none">ASCENSION</h1>
+                        <p className="text-[6px] sm:text-[8px] text-[var(--color-text-muted)] tracking-wider sm:tracking-[0.15em] uppercase mt-0.5">Level Up Daily</p>
                     </div>
                 </NavLink>
 
@@ -90,7 +90,7 @@ const Header = () => {
                     {/* Mobile Level Badge */}
                     <div className="lg:hidden flex items-center gap-1 px-2 py-1 rounded-md bg-sky-500/10 border border-sky-500/20">
                         <span className="text-[9px] sm:text-[10px] font-bold text-sky-400">LV{user?.level || 1}</span>
-                        <span className="text-[9px] sm:text-[10px] font-mono text-amber-400">{user?.streak?.current || 0}</span>
+                        <span className="text-[9px] sm:text-[10px] font-mono text-amber-400">{user?.streak?.current || 0}🔥</span>
                     </div>
 
                     {/* Time - Tablet+ */}

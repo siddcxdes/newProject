@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import AIChatbot from '../components/AIChatbot';
 
 const Admin = () => {
     const {
@@ -8,6 +10,20 @@ const Admin = () => {
     } = useApp();
 
     const [activeTab, setActiveTab] = useState('overview');
+    const location = useLocation();
+
+    // Auto-populate from AI Chat navigation
+    useEffect(() => {
+        if (location.state?.importData) {
+            setJsonInput(JSON.stringify(location.state.importData, null, 2));
+            setActiveTab('bulk');
+            showNotification('Roadmap loaded from AI! Review and import.', 'info');
+            // Clear clean state to avoid re-triggering on subsequent renders? 
+            // React Router state persists, but useEffect with dependency [location.state] ensures it runs validly.
+            window.history.replaceState({}, document.title); // Optional: Clean state
+        }
+    }, [location.state]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const [jsonInput, setJsonInput] = useState('');
     const [recipeJsonInput, setRecipeJsonInput] = useState('');
     const [workoutJsonInput, setWorkoutJsonInput] = useState('');
@@ -469,6 +485,8 @@ const Admin = () => {
                     </div>
                 </div>
             )}
+
+
 
             {activeTab === 'timed' && (
                 <div className="space-y-4">

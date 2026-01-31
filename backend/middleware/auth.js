@@ -31,3 +31,28 @@ export const protect = async (req, res, next) => {
 export const generateToken = (id) => {
     return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 };
+
+// Optional auth - doesn't require token but will attach user if present
+export const optionalAuth = async (req, res, next) => {
+    try {
+        let token;
+
+        if (req.headers.authorization?.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, JWT_SECRET);
+                req.user = await User.findById(decoded.id).select('-password');
+            } catch (error) {
+                // Token invalid, but that's okay for optional auth
+                req.user = null;
+            }
+        }
+
+        next();
+    } catch (error) {
+        next();
+    }
+};

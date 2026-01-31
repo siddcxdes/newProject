@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { setAuthToken, setIsAuthenticated, hydrateFromServerData } = useApp();
+    const { setAuthToken, setIsAuthenticated, hydrateFromServerData, setUseLocalStorage } = useApp();
     const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset'
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -454,7 +454,12 @@ const Login = () => {
 
                 {/* Continue offline option */}
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => {
+                        setAuthToken(null);
+                        setUseLocalStorage(true);
+                        setIsAuthenticated(true);
+                        navigate('/');
+                    }}
                     className="w-full mt-6 py-2 text-[var(--color-text-muted)] text-sm hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                     Continue offline (local storage only)

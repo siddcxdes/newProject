@@ -95,8 +95,7 @@ const ScheduledTasks = () => {
 
             <div className="p-5 relative">
                 {/* Connecting Line */}
-                {/* Connecting Line */}
-                <div className="absolute left-[111px] top-6 bottom-6 w-[2px] bg-subtle hidden sm:block opacity-30"></div>
+                <div className="absolute left-[107px] top-6 bottom-6 w-[2px] bg-subtle hidden sm:block opacity-50"></div>
 
                 <div className="space-y-6 relative">
                     {scheduledItems.map((item, index) => {
@@ -106,9 +105,9 @@ const ScheduledTasks = () => {
                         const isNext = index === 0 && status !== 'overdue';
 
                         return (
-                            <div key={item._id} className="relative flex flex-col sm:flex-row gap-4 sm:gap-16 group">
+                            <div key={item._id} className="relative flex flex-col sm:flex-row gap-4 sm:gap-14 group">
                                 {/* Time Column */}
-                                <div className="sm:w-20 flex-shrink-0 text-left sm:text-right pt-2.5">
+                                <div className="sm:w-20 flex-shrink-0 text-left sm:text-right pt-2.5 pr-4">
                                     <p className={`font-mono text-xs font-bold leading-none ${isNext ? 'text-sky-600' : 'text-zinc-500'}`}>
                                         {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
@@ -118,7 +117,7 @@ const ScheduledTasks = () => {
                                 </div>
 
                                 {/* Timeline Node */}
-                                <div className="hidden sm:flex flex-col items-center absolute left-[95px] top-0 h-full">
+                                <div className="hidden sm:flex flex-col items-center absolute left-[91px] top-0 h-full">
                                     <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isNext
                                         ? 'bg-surface border-sky-500 ring-4 ring-sky-500/10 shadow-lg shadow-sky-500/20'
                                         : status === 'overdue'

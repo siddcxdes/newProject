@@ -1358,7 +1358,7 @@ export const AppProvider = ({ children }) => {
         setTimedTasks, setPoints,
         // Auth
         login, register, logout, syncToCloud, updateUserProfile, forceSyncNow,
-        hydrateFromServerData, setAuthToken, setIsAuthenticated,
+        hydrateFromServerData, setAuthToken, setIsAuthenticated, setUseLocalStorage,
         // Activity
         logActivity,
         // Goals

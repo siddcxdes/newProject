@@ -89,14 +89,16 @@ const ActivityHeatmap = () => {
     const monthLabels = useMemo(() => {
         const labels = [];
         let lastMonth = -1;
+        let lastWeekIndex = -10;
 
         weeks.forEach((week, weekIndex) => {
             const firstValidDay = week.find(d => d !== null);
             if (firstValidDay) {
                 const month = new Date(firstValidDay.date).getMonth();
-                if (month !== lastMonth) {
+                if (month !== lastMonth && (weekIndex - lastWeekIndex) > 3) {
                     labels.push({ month: months[month], weekIndex });
                     lastMonth = month;
+                    lastWeekIndex = weekIndex;
                 }
             }
         });

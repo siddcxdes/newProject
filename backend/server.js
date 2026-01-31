@@ -1,3 +1,4 @@
+// Updated: Added optional auth for AI routes
 import dotenv from 'dotenv';
 dotenv.config(); // Load env vars FIRST before any other imports
 
@@ -6,6 +7,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import apiRoutes from './routes/api.js';
 import authRoutes from './routes/auth.js';
+import aiRoutes from './routes/ai.js';
 
 const app = express();
 
@@ -26,6 +28,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes); // Must be before /api to avoid auth check
 app.use('/api', apiRoutes);
 
 // Health check

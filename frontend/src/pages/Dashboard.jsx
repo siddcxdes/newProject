@@ -4,6 +4,7 @@ import MetricCard from '../components/dashboard/MetricCard';
 import StreakCard from '../components/dashboard/StreakCard';
 import LevelCard from '../components/dashboard/LevelCard';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
+import FloatingAIChat from '../components/FloatingAIChat';
 
 const Dashboard = () => {
     const { user, activities, points } = useApp();
@@ -60,6 +61,9 @@ const Dashboard = () => {
 
             {/* Activity Heatmap */}
             <ActivityHeatmap activities={activities} />
+
+            {/* AI Chat Widget */}
+            <FloatingAIChat />
         </div>
     );
 };
