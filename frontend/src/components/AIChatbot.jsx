@@ -48,19 +48,23 @@ const AIChatbot = ({ onRoadmapGenerated, variant = 'full' }) => {
                 throw new Error(data.error || 'Failed to generate roadmap');
             }
 
-            if (data.success && data.roadmap) {
+            if (data.success) {
                 // Add AI response to conversation
+                const itemTypeName = data.type === 'workout' ? 'exercises' : data.type === 'diet' ? 'meals' : 'learning items';
+                const containerTypeName = data.type === 'workout' ? 'workouts' : data.type === 'diet' ? 'plan' : 'domains';
+
                 const aiMessage = {
                     role: 'assistant',
-                    content: `Generated ${data.itemCount} learning items across ${data.roadmap.length} domains!`,
-                    roadmap: data.roadmap,
+                    content: `Generated ${data.itemCount} ${itemTypeName} in your ${data.type} plan!`,
+                    data: data.data,
+                    dataType: data.type, // 'learning', 'workout', 'diet'
                     itemCount: data.itemCount
                 };
                 setConversation(prev => [...prev, aiMessage]);
 
-                // Pass the roadmap to parent component
+                // Pass the data to parent component (legacy support mainly)
                 if (onRoadmapGenerated) {
-                    onRoadmapGenerated(data.roadmap);
+                    onRoadmapGenerated(data.data);
                 }
 
                 setPrompt('');
@@ -115,10 +119,10 @@ const AIChatbot = ({ onRoadmapGenerated, variant = 'full' }) => {
                         <div>
                             <h3 className="text-base font-semibold text-heading flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-400"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" /><path d="M4.93 19.07a20 20 0 0 0 .1.1" /><path d="M19.07 4.93a20 20 0 0 0 .1.1" /><path d="M12 17v4" /><path d="m15.2 21.3 1.2-1.2" /><path d="m8.8 21.3-1.2-1.2" /><path d="M15.2 16.4a4 4 0 1 0-6.4 0" /><path d="m5 16 .5 1" /><path d="m19 16-.5 1" /><path d="m12 12 1 2" /></svg>
-                                AI Roadmap Generator
+                                AI Plan Generator
                             </h3>
                             <p className="text-sm text-muted mt-1">
-                                Describe your goal and let AI create a structured learning plan
+                                Create learning roadmaps, workout routines, or diet plans
                             </p>
                         </div>
                         {conversation.length > 0 && (
@@ -166,16 +170,13 @@ const AIChatbot = ({ onRoadmapGenerated, variant = 'full' }) => {
                                     </span>
                                     <div className="flex-1">
                                         <p className="text-sm text-heading">{message.content}</p>
-                                        {message.roadmap && (
+                                        {message.data && (
                                             <div className="mt-2 text-xs text-zinc-500">
-                                                <p>✅ Roadmap ready to import!</p>
-                                                <p className="mt-1">
-                                                    {message.roadmap.length} domains • {message.itemCount} total items
-                                                </p>
+                                                <p>✅ {message.dataType === 'workout' ? 'Workout' : message.dataType === 'diet' ? 'Diet plan' : 'Roadmap'} ready to import!</p>
                                                 <div className="flex gap-3 mt-2">
                                                     {isWidget && (
                                                         <button
-                                                            onClick={() => navigate('/admin', { state: { importData: message.roadmap } })}
+                                                            onClick={() => navigate('/admin', { state: { importData: message.data, importType: message.dataType } })}
                                                             className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium underline"
                                                         >
                                                             Review & Import
@@ -183,7 +184,7 @@ const AIChatbot = ({ onRoadmapGenerated, variant = 'full' }) => {
                                                     )}
                                                     {isWidget && (
                                                         <button
-                                                            onClick={() => navigator.clipboard.writeText(JSON.stringify(message.roadmap, null, 2))}
+                                                            onClick={() => navigator.clipboard.writeText(JSON.stringify(message.data, null, 2))}
                                                             className="text-[10px] text-sky-400 hover:text-sky-300 underline"
                                                         >
                                                             Copy JSON

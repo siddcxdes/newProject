@@ -8,54 +8,63 @@ const router = express.Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // System prompt for the AI
-const SYSTEM_PROMPT = `You are an AI assistant that helps users create structured learning roadmaps. 
-When a user describes their goal (e.g., "I want to be an AI/ML engineer in 3 months" or "I want to crack the CDS exam"), 
-you should generate a comprehensive JSON array of learning domains, topics, and subtopics.
+const SYSTEM_PROMPT = `You are an AI assistant that helps users create structured plans for learning, fitness, and nutrition.
+Detect the user's intent and generate the appropriate JSON structure.
+
+### 1. Learning Roadmap (Default)
+If the user wants to learn a skill or prepare for an exam, use this structure:
+{
+  "type": "learning",
+  "data": [
+    {
+      "domain": "Broad Domain Name (e.g. AI/ML Engineering)",
+      "shortName": "SHORT (e.g. AI/ML)",
+      "topics": "Specific Topic Name",
+      "subtopics": ["Subtopic 1", "Subtopic 2"]
+    }
+  ]
+}
+Rule: Use a SINGLE, BROAD domain name for the user's entire goal. Group related topics under this domain.
+
+### 2. Workout Routine
+If the user wants a workout plan, gym routine, or mentions specific splits (e.g., PPL), use this structure:
+{
+  "type": "workout",
+  "data": [
+    {
+      "name": "Workout Name (e.g. Push Day)",
+      "pre_workout_warmup": ["Warmup 1", "Warmup 2"],
+      "exercises": [
+        {
+          "muscle_group": "Target Muscle",
+          "movements": ["Exercise 1 – SetsxReps", "Exercise 2"]
+        }
+      ],
+      "post_workout_stretch": ["Stretch 1", "Stretch 2"]
+    }
+  ]
+}
+Note: "exercises" can also be a simple array of strings if the workout is simple.
+
+### 3. Diet Plan
+If the user wants a diet plan, meal ideas, or nutrition advice, use this structure:
+{
+  "type": "diet",
+  "data": [
+    {
+      "name": "Meal Name",
+      "category": "breakfast", 
+      "calories": 350,
+      "protein": 20
+    }
+  ]
+}
+Note: category must be one of: breakfast, lunch, snack, dinner.
 
 IMPORTANT RULES:
-1. Always respond with ONLY valid JSON - no markdown, no explanations, no code blocks
-2. Use this exact structure:
-[
-  {
-    "domain": "Broad Domain Name",
-    "shortName": "SHORT",
-    "topics": "Specific Topic Name",
-    "subtopics": ["Subtopic 1", "Subtopic 2", "Subtopic 3"]
-  }
-]
-
-3. **CRITICAL: GROUPING RULE**: Use a SINGLE, BROAD domain name for the user's entire goal.
-   - If the user wants "AI/ML", EVERYTHING (Python, Math, Deep Learning, MLOps) must have the exact same domain: "AI/ML Engineering".
-   - Do NOT split into "Math for ML", "Python", "Deep Learning". They should all be distinct 'topics' under the SAME 'domain'.
-   - Only create separate domains if the user asks for two completely unrelated goals (e.g. "GATE Exam" and "Cooking").
-
-4. Be comprehensive but realistic based on the timeframe.
-5. Break down complex topics into actionable subtopics.
-
-Example for "AI/ML engineer in 3 months":
-[
-  {
-    "domain": "AI/ML Engineering",
-    "shortName": "AI/ML",
-    "topics": "Prerequisites & Math",
-    "subtopics": ["Python Basics", "Linear Algebra", "Calculus for ML", "Statistics & Probability"]
-  },
-  {
-    "domain": "AI/ML Engineering",
-    "shortName": "AI/ML",
-    "topics": "Deep Learning Fundamentals",
-    "subtopics": ["Neural Networks", "Backpropagation", "CNNs", "RNNs & LSTMs"]
-  },
-  {
-    "domain": "AI/ML Engineering",
-    "shortName": "AI/ML",
-    "topics": "Modern NLP & LLMs",
-    "subtopics": ["Transformers", "Attention Mechanism", "Fine-tuning", "RAG Architecture"]
-  }
-]
-Notice how "domain" is identical for all entries. This is required.
-
-Remember: Output ONLY the JSON array, nothing else.`;
+1. Always respond with ONLY valid JSON.
+2. The root object MUST have "type" and "data".
+3. No markdown, no explanations.`;
 
 // POST /api/ai/generate-roadmap
 router.post('/generate-roadmap', optionalAuth, async (req, res) => {
@@ -70,7 +79,6 @@ router.post('/generate-roadmap', optionalAuth, async (req, res) => {
 
         const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
 
-        // Check if API key is configured
         if (!apiKey) {
             console.error('❌ GEMINI_API_KEY is missing in backend .env');
             return res.status(500).json({
@@ -78,29 +86,24 @@ router.post('/generate-roadmap', optionalAuth, async (req, res) => {
             });
         }
 
-        // Initialize with trimmed key
         const genAITrimmed = new GoogleGenerativeAI(apiKey);
         const model = genAITrimmed.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-        // Combine system prompt with user prompt
-        const fullPrompt = `${SYSTEM_PROMPT}\n\nUser Goal: ${prompt}\n\nGenerate the JSON roadmap:`;
+        const fullPrompt = `${SYSTEM_PROMPT}\n\nUser Request: ${prompt}\n\nGenerate the JSON plan:`;
 
-        console.log(`🤖 Generating roadmap for: "${prompt.substring(0, 50)}..."`);
+        console.log(`🤖 Generating plan for: "${prompt.substring(0, 50)}..."`);
 
-        // Generate content
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
         let text = response.text();
 
         console.log('✅ AI Response received (length: ' + text.length + ')');
 
-        // Clean up the response - remove markdown code blocks if present
         text = text.trim();
         text = text.replace(/```json\n?/g, '');
         text = text.replace(/```\n?/g, '');
         text = text.trim();
 
-        // Validate JSON
         let jsonData;
         try {
             jsonData = JSON.parse(text);
@@ -109,39 +112,56 @@ router.post('/generate-roadmap', optionalAuth, async (req, res) => {
             console.error('Raw AI Response:', text.substring(0, 500) + '...');
             return res.status(500).json({
                 error: 'AI generated invalid JSON. Please try again.',
-                rawResponse: text.substring(0, 500) // First 500 chars for debugging
+                rawResponse: text.substring(0, 500)
             });
         }
 
-        // Ensure it's an array
-        if (!Array.isArray(jsonData)) {
-            jsonData = [jsonData];
+        // Normalize structure if AI creates a direct array (fallback logic)
+        if (Array.isArray(jsonData)) {
+            // Assume learning if it looks like learning, otherwise unknown
+            if (jsonData[0]?.domain) {
+                jsonData = { type: 'learning', data: jsonData };
+            } else {
+                jsonData = { type: 'unknown', data: jsonData };
+            }
         }
 
-        // Validate structure
-        const isValid = jsonData.every(item =>
-            item.domain &&
-            item.shortName &&
-            item.topics &&
-            item.subtopics
-        );
+        const { type, data } = jsonData;
 
-        if (!isValid) {
-            console.error('❌ Invalid JSON structure received');
+        if (!type || !Array.isArray(data)) {
             return res.status(500).json({
-                error: 'AI generated data with invalid structure',
+                error: 'AI generated invalid structure (missing type or data array)',
                 data: jsonData
             });
         }
 
-        // Return the generated roadmap
+        // Basic validation based on type
+        let isValid = true;
+        if (type === 'learning') {
+            isValid = data.every(item => item.domain && item.topics && item.subtopics);
+        } else if (type === 'workout') {
+            isValid = data.every(item => item.name && item.exercises);
+        } else if (type === 'diet') {
+            isValid = data.every(item => item.name && item.category && item.calories !== undefined);
+        }
+
+        if (!isValid) {
+            console.error('❌ Invalid JSON data schema for type:', type);
+            return res.status(500).json({
+                error: `AI generated invalid data for ${type}`,
+                data: jsonData
+            });
+        }
+
+        // Return the response
         res.json({
             success: true,
-            roadmap: jsonData,
-            itemCount: jsonData.reduce((sum, item) => {
-                const subtopics = Array.isArray(item.subtopics) ? item.subtopics : [item.subtopics];
-                return sum + subtopics.length;
-            }, 0)
+            type: type,
+            roadmap: type === 'learning' ? data : undefined, // Legacy support
+            workout: type === 'workout' ? data : undefined,
+            diet: type === 'diet' ? data : undefined,
+            data: data,
+            itemCount: data.length // Simplified count
         });
 
     } catch (error) {

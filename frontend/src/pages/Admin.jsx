@@ -13,14 +13,28 @@ const Admin = () => {
     const location = useLocation();
 
     // Auto-populate from AI Chat navigation
+    // Auto-populate from AI Chat navigation
     useEffect(() => {
-        if (location.state?.importData) {
-            setJsonInput(JSON.stringify(location.state.importData, null, 2));
-            setActiveTab('bulk');
-            showNotification('Roadmap loaded from AI! Review and import.', 'info');
-            // Clear clean state to avoid re-triggering on subsequent renders? 
-            // React Router state persists, but useEffect with dependency [location.state] ensures it runs validly.
-            window.history.replaceState({}, document.title); // Optional: Clean state
+        const { importData, importType } = location.state || {};
+
+        if (importData) {
+            if (importType === 'workout') {
+                setWorkoutJsonInput(JSON.stringify(importData, null, 2));
+                setActiveTab('workouts');
+                showNotification('Workout plan loaded from AI! Review and import.', 'info');
+            } else if (importType === 'diet') {
+                setRecipeJsonInput(JSON.stringify(importData, null, 2));
+                setActiveTab('recipes');
+                showNotification('Diet plan loaded from AI! Review and import.', 'info');
+            } else {
+                // Default to learning
+                setJsonInput(JSON.stringify(importData, null, 2));
+                setActiveTab('bulk');
+                showNotification('Roadmap loaded from AI! Review and import.', 'info');
+            }
+
+            // Clear state to avoid re-triggering? optional
+            window.history.replaceState({}, document.title);
         }
     }, [location.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
